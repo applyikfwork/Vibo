@@ -1,0 +1,122 @@
+/**
+ * @fileoverview Firestore Security Rules for Vibee OS Lite.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user-related data
+ * (profiles, vibes, mood history). Global tags are publicly readable.
+ *
+ * Data Structure:
+ * - /users/{userId}: User profiles, accessible only to the owning user.
+ * - /users/{userId}/vibes/{vibeId}: Vibes, accessible only to the owning user.
+ * - /tags/{tagId}: Global emotion tags, publicly readable.
+ * - /users/{userId}/moodHistory/{moodHistoryId}: Mood history, accessible only to the owning user.
+ *
+ * Key Security Decisions:
+ * - Users can only manage their own profiles, vibes, and mood history.
+ * - Global tags are publicly readable to facilitate app functionality.
+ * - Listing of user-specific data (vibes, mood history) is allowed only for the owning user.
+ * - Data validation is relaxed in this prototyping phase to allow for schema iteration.
+ *
+ * Denormalization for Authorization:
+ *  - The `userId` is part of the path for `vibes` and `moodHistory`, allowing direct path-based authorization.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the request is authenticated.
+     * @return {boolean} True if the request is authenticated, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the request is made by the owner of the resource.
+     * @param {string} userId The user ID to compare against the request's auth UID.
+     * @return {boolean} True if the request is made by the owner, false otherwise.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the request is made by the owner of the existing resource.
+     * @param {string} userId The user ID to compare against the resource's data.
+     * @return {boolean} True if the request is made by the owner and the resource exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rules for the /users/{userId} collection.
+     * @path /users/{userId}
+     * @allow (create) - Authenticated user can create their own profile with matching userId.
+     * @allow (get) - Authenticated user can read their own profile.
+     * @allow (update) - Authenticated user can update their own profile.
+     * @allow (delete) - Authenticated user can delete their own profile.
+     * @deny (create) - Another user attempts to create a profile with a different userId.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // User listing is disabled for privacy.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/vibes/{vibeId} collection.
+     * @path /users/{userId}/vibes/{vibeId}
+     * @allow (create) - Authenticated user can create a vibe under their own user ID.
+     * @allow (get) - Authenticated user can read a vibe under their own user ID.
+     * @allow (update) - Authenticated user can update a vibe under their own user ID.
+     * @allow (delete) - Authenticated user can delete a vibe under their own user ID.
+     * @deny (create) - Another user attempts to create a vibe under a different user ID.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/vibes/{vibeId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /tags/{tagId} collection.
+     * @path /tags/{tagId}
+     * @allow (get) - Any user can read a tag.
+     * @allow (list) - Any user can list tags.
+     * @deny (create) - No one can create a tag (admin only - not implemented).
+     * @deny (update) - No one can update a tag (admin only - not implemented).
+     * @deny (delete) - No one can delete a tag (admin only - not implemented).
+     * @principle Public read, owner-only writes (not implemented - TODO).
+     */
+    match /tags/{tagId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add admin role validation for tag management.
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/moodHistory/{moodHistoryId} collection.
+     * @path /users/{userId}/moodHistory/{moodHistoryId}
+     * @allow (create) - Authenticated user can create a moodHistory under their own user ID.
+     * @allow (get) - Authenticated user can read a moodHistory under their own user ID.
+     * @allow (update) - Authenticated user can update a moodHistory under their own user ID.
+     * @allow (delete) - Authenticated user can delete a moodHistory under their own user ID.
+     * @deny (create) - Another user attempts to create a moodHistory under a different user ID.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/moodHistory/{moodHistoryId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
