@@ -75,12 +75,12 @@ service cloud.firestore {
     /**
      * @description Rules for the public /all-vibes/{vibeId} collection.
      * @path /all-vibes/{vibeId}
-     * @allow (list, get) - Anyone can read the global vibe feed.
+     * @allow (list, get) - Any authenticated user can read the global vibe feed.
      * @allow (create) - Any authenticated user can create a new vibe.
      * @deny (update, delete) - Vibes cannot be updated or deleted from the global feed to maintain integrity.
      */
     match /all-vibes/{vibeId} {
-        allow list, get: if true;
+        allow list, get: if isSignedIn();
         allow create: if isSignedIn();
         allow update, delete: if false;
     }

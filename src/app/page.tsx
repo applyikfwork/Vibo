@@ -4,7 +4,7 @@ import { VibeForm } from '@/components/VibeForm';
 import { EmotionTabs } from '@/components/EmotionTabs';
 import { VibeCard } from '@/components/VibeCard';
 import { emotions } from '@/lib/data';
-import { useCollection, useMemoFirebase } from '@/firebase';
+import { useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Vibe } from '@/lib/types';
@@ -23,19 +23,17 @@ function VibeListLoading() {
 
 export default function Home() {
   const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
 
-  // Note: Firestore doesn't allow querying across all subcollections with the same name (e.g., all 'vibes' across all 'users')
-  // out of the box with client-side SDKs due to security and performance reasons. 
-  // To show a global feed, you'd typically have a separate top-level 'vibes' collection where all public vibes are duplicated.
-  // For this prototype, we'll just show a message.
   const globalVibesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    // This query would point to a global collection if it existed.
-    // For now, we'll create a dummy query that returns nothing to illustrate the point.
+    // Wait until we have a user and firestore instance
+    if (!firestore || !user) return null;
+    
     return query(collection(firestore, 'all-vibes'), orderBy('timestamp', 'desc'), limit(30));
-  }, [firestore]);
+  }, [firestore, user]);
 
-  const { data: vibes, isLoading } = useCollection<Vibe>(globalVibesQuery);
+  const { data: vibes, isLoading: isLoadingVibes } = useCollection<Vibe>(globalVibesQuery);
+  const isLoading = isUserLoading || isLoadingVibes;
 
   return (
     <div className="container mx-auto max-w-4xl py-8 px-4">
