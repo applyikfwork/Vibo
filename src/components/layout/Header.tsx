@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { UserCircle, BarChart3, LogOut, LogIn } from 'lucide-react';
+import { UserCircle, BarChart3, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import {
@@ -64,11 +64,11 @@ function UserMenu() {
     );
   }
 
+  // Guest/Anonymous user view
   return (
-    <Button asChild variant="ghost">
-      <Link href="/login">
-        <LogIn className="mr-2 h-4 w-4" />
-        Login
+    <Button asChild variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+      <Link href="/login" aria-label="Login">
+        <UserCircle className="h-6 w-6" />
       </Link>
     </Button>
   );
