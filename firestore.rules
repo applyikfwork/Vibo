@@ -4,7 +4,7 @@
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for user-related data
  * (profiles, vibes, mood history). Global tags are publicly readable. A global
- * feed of vibes is also publicly readable.
+ * feed of vibes is also publicly readable by authenticated users.
  *
  * Data Structure:
  * - /users/{userId}: User profiles, accessible only to the owning user.
@@ -64,25 +64,32 @@ service cloud.firestore {
     /**
      * @description Rules for the private /users/{userId}/vibes/{vibeId} collection.
      * @path /users/{userId}/vibes/{vibeId}
-     * @allow (create) - Authenticated user can create a vibe under their own user ID.
-     * @allow (get, list) - Authenticated user can read their own vibes.
-     * @allow (update, delete) - Authenticated user can manage their own vibes.
+     * @allow (read, write) - Authenticated user can read their own vibes.
      */
     match /users/{userId}/vibes/{vibeId} {
       allow read, write: if isOwner(userId);
     }
 
     /**
-     * @description Rules for the public /all-vibes/{vibeId} collection.
+     * @description Rules for the public /all-vibes collection.
+     * @path /all-vibes
+     * @allow (list) - Any authenticated user can read the global vibe feed.
+     */
+    match /all-vibes {
+      allow list: if isSignedIn();
+    }
+
+    /**
+     * @description Rules for individual documents in the /all-vibes collection.
      * @path /all-vibes/{vibeId}
-     * @allow (list, get) - Any authenticated user can read the global vibe feed.
+     * @allow (get) - Any authenticated user can read a single vibe.
      * @allow (create) - Any authenticated user can create a new vibe.
      * @deny (update, delete) - Vibes cannot be updated or deleted from the global feed to maintain integrity.
      */
     match /all-vibes/{vibeId} {
-        allow list, get: if isSignedIn();
-        allow create: if isSignedIn();
-        allow update, delete: if false;
+      allow get: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
     }
 
     /**
