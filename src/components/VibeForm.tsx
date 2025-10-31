@@ -11,9 +11,9 @@ import { Sparkles, Send, Loader2 } from 'lucide-react';
 import { getEmojiSuggestion, FormState } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { getEmotionByName } from '@/lib/data';
+import { getEmotionByName, emotions } from '@/lib/data';
 
 function SuggestButton() {
   const { pending } = useFormStatus();
@@ -65,20 +65,18 @@ export function VibeForm() {
             });
             return;
         }
-
-        // For this prototype, we'll just pick a random emotion.
-        // A real app would use another Genkit flow to determine this from text.
-        const randomEmotion = ['Happy', 'Sad', 'Chill', 'Motivated', 'Lonely'][Math.floor(Math.random() * 5)];
-        const emotionDetails = getEmotionByName(randomEmotion);
+        
+        const mainEmotions = ['Happy', 'Sad', 'Chill', 'Motivated', 'Lonely'];
+        const randomEmotionName = mainEmotions[Math.floor(Math.random() * mainEmotions.length)];
+        const emotionDetails = getEmotionByName(randomEmotionName);
         
         const newVibe = {
             userId: user.uid,
             text: vibeText,
             emoji: emoji,
-            emotion: randomEmotion,
-            backgroundColor: 'bg-gradient-to-br ' + emotionDetails.gradient,
+            emotion: randomEmotionName,
+            backgroundColor: emotionDetails.gradient,
             timestamp: serverTimestamp(),
-            // User details are denormalized for easier display on a global feed
             author: {
                 name: user.displayName || 'Anonymous User',
                 avatarUrl: user.photoURL || '',
@@ -86,8 +84,6 @@ export function VibeForm() {
             isAnonymous: isAnonymous,
         };
 
-        // We'll write to both the user-specific collection and a global collection
-        // to facilitate both a user's private history and a public feed.
         const userVibesRef = collection(firestore, 'users', user.uid, 'vibes');
         const globalVibesRef = collection(firestore, 'all-vibes');
 

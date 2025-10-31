@@ -1,8 +1,10 @@
+'use client';
+
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Heart } from 'lucide-react';
-import { Vibe } from '@/lib/types';
+import type { Vibe } from '@/lib/types';
 import { getEmotionByName } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -16,14 +18,13 @@ export function VibeCard({ vibe }: VibeCardProps) {
     const authorName = vibe.isAnonymous ? 'Hidden Soul' : vibe.author.name;
     const authorInitial = vibe.isAnonymous ? 'H' : (vibe.author.name ? vibe.author.name.charAt(0) : 'A');
     
-    // The timestamp from Firestore needs to be converted to a Date object
     const timeAgo = vibe.timestamp ? formatDistanceToNow(vibe.timestamp.toDate(), { addSuffix: true }) : 'just now';
 
     return (
         <Card className={cn(
             "flex flex-col h-full overflow-hidden border-0 shadow-lg text-white transition-transform duration-300 ease-in-out hover:-translate-y-1.5",
             "bg-gradient-to-br",
-            emotion.gradient
+            emotion?.gradient // Use optional chaining in case emotion is not found
         )}>
             <CardContent className="p-6 flex-grow flex flex-col">
                 <div className="flex items-center mb-4">

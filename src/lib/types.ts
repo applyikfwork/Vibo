@@ -8,7 +8,7 @@ export type Vibe = {
   text: string;
   emoji: string;
   emotion: EmotionCategory;
-  backgroundColor: string;
+  backgroundColor: string; // This should be the tailwind gradient class string
   timestamp: Timestamp;
   tagIds?: string[];
   // Denormalized author data for easier feed display
