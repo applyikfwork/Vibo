@@ -1,4 +1,6 @@
 import { Timestamp } from "firebase/firestore";
+import { z } from 'zod';
+import { DiagnoseVibeInputSchema, DiagnoseVibeOutputSchema } from './schemas';
 
 export type EmotionCategory = 'Happy' | 'Sad' | 'Chill' | 'Motivated' | 'Lonely' | 'Angry' | 'Neutral';
 
@@ -33,3 +35,6 @@ export type MoodHistoryData = {
   Motivated: number;
   Lonely: number;
 };
+
+export type DiagnoseVibeInput = z.infer<typeof DiagnoseVibeInputSchema>;
+export type DiagnoseVibeOutput = z.infer<typeof DiagnoseVibeOutputSchema>;
