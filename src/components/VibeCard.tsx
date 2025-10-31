@@ -23,7 +23,7 @@ export function VibeCard({ vibe }: VibeCardProps) {
             "rounded-3xl p-4 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-102 hover:-translate-y-1",
             "flex flex-col",
             "bg-gradient-to-br",
-            vibe.backgroundColor // Use the gradient string from the vibe object
+            vibe.backgroundColor 
         )}>
             {/* Vibe Header */}
             <div className="flex justify-between items-center text-sm opacity-85 mb-3">
@@ -46,11 +46,11 @@ export function VibeCard({ vibe }: VibeCardProps) {
             {/* Vibe Actions */}
             <div className="flex justify-around mt-auto pt-3 border-t border-white/20">
                 <Button variant="ghost" size="sm" className="text-white/90 hover:bg-white/10 hover:text-white rounded-full">
-                    <Heart className="h-4 w-4 mr-2" />
+                    <Heart className="mr-2 h-4 w-4" />
                     React
                 </Button>
                 <Button variant="ghost" size="sm" className="text-white/90 hover:bg-white/10 hover:text-white rounded-full">
-                    <MessageCircle className="h-4 w-4 mr-2" />
+                    <MessageCircle className="mr-2 h-4 w-4" />
                     Vibe Chat
                 </Button>
             </div>
