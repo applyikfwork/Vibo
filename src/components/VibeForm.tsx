@@ -1,7 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,7 +23,7 @@ function SuggestButton() {
 
 export function VibeForm() {
     const initialState: FormState = { message: '' };
-    const [state, formAction] = useFormState(getEmojiSuggestion, initialState);
+    const [state, formAction] = useActionState(getEmojiSuggestion, initialState);
     const { toast } = useToast();
     const [emoji, setEmoji] = useState('✨');
     const [vibeText, setVibeText] = useState('');
