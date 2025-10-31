@@ -24,7 +24,7 @@ export function VibeCard({ vibe }: VibeCardProps) {
         <Card className={cn(
             "flex flex-col h-full overflow-hidden border-0 shadow-lg text-white transition-transform duration-300 ease-in-out hover:-translate-y-1.5",
             "bg-gradient-to-br",
-            emotion?.gradient // Use optional chaining in case emotion is not found
+            emotion?.gradient
         )}>
             <CardContent className="p-6 flex-grow flex flex-col">
                 <div className="flex items-center mb-4">
