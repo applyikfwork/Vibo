@@ -2,13 +2,13 @@ import type { Vibe, Emotion, MoodHistoryData, EmotionCategory } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 export const emotions: Emotion[] = [
-  { name: 'Happy', emoji: '😊', gradient: 'from-yellow-400 to-amber-500' },
-  { name: 'Sad', emoji: '😢', gradient: 'from-blue-500 to-indigo-600' },
-  { name: 'Chill', emoji: '😌', gradient: 'from-green-400 to-teal-500' },
-  { name: 'Motivated', emoji: '💪', gradient: 'from-orange-500 to-red-500' },
-  { name: 'Lonely', emoji: '😔', gradient: 'from-purple-500 to-violet-600' },
-  { name: 'Angry', emoji: '😠', gradient: 'from-red-600 to-rose-700' },
-  { name: 'Neutral', emoji: '😶', gradient: 'from-gray-400 to-slate-500' },
+  { name: 'Happy', emoji: '😊', gradient: 'from-yellow-500 to-amber-600' },
+  { name: 'Sad', emoji: '😢', gradient: 'from-blue-600 to-indigo-700' },
+  { name: 'Chill', emoji: '😌', gradient: 'from-green-500 to-teal-600' },
+  { name: 'Motivated', emoji: '💪', gradient: 'from-orange-600 to-red-700' },
+  { name: 'Lonely', emoji: '😔', gradient: 'from-purple-600 to-violet-700' },
+  { name: 'Angry', emoji: '😠', gradient: 'from-red-700 to-rose-800' },
+  { name: 'Neutral', emoji: '😶', gradient: 'from-gray-500 to-slate-600' },
 ];
 
 // This file now contains only static definitions.
