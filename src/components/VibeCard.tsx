@@ -20,10 +20,10 @@ export function VibeCard({ vibe }: VibeCardProps) {
 
     return (
         <Card className={cn(
-            "rounded-3xl p-4 text-white shadow-lg transition-all duration-400 ease-in-out hover:scale-102 hover:-translate-y-1",
+            "rounded-3xl p-4 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-102 hover:-translate-y-1",
             "flex flex-col",
             "bg-gradient-to-br",
-            emotion?.gradient
+            vibe.backgroundColor // Use the gradient string from the vibe object
         )}>
             {/* Vibe Header */}
             <div className="flex justify-between items-center text-sm opacity-85 mb-3">
@@ -32,18 +32,19 @@ export function VibeCard({ vibe }: VibeCardProps) {
             </div>
 
             {/* Vibe Content */}
-            <div className="flex flex-col items-center justify-center text-center flex-grow my-3">
+            <div className="flex flex-col items-center justify-center text-center flex-grow my-4">
                 <span className={cn(
-                    "text-5xl mb-2",
-                    emotion?.name === 'Happy' && "drop-shadow-[0_2px_4px_rgba(255,217,61,0.5)]",
+                    "text-6xl mb-3",
+                    // Applying a subtle yellow glow for happy emoji as requested
+                    emotion?.name === 'Happy' && "drop-shadow-[0_2px_5px_rgba(255,217,61,0.6)]",
                 )}>
                     {vibe.emoji}
                 </span>
-                <p className="text-lg font-medium leading-snug drop-shadow-sm">{vibe.text}</p>
+                <p className="text-xl font-medium leading-snug drop-shadow-md">{vibe.text}</p>
             </div>
 
             {/* Vibe Actions */}
-            <div className="flex justify-around mt-2 pt-3 border-t border-white/20">
+            <div className="flex justify-around mt-auto pt-3 border-t border-white/20">
                 <Button variant="ghost" size="sm" className="text-white/90 hover:bg-white/10 hover:text-white rounded-full">
                     <Heart className="h-4 w-4 mr-2" />
                     React

@@ -8,8 +8,8 @@ export const emotions: Emotion[] = [
   { name: 'Chill', emoji: '😌', gradient: 'from-[#C1FFD7] to-[#6DD5FA]' },
   { name: 'Motivated', emoji: '💪', gradient: 'from-[#FF6B6B] to-[#FFD93D]' },
   { name: 'Lonely', emoji: '😔', gradient: 'from-[#A18CD1] to-[#FBC2EB]' },
-  { name: 'Angry', emoji: '😠', gradient: 'from-red-700 to-rose-800' }, // Kept original as it was not in the spec
-  { name: 'Neutral', emoji: '😶', gradient: 'from-gray-500 to-slate-600' }, // Kept original as it was not in the spec
+  { name: 'Angry', emoji: '😠', gradient: 'from-red-700 to-rose-800' },
+  { name: 'Neutral', emoji: '😶', gradient: 'from-gray-500 to-slate-600' },
 ];
 
 // This file now contains only static definitions.
@@ -25,6 +25,6 @@ export const moodHistory: MoodHistoryData[] = [
   { day: 'Sun', Happy: 5, Sad: 2, Chill: 8, Motivated: 0, Lonely: 3 },
 ];
 
-export const getEmotionByName = (name: string): Emotion => {
-    return emotions.find(e => e.name === name) || emotions.find(e => e.name === 'Neutral')!;
+export const getEmotionByName = (name: string): Emotion | undefined => {
+    return emotions.find(e => e.name === name);
 }
