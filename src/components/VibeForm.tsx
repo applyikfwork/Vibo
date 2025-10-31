@@ -10,6 +10,10 @@ import { Switch } from '@/components/ui/switch';
 import { Sparkles, Send, Loader2 } from 'lucide-react';
 import { getEmojiSuggestion, FormState } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { getEmotionByName } from '@/lib/data';
 
 function SuggestButton() {
   const { pending } = useFormStatus();
@@ -27,6 +31,10 @@ export function VibeForm() {
     const { toast } = useToast();
     const [emoji, setEmoji] = useState('✨');
     const [vibeText, setVibeText] = useState('');
+    const [isAnonymous, setIsAnonymous] = useState(false);
+
+    const { user } = useUser();
+    const firestore = useFirestore();
 
     useEffect(() => {
         if (state.message && state.error) {
@@ -42,8 +50,13 @@ export function VibeForm() {
         }
     }, [state, toast]);
 
-    const handlePostVibe = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handlePostVibe = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'Not signed in', description: 'You must be signed in to post a vibe.' });
+            return;
+        }
+
         if (vibeText.trim().length < 3) {
             toast({
                 variant: 'destructive',
@@ -52,6 +65,34 @@ export function VibeForm() {
             });
             return;
         }
+
+        // For this prototype, we'll just pick a random emotion.
+        // A real app would use another Genkit flow to determine this from text.
+        const randomEmotion = ['Happy', 'Sad', 'Chill', 'Motivated', 'Lonely'][Math.floor(Math.random() * 5)];
+        const emotionDetails = getEmotionByName(randomEmotion);
+        
+        const newVibe = {
+            userId: user.uid,
+            text: vibeText,
+            emoji: emoji,
+            emotion: randomEmotion,
+            backgroundColor: 'bg-gradient-to-br ' + emotionDetails.gradient,
+            timestamp: serverTimestamp(),
+            // User details are denormalized for easier display on a global feed
+            author: {
+                name: user.displayName || 'Anonymous User',
+                avatarUrl: user.photoURL || '',
+            },
+            isAnonymous: isAnonymous,
+        };
+
+        // We'll write to both the user-specific collection and a global collection
+        // to facilitate both a user's private history and a public feed.
+        const userVibesRef = collection(firestore, 'users', user.uid, 'vibes');
+        const globalVibesRef = collection(firestore, 'all-vibes');
+
+        addDocumentNonBlocking(userVibesRef, newVibe);
+        addDocumentNonBlocking(globalVibesRef, newVibe);
         
         toast({
             title: 'Vibe Posted!',
@@ -81,12 +122,12 @@ export function VibeForm() {
                 </CardContent>
                 <div className="bg-muted/30 px-4 py-3 flex justify-between items-center border-t">
                     <div className="flex items-center space-x-2">
-                        <Switch id="anonymous-mode" />
+                        <Switch id="anonymous-mode" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
                         <Label htmlFor="anonymous-mode" className="text-sm text-muted-foreground">Post Anonymously</Label>
                     </div>
                     <div className="flex gap-2">
                         <SuggestButton />
-                        <Button onClick={handlePostVibe}>
+                        <Button onClick={handlePostVibe} disabled={!user || !firestore}>
                             <Send className="mr-2 h-4 w-4" />
                             Post Vibe
                         </Button>

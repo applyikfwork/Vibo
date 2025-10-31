@@ -3,6 +3,8 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/layout/Header';
+import { FirebaseClientProvider } from '@/firebase';
+import AuthManager from '@/components/AuthManager';
 
 export const metadata: Metadata = {
   title: 'Vibee OS Lite – The social network that feels you.',
@@ -25,11 +27,15 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
-        <div className="relative flex min-h-dvh flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-        </div>
-        <Toaster />
+        <FirebaseClientProvider>
+          <AuthManager>
+            <div className="relative flex min-h-dvh flex-col">
+              <Header />
+              <main className="flex-1">{children}</main>
+            </div>
+            <Toaster />
+          </AuthManager>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

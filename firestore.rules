@@ -3,22 +3,15 @@
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for user-related data
- * (profiles, vibes, mood history). Global tags are publicly readable.
+ * (profiles, vibes, mood history). Global tags are publicly readable. A global
+ * feed of vibes is also publicly readable.
  *
  * Data Structure:
  * - /users/{userId}: User profiles, accessible only to the owning user.
- * - /users/{userId}/vibes/{vibeId}: Vibes, accessible only to the owning user.
+ * - /users/{userId}/vibes/{vibeId}: Vibes, accessible only to the owning user (private copy).
+ * - /all-vibes/{vibeId}: Global vibes feed, publicly readable, writable by any authenticated user.
  * - /tags/{tagId}: Global emotion tags, publicly readable.
  * - /users/{userId}/moodHistory/{moodHistoryId}: Mood history, accessible only to the owning user.
- *
- * Key Security Decisions:
- * - Users can only manage their own profiles, vibes, and mood history.
- * - Global tags are publicly readable to facilitate app functionality.
- * - Listing of user-specific data (vibes, mood history) is allowed only for the owning user.
- * - Data validation is relaxed in this prototyping phase to allow for schema iteration.
- *
- * Denormalization for Authorization:
- *  - The `userId` is part of the path for `vibes` and `moodHistory`, allowing direct path-based authorization.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -69,21 +62,27 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for the /users/{userId}/vibes/{vibeId} collection.
+     * @description Rules for the private /users/{userId}/vibes/{vibeId} collection.
      * @path /users/{userId}/vibes/{vibeId}
      * @allow (create) - Authenticated user can create a vibe under their own user ID.
-     * @allow (get) - Authenticated user can read a vibe under their own user ID.
-     * @allow (update) - Authenticated user can update a vibe under their own user ID.
-     * @allow (delete) - Authenticated user can delete a vibe under their own user ID.
-     * @deny (create) - Another user attempts to create a vibe under a different user ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (get, list) - Authenticated user can read their own vibes.
+     * @allow (update, delete) - Authenticated user can manage their own vibes.
      */
     match /users/{userId}/vibes/{vibeId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
+    }
+
+    /**
+     * @description Rules for the public /all-vibes/{vibeId} collection.
+     * @path /all-vibes/{vibeId}
+     * @allow (list, get) - Anyone can read the global vibe feed.
+     * @allow (create) - Any authenticated user can create a new vibe.
+     * @deny (update, delete) - Vibes cannot be updated or deleted from the global feed to maintain integrity.
+     */
+    match /all-vibes/{vibeId} {
+        allow list, get: if true;
+        allow create: if isSignedIn();
+        allow update, delete: if false;
     }
 
     /**
@@ -91,32 +90,20 @@ service cloud.firestore {
      * @path /tags/{tagId}
      * @allow (get) - Any user can read a tag.
      * @allow (list) - Any user can list tags.
-     * @deny (create) - No one can create a tag (admin only - not implemented).
-     * @deny (update) - No one can update a tag (admin only - not implemented).
-     * @deny (delete) - No one can delete a tag (admin only - not implemented).
-     * @principle Public read, owner-only writes (not implemented - TODO).
+     * @deny (create, update, delete) - Tag management is restricted (e.g., admin only).
      */
     match /tags/{tagId} {
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add admin role validation for tag management.
+      allow create, update, delete: if false;
     }
 
     /**
      * @description Rules for the /users/{userId}/moodHistory/{moodHistoryId} collection.
      * @path /users/{userId}/moodHistory/{moodHistoryId}
-     * @allow (create) - Authenticated user can create a moodHistory under their own user ID.
-     * @allow (get) - Authenticated user can read a moodHistory under their own user ID.
-     * @allow (update) - Authenticated user can update a moodHistory under their own user ID.
-     * @allow (delete) - Authenticated user can delete a moodHistory under their own user ID.
-     * @deny (create) - Another user attempts to create a moodHistory under a different user ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (read, write) - Only the owner can manage their mood history.
      */
     match /users/{userId}/moodHistory/{moodHistoryId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
     }
   }
 }

@@ -14,8 +14,10 @@ interface VibeCardProps {
 export function VibeCard({ vibe }: VibeCardProps) {
     const emotion = getEmotionByName(vibe.emotion);
     const authorName = vibe.isAnonymous ? 'Hidden Soul' : vibe.author.name;
-    const authorInitial = vibe.isAnonymous ? 'H' : vibe.author.name.charAt(0);
-    const timeAgo = formatDistanceToNow(new Date(vibe.createdAt), { addSuffix: true });
+    const authorInitial = vibe.isAnonymous ? 'H' : (vibe.author.name ? vibe.author.name.charAt(0) : 'A');
+    
+    // The timestamp from Firestore needs to be converted to a Date object
+    const timeAgo = vibe.timestamp ? formatDistanceToNow(vibe.timestamp.toDate(), { addSuffix: true }) : 'just now';
 
     return (
         <Card className={cn(
@@ -26,7 +28,7 @@ export function VibeCard({ vibe }: VibeCardProps) {
             <CardContent className="p-6 flex-grow flex flex-col">
                 <div className="flex items-center mb-4">
                     <Avatar className="h-8 w-8 mr-3 border-2 border-white/50">
-                        {!vibe.isAnonymous && <AvatarImage src={vibe.author.avatarUrl} alt={authorName} data-ai-hint="person portrait" />}
+                        {!vibe.isAnonymous && vibe.author.avatarUrl && <AvatarImage src={vibe.author.avatarUrl} alt={authorName} data-ai-hint="person portrait" />}
                         <AvatarFallback className="bg-white/30 text-white font-bold">{authorInitial}</AvatarFallback>
                     </Avatar>
                     <div>
