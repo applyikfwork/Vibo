@@ -14,7 +14,7 @@ interface VibeCardProps {
 
 export function VibeCard({ vibe }: VibeCardProps) {
     const emotion = getEmotionByName(vibe.emotion);
-    const authorName = vibe.isAnonymous ? 'Anonymous User' : vibe.author.name;
+    const authorName = vibe.isAnonymous ? 'Anonymous' : vibe.author.name;
     
     const timeAgo = vibe.timestamp ? formatDistanceToNow(vibe.timestamp.toDate(), { addSuffix: true }) : 'just now';
 
@@ -32,11 +32,11 @@ export function VibeCard({ vibe }: VibeCardProps) {
         <Card className={cn(
             "rounded-3xl p-6 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-102 hover:-translate-y-1",
             "flex flex-col h-[280px]", // Fixed height for consistency
-            "bg-gradient-to-b", // Changed to top-to-bottom gradient
-            vibe.backgroundColor 
+            "bg-gradient-to-br", // Use bottom-right gradient direction
+            vibe.backgroundColor // This applies the from-[] and to-[] classes
         )}>
             {/* Vibe Header */}
-            <div className="flex items-center text-sm opacity-85 mb-3 gap-2">
+            <div className="flex items-center text-sm opacity-85 mb-3 gap-2 drop-shadow-sm">
                 <User className="w-4 h-4" />
                 <div className="flex flex-col">
                     <span className="font-semibold leading-none">{authorName}</span>
@@ -56,10 +56,14 @@ export function VibeCard({ vibe }: VibeCardProps) {
             </div>
 
             {/* Vibe Actions */}
-            <div className="flex justify-center mt-auto">
-                <Button variant="ghost" size="lg" className="text-white/90 bg-white/10 hover:bg-white/20 hover:text-white rounded-full px-6 py-2 h-auto w-auto">
+            <div className="flex justify-center items-center gap-4 mt-auto">
+                <Button variant="ghost" size="sm" className="text-white/90 bg-white/10 hover:bg-white/20 hover:text-white rounded-full px-4 h-auto">
                     {vibe.emotion === 'Motivated' ? <Zap className="mr-2 h-4 w-4" /> : <Heart className="mr-2 h-4 w-4" />}
                     <span>React</span>
+                </Button>
+                 <Button variant="ghost" size="sm" className="text-white/90 bg-white/10 hover:bg-white/20 hover:text-white rounded-full px-4 h-auto">
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    <span>Chat</span>
                 </Button>
             </div>
         </Card>
