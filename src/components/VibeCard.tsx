@@ -14,58 +14,114 @@ interface VibeCardProps {
 
 export function VibeCard({ vibe }: VibeCardProps) {
     const emotion = getEmotionByName(vibe.emotion);
-    const authorName = vibe.isAnonymous ? 'Anonymous' : vibe.author.name;
+    const authorName = vibe.isAnonymous ? 'Anonymous User' : vibe.author.name;
     
     const timeAgo = vibe.timestamp ? formatDistanceToNow(vibe.timestamp.toDate(), { addSuffix: true }) : 'just now';
 
-    // Emotion-specific glow effects for the emoji
+    // Enhanced emotion-specific glow effects for powerful emoji presence
     const emotionGlowEffect: Record<string, string> = {
-        'Happy': 'drop-shadow-[0_0_15px_rgba(255,217,61,0.7)]',
-        'Sad': 'drop-shadow-[0_0_15px_rgba(137,207,240,0.6)]',
-        'Chill': 'drop-shadow-[0_0_15px_rgba(109,213,250,0.7)]',
-        'Motivated': 'drop-shadow-[0_0_15px_rgba(251,194,235,0.7)]',
-        'Lonely': 'drop-shadow-[0_0_15px_rgba(251,194,235,0.6)]',
-        'Angry': 'drop-shadow-[0_0_15px_rgba(239,68,68,0.6)]',
-        'Neutral': 'drop-shadow-[0_0_15px_rgba(156,163,175,0.5)]',
+        'Happy': 'drop-shadow-[0_0_35px_rgba(255,200,87,0.95)] drop-shadow-[0_0_20px_rgba(255,167,38,0.8)]',
+        'Sad': 'drop-shadow-[0_0_35px_rgba(33,150,243,0.9)] drop-shadow-[0_0_20px_rgba(25,118,210,0.7)]',
+        'Chill': 'drop-shadow-[0_0_35px_rgba(77,208,225,0.95)] drop-shadow-[0_0_20px_rgba(38,198,218,0.8)]',
+        'Motivated': 'drop-shadow-[0_0_35px_rgba(224,64,251,0.9)] drop-shadow-[0_0_20px_rgba(186,104,200,0.8)]',
+        'Lonely': 'drop-shadow-[0_0_30px_rgba(161,140,209,0.85)] drop-shadow-[0_0_18px_rgba(179,157,219,0.7)]',
+        'Angry': 'drop-shadow-[0_0_35px_rgba(239,83,80,0.9)] drop-shadow-[0_0_20px_rgba(229,57,53,0.75)]',
+        'Neutral': 'drop-shadow-[0_0_25px_rgba(120,144,156,0.7)] drop-shadow-[0_0_15px_rgba(96,125,139,0.6)]',
+    }
+
+    // Emotion text color variations for extra punch
+    const emotionTextColor: Record<string, string> = {
+        'Happy': 'text-white',
+        'Sad': 'text-white',
+        'Chill': 'text-white',
+        'Motivated': 'text-yellow-100',
+        'Lonely': 'text-pink-50',
+        'Angry': 'text-white',
+        'Neutral': 'text-gray-100',
     }
 
     return (
         <Card className={cn(
-            "rounded-3xl p-6 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-[1.02] hover:-translate-y-1",
-            "flex flex-col h-[280px]", // Fixed height for consistency
-            "bg-gradient-to-br", // Use bottom-right gradient direction
-            vibe.backgroundColor // This applies the from-[] and to-[] classes
+            "rounded-[28px] p-7 text-white shadow-2xl transition-all duration-300 ease-out",
+            "hover:scale-[1.03] hover:-translate-y-2 hover:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)]",
+            "flex flex-col h-[340px] relative overflow-hidden",
+            "bg-gradient-to-br", 
+            vibe.backgroundColor,
+            "border-0 backdrop-blur-sm"
         )}>
-            {/* Vibe Header */}
-            <div className="flex items-center text-sm opacity-85 mb-3 gap-2 drop-shadow-sm">
-                <User className="w-4 h-4" />
-                <div className="flex flex-col">
-                    <span className="font-semibold leading-none">{authorName}</span>
-                    <span className="text-xs leading-tight">{timeAgo}</span>
+            {/* Subtle overlay for depth */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-white/5 pointer-events-none" />
+            
+            {/* Content Container */}
+            <div className="relative z-10 flex flex-col h-full">
+                {/* Vibe Header */}
+                <div className="flex items-center text-sm opacity-90 mb-4 gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                        <User className="w-4.5 h-4.5" />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-semibold leading-none text-base">{authorName}</span>
+                        <span className="text-xs leading-tight opacity-75 mt-0.5">{timeAgo}</span>
+                    </div>
                 </div>
-            </div>
 
-            {/* Vibe Content */}
-            <div className="flex flex-col items-center justify-center text-center flex-grow my-4">
-                <span className={cn(
-                    "text-6xl mb-4",
-                    emotion && emotionGlowEffect[emotion.name]
-                )}>
-                    {vibe.emoji}
-                </span>
-                <p className="text-3xl font-bold tracking-tight drop-shadow-sm">{vibe.emotion}</p>
-            </div>
+                {/* Vibe Content - Centered and Powerful */}
+                <div className="flex flex-col items-center justify-center text-center flex-grow -mt-2">
+                    {/* Emoji with powerful glow */}
+                    <div className="relative mb-6">
+                        <span className={cn(
+                            "text-[120px] leading-none inline-block",
+                            "transition-transform duration-300 hover:scale-110",
+                            emotion && emotionGlowEffect[emotion.name]
+                        )}>
+                            {vibe.emoji}
+                        </span>
+                    </div>
+                    
+                    {/* Emotion Name */}
+                    <h3 className={cn(
+                        "text-5xl font-black tracking-tight",
+                        "drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]",
+                        emotionTextColor[vibe.emotion] || 'text-white'
+                    )}>
+                        {vibe.emotion}
+                    </h3>
+                </div>
 
-            {/* Vibe Actions */}
-            <div className="flex justify-center items-center gap-4 mt-auto">
-                <Button variant="ghost" size="sm" className="text-white/90 bg-white/10 hover:bg-white/20 hover:text-white rounded-full px-4 h-auto py-1.5">
-                    {vibe.emotion === 'Motivated' ? <Zap className="mr-2 h-4 w-4" /> : <Heart className="mr-2 h-4 w-4" />}
-                    <span>React</span>
-                </Button>
-                 <Button variant="ghost" size="sm" className="text-white/90 bg-white/10 hover:bg-white/20 hover:text-white rounded-full px-4 h-auto py-1.5">
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    <span>Vibe Chat</span>
-                </Button>
+                {/* Vibe Actions */}
+                <div className="flex justify-center items-center gap-3 mt-auto pt-2">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className={cn(
+                            "text-white bg-white/15 hover:bg-white/25 backdrop-blur-md",
+                            "border border-white/20 hover:border-white/30",
+                            "rounded-full px-5 h-10 font-medium text-sm",
+                            "transition-all duration-200 hover:scale-105",
+                            "shadow-lg hover:shadow-xl"
+                        )}
+                    >
+                        {vibe.emotion === 'Motivated' ? 
+                            <Zap className="mr-2 h-4 w-4 fill-current" /> : 
+                            <Heart className="mr-2 h-4 w-4" />
+                        }
+                        <span>React</span>
+                    </Button>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className={cn(
+                            "text-white bg-white/15 hover:bg-white/25 backdrop-blur-md",
+                            "border border-white/20 hover:border-white/30",
+                            "rounded-full px-5 h-10 font-medium text-sm",
+                            "transition-all duration-200 hover:scale-105",
+                            "shadow-lg hover:shadow-xl"
+                        )}
+                    >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        <span>Vibe Chat</span>
+                    </Button>
+                </div>
             </div>
         </Card>
     )

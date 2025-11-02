@@ -1,15 +1,15 @@
 import type { Vibe, Emotion, MoodHistoryData, EmotionCategory } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
-// Updated with new, more vibrant gradient colors as per the design plan.
+// Vibrant emotion gradients inspired by the design
 export const emotions: Emotion[] = [
-  { name: 'Happy', emoji: '😊', gradient: 'from-[#FFD93D] to-[#FF9A3D]' },
-  { name: 'Sad', emoji: '😢', gradient: 'from-[#89CFF0] to-[#3A5BA0]' },
-  { name: 'Chill', emoji: '😌', gradient: 'from-[#C1FFD7] to-[#6DD5FA]' },
-  { name: 'Motivated', emoji: '💪', gradient: 'from-[#FF6B6B] to-[#FFD93D]' },
-  { name: 'Lonely', emoji: '😔', gradient: 'from-[#A18CD1] to-[#FBC2EB]' },
-  { name: 'Angry', emoji: '😠', gradient: 'from-red-700 to-rose-800' },
-  { name: 'Neutral', emoji: '😶', gradient: 'from-gray-500 to-slate-600' },
+  { name: 'Happy', emoji: '😊', gradient: 'from-[#FFA726] via-[#FF9F1C] to-[#FF8C00]' },
+  { name: 'Sad', emoji: '😢', gradient: 'from-[#2196F3] via-[#1976D2] to-[#0D47A1]' },
+  { name: 'Chill', emoji: '😌', gradient: 'from-[#4DD0E1] via-[#26C6DA] to-[#00ACC1]' },
+  { name: 'Motivated', emoji: '😊', gradient: 'from-[#E040FB] via-[#BA68C8] to-[#9C27B0]' },
+  { name: 'Lonely', emoji: '😔', gradient: 'from-[#A18CD1] via-[#B39DDB] to-[#9575CD]' },
+  { name: 'Angry', emoji: '😠', gradient: 'from-[#EF5350] via-[#E53935] to-[#C62828]' },
+  { name: 'Neutral', emoji: '😶', gradient: 'from-[#78909C] via-[#607D8B] to-[#455A64]' },
 ];
 
 // This file now contains only static definitions.
