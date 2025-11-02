@@ -18,6 +18,7 @@ export function VibeCard({ vibe }: VibeCardProps) {
     
     const timeAgo = vibe.timestamp ? formatDistanceToNow(vibe.timestamp.toDate(), { addSuffix: true }) : 'just now';
 
+    // Emotion-specific glow effects for the emoji
     const emotionGlowEffect: Record<string, string> = {
         'Happy': 'drop-shadow-[0_0_15px_rgba(255,217,61,0.7)]',
         'Sad': 'drop-shadow-[0_0_15px_rgba(137,207,240,0.6)]',
@@ -30,7 +31,7 @@ export function VibeCard({ vibe }: VibeCardProps) {
 
     return (
         <Card className={cn(
-            "rounded-3xl p-6 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-102 hover:-translate-y-1",
+            "rounded-3xl p-6 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-[1.02] hover:-translate-y-1",
             "flex flex-col h-[280px]", // Fixed height for consistency
             "bg-gradient-to-br", // Use bottom-right gradient direction
             vibe.backgroundColor // This applies the from-[] and to-[] classes
@@ -57,13 +58,13 @@ export function VibeCard({ vibe }: VibeCardProps) {
 
             {/* Vibe Actions */}
             <div className="flex justify-center items-center gap-4 mt-auto">
-                <Button variant="ghost" size="sm" className="text-white/90 bg-white/10 hover:bg-white/20 hover:text-white rounded-full px-4 h-auto">
+                <Button variant="ghost" size="sm" className="text-white/90 bg-white/10 hover:bg-white/20 hover:text-white rounded-full px-4 h-auto py-1.5">
                     {vibe.emotion === 'Motivated' ? <Zap className="mr-2 h-4 w-4" /> : <Heart className="mr-2 h-4 w-4" />}
                     <span>React</span>
                 </Button>
-                 <Button variant="ghost" size="sm" className="text-white/90 bg-white/10 hover:bg-white/20 hover:text-white rounded-full px-4 h-auto">
+                 <Button variant="ghost" size="sm" className="text-white/90 bg-white/10 hover:bg-white/20 hover:text-white rounded-full px-4 h-auto py-1.5">
                     <MessageCircle className="mr-2 h-4 w-4" />
-                    <span>Chat</span>
+                    <span>Vibe Chat</span>
                 </Button>
             </div>
         </Card>
