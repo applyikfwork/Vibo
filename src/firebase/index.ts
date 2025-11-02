@@ -22,6 +22,15 @@ export function initializeFirebase() {
       if (process.env.NODE_ENV === "production") {
         console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
       }
+      
+      if (!firebaseConfig) {
+        throw new Error(
+          'Firebase configuration is missing. Please add the required environment variables ' +
+          '(NEXT_PUBLIC_FIREBASE_PROJECT_ID, NEXT_PUBLIC_FIREBASE_APP_ID, etc.) in Replit Secrets ' +
+          'to enable Firebase features.'
+        );
+      }
+      
       firebaseApp = initializeApp(firebaseConfig);
     }
 
