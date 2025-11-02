@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Heart, User, Zap } from 'lucide-react';
+import { MessageCircle, Heart, User, Zap, Sparkles } from 'lucide-react';
 import type { Vibe } from '@/lib/types';
 import { getEmotionByName } from '@/lib/data';
 import { cn } from '@/lib/utils';
@@ -29,23 +29,47 @@ export function VibeCard({ vibe }: VibeCardProps) {
         'Neutral': 'drop-shadow-[0_0_35px_rgba(144,164,174,0.9)] drop-shadow-[0_0_20px_rgba(120,144,156,0.8)]',
     }
 
+    // Emotion-specific card border glow colors
+    const emotionBorderGlow: Record<string, string> = {
+        'Happy': 'shadow-[0_0_30px_rgba(255,184,77,0.6),0_0_60px_rgba(255,167,38,0.4),0_0_90px_rgba(255,149,0,0.2)]',
+        'Sad': 'shadow-[0_0_30px_rgba(100,181,246,0.6),0_0_60px_rgba(66,165,245,0.4),0_0_90px_rgba(33,150,243,0.2)]',
+        'Chill': 'shadow-[0_0_30px_rgba(77,208,225,0.6),0_0_60px_rgba(38,198,218,0.4),0_0_90px_rgba(0,188,212,0.2)]',
+        'Motivated': 'shadow-[0_0_30px_rgba(244,143,177,0.6),0_0_60px_rgba(236,64,122,0.4),0_0_90px_rgba(233,30,99,0.2)]',
+        'Lonely': 'shadow-[0_0_30px_rgba(206,147,216,0.6),0_0_60px_rgba(186,104,200,0.4),0_0_90px_rgba(171,71,188,0.2)]',
+        'Angry': 'shadow-[0_0_30px_rgba(255,112,67,0.6),0_0_60px_rgba(255,87,34,0.4),0_0_90px_rgba(244,81,30,0.2)]',
+        'Neutral': 'shadow-[0_0_30px_rgba(144,164,174,0.5),0_0_60px_rgba(120,144,156,0.3)]',
+    }
+
     return (
-        <Card className={cn(
-            // Base styles with full responsiveness
-            "rounded-[24px] sm:rounded-[28px] p-5 sm:p-6 md:p-7",
-            "text-white shadow-2xl transition-all duration-300 ease-out",
-            "hover:scale-[1.02] sm:hover:scale-[1.03] hover:-translate-y-2",
-            "hover:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)]",
-            "flex flex-col relative overflow-hidden",
-            // Responsive heights
-            "h-[300px] sm:h-[320px] md:h-[360px] lg:h-[380px]",
-            // Super vibrant gradient
-            "bg-gradient-to-br", 
-            vibe.backgroundColor,
-            "border-0"
-        )}>
-            {/* Content Container */}
-            <div className="relative z-10 flex flex-col h-full">
+        <div className="group relative">
+            <Card className={cn(
+                // Base styles with full responsiveness
+                "rounded-[24px] sm:rounded-[28px] p-5 sm:p-6 md:p-7",
+                "text-white transition-all duration-500 ease-out",
+                "hover:scale-[1.05] sm:hover:scale-[1.06] hover:-translate-y-3",
+                "flex flex-col relative overflow-hidden",
+                // Responsive heights
+                "h-[300px] sm:h-[320px] md:h-[360px] lg:h-[380px]",
+                // Super vibrant gradient (animation only on hover for performance)
+                "bg-gradient-to-br group-hover:animate-gradient-shift", 
+                vibe.backgroundColor,
+                "border-2 border-white/20",
+                // Colorful emotion-based glow shadow
+                emotion && emotionBorderGlow[emotion.name]
+            )}>
+                {/* Animated gradient overlay for extra depth */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10 opacity-50" />
+                
+                {/* Sparkle decorations - only visible and animated on hover for performance */}
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Sparkles className="w-5 h-5 text-white/40 group-hover:animate-pulse" />
+                </div>
+                <div className="absolute bottom-8 left-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                    <Sparkles className="w-4 h-4 text-white/30 group-hover:animate-pulse" />
+                </div>
+
+                {/* Content Container */}
+                <div className="relative z-10 flex flex-col h-full">
                 {/* Vibe Header - Highly visible white text */}
                 <div className="flex items-center mb-3 sm:mb-4 gap-2">
                     <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-lg">
@@ -93,14 +117,14 @@ export function VibeCard({ vibe }: VibeCardProps) {
                         variant="ghost" 
                         size="sm" 
                         className={cn(
-                            "text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm",
-                            "border border-white/30 hover:border-white/40",
-                            "rounded-full font-semibold",
+                            "text-white bg-white/25 hover:bg-white/40 backdrop-blur-md",
+                            "border-2 border-white/40 hover:border-white/60",
+                            "rounded-full font-bold",
                             "px-3 sm:px-4 md:px-5 h-8 sm:h-9 md:h-10",
                             "text-xs sm:text-sm",
-                            "transition-all duration-200 hover:scale-105",
-                            "shadow-lg hover:shadow-xl",
-                            "drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]"
+                            "transition-all duration-300 hover:scale-110",
+                            "shadow-[0_4px_20px_rgba(255,255,255,0.3)] hover:shadow-[0_6px_30px_rgba(255,255,255,0.5)]",
+                            "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
                         )}
                     >
                         {vibe.emotion === 'Motivated' ? 
@@ -113,14 +137,14 @@ export function VibeCard({ vibe }: VibeCardProps) {
                         variant="ghost" 
                         size="sm" 
                         className={cn(
-                            "text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm",
-                            "border border-white/30 hover:border-white/40",
-                            "rounded-full font-semibold",
+                            "text-white bg-white/25 hover:bg-white/40 backdrop-blur-md",
+                            "border-2 border-white/40 hover:border-white/60",
+                            "rounded-full font-bold",
                             "px-3 sm:px-4 md:px-5 h-8 sm:h-9 md:h-10",
                             "text-xs sm:text-sm",
-                            "transition-all duration-200 hover:scale-105",
-                            "shadow-lg hover:shadow-xl",
-                            "drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]"
+                            "transition-all duration-300 hover:scale-110",
+                            "shadow-[0_4px_20px_rgba(255,255,255,0.3)] hover:shadow-[0_6px_30px_rgba(255,255,255,0.5)]",
+                            "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
                         )}
                     >
                         <MessageCircle className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -129,5 +153,6 @@ export function VibeCard({ vibe }: VibeCardProps) {
                 </div>
             </div>
         </Card>
+        </div>
     )
 }

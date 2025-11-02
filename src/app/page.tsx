@@ -36,15 +36,24 @@ export default function Home() {
   const isLoading = isUserLoading || isLoadingVibes;
 
   return (
-    <div className="container mx-auto max-w-4xl py-8 px-4">
-      <header className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tighter bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent">
-          Feel it. Share it. Find your vibe.
-        </h1>
-        <p className="text-muted-foreground mt-2 text-lg">
-          How do you feel right now?
-        </p>
-      </header>
+    <div className="relative min-h-screen">
+      {/* Animated Gradient Background */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 animate-gradient-shift" />
+      
+      {/* Floating decorative circles */}
+      <div className="fixed top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" />
+      <div className="fixed top-40 right-10 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float delay-1000" style={{animationDelay: '2s'}} />
+      <div className="fixed bottom-20 left-1/2 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float delay-500" style={{animationDelay: '4s'}} />
+      
+      <div className="container mx-auto max-w-4xl py-8 px-4 relative z-10">
+        <header className="text-center mb-12">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent animate-gradient-shift mb-4">
+            Feel it. Share it. Find your vibe.
+          </h1>
+          <p className="text-gray-700 mt-2 text-lg md:text-xl font-medium bg-white/50 backdrop-blur-sm rounded-full px-6 py-2 inline-block shadow-lg">
+            ✨ How do you feel right now? ✨
+          </p>
+        </header>
 
       <section className="mb-16">
         <VibeForm />
@@ -81,6 +90,7 @@ export default function Home() {
             }}
         />
       </section>
+    </div>
     </div>
   );
 }

@@ -76,17 +76,21 @@ function UserMenu() {
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b-2 border-purple-200/50 bg-gradient-to-r from-purple-50/95 via-pink-50/95 to-blue-50/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-lg shadow-purple-500/10">
       <div className="container flex h-16 max-w-screen-2xl items-center">
         <div className="mr-4 flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Logo />
-            <span className="hidden font-bold sm:inline-block">Vibee OS</span>
+          <Link href="/" className="mr-6 flex items-center space-x-2 group">
+            <div className="transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
+              <Logo />
+            </div>
+            <span className="hidden font-bold sm:inline-block bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent text-lg">
+              Vibee OS
+            </span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm md:flex">
             <Link
               href="/history"
-              className="text-foreground/60 transition-colors hover:text-foreground/80"
+              className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:bg-clip-text font-semibold"
             >
               Mood History
             </Link>
@@ -95,8 +99,8 @@ export default function Header() {
         <div className="flex flex-1 items-center justify-end space-x-2">
           <nav className="flex items-center">
             <Link href="/history" className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <BarChart3 className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 transition-all duration-300">
+                <BarChart3 className="h-5 w-5 text-purple-600" />
                 <span className="sr-only">Mood History</span>
               </Button>
             </Link>
