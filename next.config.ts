@@ -1,13 +1,6 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  experimental: {
-    // This is required to allow requests from the development environment.
-    allowedDevOrigins: [
-      'https://6000-firebase-studio-1761878944305.cluster-zumahodzirciuujpqvsniawo3o.cloudworkstations.dev',
-    ],
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
