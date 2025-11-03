@@ -113,7 +113,7 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                 "text-white transition-all duration-500 ease-out",
                  isLink && "hover:scale-[1.05] sm:hover:scale-[1.06] hover:-translate-y-3",
                 "flex flex-col relative overflow-hidden",
-                "h-auto min-h-[360px]",
+                "h-auto min-h-[380px] lg:min-h-[360px]",
                 "bg-gradient-to-br group-hover:animate-gradient-shift", 
                 vibe.backgroundColor,
                 "border-2 border-white/20",
@@ -199,12 +199,12 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                             variant="ghost" 
                             size="sm" 
                             asChild={isLink}
-                            className={cn(
+                             className={cn(
                                 "text-white bg-white/25 hover:bg-white/40 backdrop-blur-md",
                                 "border-2 border-white/40 hover:border-white/60",
                                 "rounded-full font-bold",
-                                "px-3 sm:px-4 h-8 sm:h-9",
-                                "text-xs sm:text-sm",
+                                "px-3 h-8 sm:h-9 lg:px-3 lg:h-8",
+                                "text-xs sm:text-sm lg:text-xs",
                                 "transition-all duration-300 hover:scale-110",
                                 "shadow-[0_4px_20px_rgba(255,255,255,0.3)] hover:shadow-[0_6px_30px_rgba(255,255,255,0.5)]",
                                 "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
@@ -221,30 +221,32 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                                 <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">Vibe Chat</span>
                             </div>
                         </Button>
-                         <div 
+                         {(reactionCount > 0 || viewCount > 0) && (
+                            <div 
                                 className={cn(
                                     "text-white bg-white/25 backdrop-blur-md flex items-center gap-4",
                                     "border-2 border-white/40",
                                     "rounded-full font-bold",
-                                    "px-3 h-8 sm:h-9",
-                                    "text-xs sm:text-sm",
+                                    "px-3 h-8 sm:h-9 lg:h-8",
+                                    "text-xs sm:text-sm lg:text-xs",
                                     "shadow-[0_4px_20px_rgba(255,255,255,0.3)]",
                                     "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
                                 )}
                             >
-                            {reactionCount > 0 && (
-                                <div className="flex items-center">
-                                    <Heart className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 fill-white" />
-                                    <span>{reactionCount}</span>
-                                </div>
-                            )}
-                             {viewCount > 0 && (
-                                <div className="flex items-center">
-                                    <Eye className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                                    <span>{viewCount}</span>
-                                </div>
-                            )}
-                        </div>
+                                {reactionCount > 0 && (
+                                    <div className="flex items-center">
+                                        <Heart className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 fill-white" />
+                                        <span>{reactionCount}</span>
+                                    </div>
+                                )}
+                                {viewCount > 0 && (
+                                    <div className="flex items-center">
+                                        <Eye className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                        <span>{viewCount}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </Card>
