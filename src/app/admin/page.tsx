@@ -14,6 +14,8 @@ import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
@@ -125,7 +127,12 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
             toast({ title: 'Success', description: `Added a fake reaction and ${amount} views.` });
             setReactViewsDialogOpen(false);
         } catch (e: any) {
-            toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add reaction/views." });
+            const permissionError = new FirestorePermissionError({
+                path: `all-vibes/${vibe.id}`,
+                operation: 'write', 
+                requestResourceData: { reaction: '...', viewCount: amount },
+              });
+            errorEmitter.emit('permission-error', permissionError);
         }
         setIsSubmitting(false);
     };
@@ -133,17 +140,25 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
     const handleAddViews = async () => {
         if (!firestore) return;
         setIsSubmitting(true);
-        try {
-            const vibeRef = doc(firestore, 'all-vibes', vibe.id);
-            await updateDoc(vibeRef, {
-                viewCount: increment(amount)
+        const vibeRef = doc(firestore, 'all-vibes', vibe.id);
+        const dataToUpdate = { viewCount: increment(amount) };
+
+        updateDoc(vibeRef, dataToUpdate)
+            .then(() => {
+                toast({ title: 'Success', description: `Added ${amount} views.` });
+                setViewsDialogOpen(false);
+            })
+            .catch(async (serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: vibeRef.path,
+                    operation: 'update',
+                    requestResourceData: dataToUpdate,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            })
+            .finally(() => {
+                setIsSubmitting(false);
             });
-            toast({ title: 'Success', description: `Added ${amount} views.` });
-            setViewsDialogOpen(false);
-        } catch (e: any) {
-            toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add views." });
-        }
-        setIsSubmitting(false);
     };
 
 
