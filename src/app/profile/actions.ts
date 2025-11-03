@@ -21,10 +21,10 @@ export async function updateProfileSettings(data: { userId: string, displayName:
     }
 
     const { userId, displayName } = validatedFields.data;
-
-    const { firestore, auth } = await getAdminSdks();
-
+    
     try {
+        const { firestore, auth } = await getAdminSdks();
+        
         // Update auth user
         await auth.updateUser(userId, { displayName });
 
@@ -64,9 +64,9 @@ export async function deleteVibe(data: { userId: string, vibeId: string }) {
     }
     
     const { userId, vibeId } = validatedFields.data;
-    const { firestore } = await getAdminSdks();
 
     try {
+        const { firestore } = await getAdminSdks();
         const batch = firestore.batch();
 
         const userVibeRef = firestore.doc(`users/${userId}/vibes/${vibeId}`);

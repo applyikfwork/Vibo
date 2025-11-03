@@ -10,26 +10,20 @@ function getServiceAccount() {
   const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
   if (!projectId || !clientEmail || !privateKey) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(
-        `
+     throw new Error(`
         -----------------------------------------------------------------
         Firebase Admin credentials not found in environment variables.
-        Server-side Firebase operations will fail.
+        Server-side Firebase operations require these variables to be set.
         
-        Please populate .env.local with:
+        Please create a .env.local file in your project root and add:
         FIREBASE_PROJECT_ID=...
         FIREBASE_CLIENT_EMAIL=...
         FIREBASE_PRIVATE_KEY=...
         
-        You can get these from your project's service account settings
-        in the Firebase console.
+        You can find these credentials in your Firebase project's 
+        service account settings.
         -----------------------------------------------------------------
-        `
-      );
-    }
-    // In production, you might want to throw an error
-    return null;
+      `);
   }
 
   return cert({
@@ -40,27 +34,22 @@ function getServiceAccount() {
 }
 
 
-let adminApp: App;
-
-if (!getApps().length) {
-    const serviceAccount = getServiceAccount();
-    if(serviceAccount) {
-         adminApp = initializeApp({
-            credential: serviceAccount,
-        });
-    } else {
-        // Fallback or dummy initialization if credentials are not available
-        // This will likely fail on actual operations but prevents crashing on import.
-        adminApp = initializeApp();
+function initializeAdminApp(): App {
+    if (getApps().some(app => app.name === 'admin')) {
+        return getApp('admin');
     }
-} else {
-  adminApp = getApp();
+
+    const serviceAccount = getServiceAccount();
+    return initializeApp({
+        credential: serviceAccount,
+    }, 'admin');
 }
 
-const adminAuth = getAuth(adminApp);
-const adminFirestore = getFirestore(adminApp);
-
 export async function getAdminSdks() {
+  const adminApp = initializeAdminApp();
+  const adminAuth = getAuth(adminApp);
+  const adminFirestore = getFirestore(adminApp);
+
   return {
     auth: adminAuth,
     firestore: adminFirestore,
