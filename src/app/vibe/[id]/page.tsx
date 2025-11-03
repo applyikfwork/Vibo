@@ -5,7 +5,7 @@ import { VibeCard } from '@/components/VibeCard';
 import { InteractionSection } from '@/components/InteractionSection';
 import { useDoc, useMemoFirebase } from '@/firebase';
 import { useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, increment, updateDoc } from 'firebase/firestore';
 import type { Vibe } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Eye } from 'lucide-react';
@@ -23,30 +23,6 @@ function VibeDetailLoading() {
     );
 }
 
-function ViewCounter() {
-    const [viewCount, setViewCount] = useState(1);
-
-    useEffect(() => {
-        const baseViewers = Math.floor(Math.random() * 5) + 1;
-        setViewCount(baseViewers);
-
-        const interval = setInterval(() => {
-            const change = Math.random() > 0.5 ? 1 : -1;
-            setViewCount(prev => Math.max(1, prev + change));
-        }, 3000 + Math.random() * 2000); // Vary interval slightly
-
-        return () => clearInterval(interval);
-    }, []);
-
-    return (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse-glow">
-            <Eye className="h-5 w-5" />
-            <span className="font-semibold">{viewCount}</span>
-            <span>{viewCount === 1 ? 'person is viewing' : 'people are viewing'}</span>
-        </div>
-    );
-}
-
 export default function VibeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const firestore = useFirestore();
     const { id } = use(params);
@@ -57,6 +33,14 @@ export default function VibeDetailPage({ params }: { params: Promise<{ id: strin
     }, [firestore, id]);
 
     const { data: vibe, isLoading: isLoadingVibe } = useDoc<Vibe>(vibeRef);
+
+    useEffect(() => {
+        if (vibeRef) {
+            updateDoc(vibeRef, {
+                viewCount: increment(1)
+            }).catch(err => console.error("Failed to increment view count: ", err));
+        }
+    }, [vibeRef]);
 
     if (isLoadingVibe) {
         return (
@@ -82,7 +66,11 @@ export default function VibeDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             <div className="flex justify-end mb-6">
-                <ViewCounter />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground animate-pulse-glow">
+                    <Eye className="h-5 w-5" />
+                    <span className="font-semibold">{vibe.viewCount ?? 1}</span>
+                    <span>{vibe.viewCount === 1 ? 'view' : 'views'}</span>
+                </div>
             </div>
             
             <InteractionSection vibeId={vibe.id} />

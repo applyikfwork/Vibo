@@ -29,6 +29,7 @@ export type Vibe = {
   // Denormalized author data for easier feed display
   author: Author;
   isAnonymous: boolean;
+  viewCount?: number;
 };
 
 export type Comment = {

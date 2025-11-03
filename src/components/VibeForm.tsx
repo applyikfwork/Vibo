@@ -77,6 +77,7 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
           avatarUrl: user.photoURL || '',
         },
         isAnonymous: isAnonymous,
+        viewCount: 0,
       };
 
       const userVibesRef = collection(firestore, 'users', user.uid, 'vibes');

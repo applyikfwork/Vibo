@@ -71,6 +71,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "viewCount": {
+            "type": "number",
+            "description": "The number of times the vibe has been viewed."
         }
       },
       "required": [
@@ -306,5 +310,3 @@
     "reasoning": "The Firestore structure is designed to support Vibee OS Lite's emotion-focused social networking features, emphasizing ease of use, scalability, and robust security. It leverages path-based ownership for private user data and segregates data with different security requirements into separate collections. Authorization Independence is achieved by avoiding `get()` calls in security rules, ensuring atomic operations and simplifying debugging.\n\n1.  **Users Collection**: Stores user profiles.\n2.  **Users/{userId}/vibes Collection**: Stores individual user's vibes.\n3.  **Tags Collection**: Stores global emotion tags.\n4.  **Users/{userId}/moodHistory Collection**: Stores mood history for each user.\n\n**Authorization Independence:** For the `/users/{userId}/vibes` collection, access control depends solely on `request.auth.uid` matching the `userId` path parameter, ensuring only the authenticated user can manage their vibes. The same principle applies to `/users/{userId}/moodHistory`.\n\n**QAPs Support:** The structure supports secure `list` operations (QAPs) due to structural segregation and path-based ownership. Listing vibes is restricted to the authenticated user's own vibes via the `/users/{userId}/vibes` collection, preventing unauthorized access. Global `Tag` listing is allowed as these are intended to be publicly accessible. The use of hierarchical paths makes it easy to define very targeted security rules."
   }
 }
-
-    

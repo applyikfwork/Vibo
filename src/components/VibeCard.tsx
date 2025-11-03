@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, User, Zap, Sparkles, Heart, Trash2 } from 'lucide-react';
+import { MessageCircle, User, Zap, Sparkles, Heart, Trash2, Eye } from 'lucide-react';
 import type { Vibe, Reaction } from '@/lib/types';
 import { getEmotionByName } from '@/lib/data';
 import { cn } from '@/lib/utils';
@@ -48,6 +48,7 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     }, [firestore, vibe.id]);
     const { data: reactions } = useCollection<Reaction>(reactionsQuery);
     const reactionCount = reactions?.length ?? 0;
+    const viewCount = vibe.viewCount ?? 0;
 
     const isOwner = user?.uid === vibe.userId;
 
@@ -220,10 +221,9 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                                 <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">Vibe Chat</span>
                             </div>
                         </Button>
-                         {reactionCount > 0 && (
-                            <div 
+                         <div 
                                 className={cn(
-                                    "text-white bg-white/25 backdrop-blur-md flex items-center",
+                                    "text-white bg-white/25 backdrop-blur-md flex items-center gap-4",
                                     "border-2 border-white/40",
                                     "rounded-full font-bold",
                                     "px-3 h-8 sm:h-9",
@@ -232,10 +232,19 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                                     "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
                                 )}
                             >
-                                <Heart className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 fill-white" />
-                                <span>{reactionCount}</span>
-                            </div>
-                        )}
+                            {reactionCount > 0 && (
+                                <div className="flex items-center">
+                                    <Heart className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 fill-white" />
+                                    <span>{reactionCount}</span>
+                                </div>
+                            )}
+                             {viewCount > 0 && (
+                                <div className="flex items-center">
+                                    <Eye className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                    <span>{viewCount}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </Card>
