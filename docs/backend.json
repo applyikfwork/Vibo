@@ -83,6 +83,77 @@
         "timestamp"
       ]
     },
+    "Comment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Comment",
+      "type": "object",
+      "description": "Represents a comment on a Vibe.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Comment."
+        },
+        "vibeId": {
+          "type": "string",
+          "description": "The ID of the Vibe being commented on."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who made the comment."
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the comment."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the comment was posted."
+        },
+        "isAnonymous": {
+          "type": "boolean",
+          "description": "Whether the comment was posted anonymously."
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "avatarUrl": { "type": "string" }
+          }
+        }
+      },
+      "required": ["id", "vibeId", "userId", "text", "timestamp"]
+    },
+    "Reaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Reaction",
+      "type": "object",
+      "description": "Represents a reaction to a Vibe.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Reaction."
+        },
+        "vibeId": {
+          "type": "string",
+          "description": "The ID of the Vibe being reacted to."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who reacted."
+        },
+        "emoji": {
+          "type": "string",
+          "description": "The emoji used for the reaction."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the reaction was made."
+        }
+      },
+      "required": ["id", "vibeId", "userId", "emoji", "timestamp"]
+    },
     "Tag": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Tag",
@@ -180,6 +251,22 @@
         }
       },
       {
+        "path": "/all-vibes/{vibeId}/comments/{commentId}",
+        "definition": {
+          "entityName": "Comment",
+          "schema": { "$ref": "#/backend/entities/Comment" },
+          "description": "Stores comments for a specific vibe."
+        }
+      },
+      {
+        "path": "/all-vibes/{vibeId}/reactions/{reactionId}",
+        "definition": {
+          "entityName": "Reaction",
+          "schema": { "$ref": "#/backend/entities/Reaction" },
+          "description": "Stores reactions for a specific vibe."
+        }
+      },
+      {
         "path": "/tags/{tagId}",
         "definition": {
           "entityName": "Tag",
@@ -219,3 +306,5 @@
     "reasoning": "The Firestore structure is designed to support Vibee OS Lite's emotion-focused social networking features, emphasizing ease of use, scalability, and robust security. It leverages path-based ownership for private user data and segregates data with different security requirements into separate collections. Authorization Independence is achieved by avoiding `get()` calls in security rules, ensuring atomic operations and simplifying debugging.\n\n1.  **Users Collection**: Stores user profiles.\n2.  **Users/{userId}/vibes Collection**: Stores individual user's vibes.\n3.  **Tags Collection**: Stores global emotion tags.\n4.  **Users/{userId}/moodHistory Collection**: Stores mood history for each user.\n\n**Authorization Independence:** For the `/users/{userId}/vibes` collection, access control depends solely on `request.auth.uid` matching the `userId` path parameter, ensuring only the authenticated user can manage their vibes. The same principle applies to `/users/{userId}/moodHistory`.\n\n**QAPs Support:** The structure supports secure `list` operations (QAPs) due to structural segregation and path-based ownership. Listing vibes is restricted to the authenticated user's own vibes via the `/users/{userId}/vibes` collection, preventing unauthorized access. Global `Tag` listing is allowed as these are intended to be publicly accessible. The use of hierarchical paths makes it easy to define very targeted security rules."
   }
 }
+
+    

@@ -4,8 +4,10 @@ import { diagnoseVibe } from '@/ai/flows/diagnose-vibe';
 import type { DiagnoseVibeInput } from '@/ai/flows/diagnose-vibe';
 import { z } from 'zod';
 import { getEmotionByName } from '@/lib/data';
+import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
+import { revalidatePath } from 'next/cache';
 
-const schema = z.object({
+const vibeSchema = z.object({
   text: z.string().min(3, { message: 'Must be at least 3 characters' }),
 });
 
@@ -21,7 +23,7 @@ export async function getEmojiSuggestion(
   prevState: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const validatedFields = schema.safeParse({
+  const validatedFields = vibeSchema.safeParse({
     text: formData.get('vibeText'),
   });
 
@@ -51,3 +53,28 @@ export async function getVibeDiagnosis(text: string) {
   }
   return await diagnoseVibe({ text });
 }
+
+const commentSchema = z.object({
+  vibeId: z.string(),
+  commentText: z.string().min(1, { message: 'Comment cannot be empty' }),
+  isAnonymous: z.string(), // z.boolean() doesn't work with FormData
+});
+
+export async function createComment(formData: FormData) {
+  'use server';
+  // This is a server action, need to get firestore and user from a different context
+  // For now, this is a placeholder. We will need a way to get the db and user here.
+  // This demonstrates the non-blocking principle.
+  console.log('Would be creating comment with:', {
+    vibeId: formData.get('vibeId'),
+    commentText: formData.get('commentText'),
+    isAnonymous: formData.get('isAnonymous') === 'true',
+  });
+
+  // Revalidate the path to show the new comment
+  if (formData.get('vibeId')) {
+    revalidatePath(`/vibe/${formData.get('vibeId')}`);
+  }
+}
+
+    

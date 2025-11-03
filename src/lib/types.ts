@@ -4,6 +4,11 @@ import { DiagnoseVibeInputSchema, DiagnoseVibeOutputSchema } from './schemas';
 
 export type EmotionCategory = 'Happy' | 'Sad' | 'Chill' | 'Motivated' | 'Lonely' | 'Angry' | 'Neutral';
 
+export type Author = {
+  name: string;
+  avatarUrl: string;
+};
+
 export type Vibe = {
   id: string;
   userId: string;
@@ -14,11 +19,25 @@ export type Vibe = {
   timestamp: Timestamp;
   tagIds?: string[];
   // Denormalized author data for easier feed display
-  author: {
-    name: string;
-    avatarUrl: string;
-  };
+  author: Author;
   isAnonymous: boolean;
+};
+
+export type Comment = {
+  id: string;
+  vibeId: string;
+  userId: string;
+  text: string;
+  timestamp: Timestamp;
+  author: Author;
+  isAnonymous: boolean;
+};
+
+export type Reaction = {
+  id: string;
+  vibeId: string;
+  userId: string;
+  emoji: string;
 };
 
 export type Emotion = {
@@ -38,3 +57,5 @@ export type MoodHistoryData = {
 
 export type DiagnoseVibeInput = z.infer<typeof DiagnoseVibeInputSchema>;
 export type DiagnoseVibeOutput = z.infer<typeof DiagnoseVibeOutputSchema>;
+
+    
