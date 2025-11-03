@@ -71,7 +71,7 @@ service cloud.firestore {
      * @path /all-vibes/{vibeId}
      * @allow (read) - Any authenticated user can read the global vibe feed.
      * @allow (create) - Any authenticated user can create a new vibe.
-     * @allow (update) - Any authenticated user can update a vibe (e.g., for view counts).
+     * @allow (update) - Any user can update a vibe (e.g., for view counts).
      * @allow (delete) - Owner of the vibe can delete it.
      */
     match /all-vibes/{vibeId} {
