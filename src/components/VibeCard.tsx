@@ -203,8 +203,8 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                                 "text-white bg-white/25 hover:bg-white/40 backdrop-blur-md",
                                 "border-2 border-white/40 hover:border-white/60",
                                 "rounded-full font-bold",
-                                "px-3 h-8 sm:h-9 lg:px-3 lg:h-8",
-                                "text-xs sm:text-sm lg:text-xs",
+                                "px-3 h-8 sm:px-4 sm:h-9",
+                                "text-xs sm:text-sm",
                                 "transition-all duration-300 hover:scale-110",
                                 "shadow-[0_4px_20px_rgba(255,255,255,0.3)] hover:shadow-[0_6px_30px_rgba(255,255,255,0.5)]",
                                 "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
@@ -224,11 +224,11 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                          {(reactionCount > 0 || viewCount > 0) && (
                             <div 
                                 className={cn(
-                                    "text-white bg-white/25 backdrop-blur-md flex items-center gap-4",
+                                    "text-white bg-white/25 backdrop-blur-md flex items-center gap-3 sm:gap-4",
                                     "border-2 border-white/40",
                                     "rounded-full font-bold",
-                                    "px-3 h-8 sm:h-9 lg:h-8",
-                                    "text-xs sm:text-sm lg:text-xs",
+                                    "px-3 h-8 sm:px-4 sm:h-9",
+                                    "text-xs sm:text-sm",
                                     "shadow-[0_4px_20px_rgba(255,255,255,0.3)]",
                                     "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
                                 )}
