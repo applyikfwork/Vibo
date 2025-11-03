@@ -38,6 +38,8 @@ export type Reaction = {
   vibeId: string;
   userId: string;
   emoji: string;
+  timestamp: Timestamp;
+  author: Author;
 };
 
 export type Emotion = {
@@ -57,5 +59,3 @@ export type MoodHistoryData = {
 
 export type DiagnoseVibeInput = z.infer<typeof DiagnoseVibeInputSchema>;
 export type DiagnoseVibeOutput = z.infer<typeof DiagnoseVibeOutputSchema>;
-
-    

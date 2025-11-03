@@ -66,7 +66,7 @@ service cloud.firestore {
     /**
      * @description Rules for the public /all-vibes collection.
      * @path /all-vibes/{vibeId}
-     * @allow (list, get) - Any authenticated user can read the global vibe feed.
+     * @allow (read) - Any authenticated user can read the global vibe feed.
      * @allow (create) - Any authenticated user can create a new vibe.
      * @deny (update, delete) - Vibes cannot be updated or deleted from the global feed to maintain integrity.
      */
@@ -92,13 +92,13 @@ service cloud.firestore {
        * @description Rules for reactions on a vibe.
        * @path /all-vibes/{vibeId}/reactions/{reactionId}
        * @allow (read) - Any authenticated user can read reactions.
-       * @allow (create) - Any authenticated user can create a reaction.
+       * @allow (create) - Any authenticated, non-anonymous user can create a reaction.
        * @allow (delete) - The user who created the reaction can delete it.
        * @deny (update) - Reactions are immutable.
        */
       match /reactions/{reactionId} {
         allow read: if isSignedIn();
-        allow create: if isSignedIn();
+        allow create: if isSignedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous';
         allow delete: if isOwner(resource.data.userId);
         allow update: if false;
       }
@@ -126,4 +126,3 @@ service cloud.firestore {
     }
   }
 }
-    

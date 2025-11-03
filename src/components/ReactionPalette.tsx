@@ -13,6 +13,7 @@ import { collection, serverTimestamp } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import type { Reaction } from "@/lib/types";
 
 const reactionEmojis = ['🤗', '🙏', '❤️', '✨', '🔥'];
 
@@ -31,17 +32,27 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
       });
       return;
     }
+     if (user.isAnonymous) {
+      toast({
+        variant: 'destructive',
+        title: 'Anonymous User',
+        description: 'You must have an account to react.',
+      });
+      return;
+    }
 
     const reactionsRef = collection(firestore, 'all-vibes', vibeId, 'reactions');
-    const newReaction = {
+    const newReaction: Omit<Reaction, 'id'> = {
       vibeId,
       userId: user.uid,
       emoji,
       timestamp: serverTimestamp(),
+      author: {
+        name: user.displayName || 'A User',
+        avatarUrl: user.photoURL || '',
+      }
     };
 
-    // This is a non-blocking write. We can add more complex logic here later to
-    // prevent duplicate reactions from the same user.
     addDocumentNonBlocking(reactionsRef, newReaction);
 
     toast({
@@ -61,7 +72,7 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
                 "text-white bg-white/25 hover:bg-white/40 backdrop-blur-md",
                 "border-2 border-white/40 hover:border-white/60",
                 "rounded-full font-bold",
-                "px-3 sm:px-4 md:px-5 h-8 sm:h-9 md:h-10",
+                "px-3 sm:px-4 h-8 sm:h-9",
                 "text-xs sm:text-sm",
                 "transition-all duration-300 hover:scale-110",
                 "shadow-[0_4px_20px_rgba(255,255,255,0.3)] hover:shadow-[0_6px_30px_rgba(255,255,255,0.5)]",
@@ -88,5 +99,3 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
     </Popover>
   )
 }
-
-    

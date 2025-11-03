@@ -2,7 +2,7 @@
 
 import { use } from 'react';
 import { VibeCard } from '@/components/VibeCard';
-import { CommentSection } from '@/components/CommentSection';
+import { InteractionSection } from '@/components/InteractionSection';
 import { useDoc, useMemoFirebase } from '@/firebase';
 import { useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -56,7 +56,7 @@ export default function VibeDetailPage({ params }: { params: Promise<{ id: strin
                 <VibeCard vibe={vibe} isLink={false} />
             </div>
             
-            <CommentSection vibeId={vibe.id} />
+            <InteractionSection vibeId={vibe.id} />
         </div>
     );
 }
