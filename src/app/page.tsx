@@ -5,6 +5,7 @@ import { VibeForm } from '@/components/VibeForm';
 import { EmotionTabs } from '@/components/EmotionTabs';
 import { VibeCard } from '@/components/VibeCard';
 import { SmartVibeFeed } from '@/components/SmartVibeFeed';
+import { WeeklyReflection } from '@/components/WeeklyReflection';
 import { emotions } from '@/lib/data';
 import { useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
@@ -103,7 +104,10 @@ export default function Home() {
 
           <section>
             {feedMode === 'smart' ? (
-              <SmartVibeFeed />
+              <>
+                {user && <WeeklyReflection userId={user.uid} />}
+                <SmartVibeFeed />
+              </>
             ) : (
               <EmotionTabs 
                   emotions={emotions} 

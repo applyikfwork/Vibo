@@ -1,25 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { VibeCard } from './VibeCard';
 import { useUser } from '@/firebase';
 import { usePersonalizedFeed } from '@/hooks/usePersonalizedFeed';
+import { useMoodFlow } from '@/hooks/useMoodFlow';
+import { useVibeMemory } from '@/hooks/useVibeMemory';
 import type { EmotionCategory } from '@/lib/types';
 import { emotions } from '@/lib/data';
 import { Skeleton } from './ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Heart, Compass } from 'lucide-react';
+import { Sparkles, Heart, Compass, TrendingUp } from 'lucide-react';
 
 export function SmartVibeFeed() {
   const { user } = useUser();
-  const [userMood, setUserMood] = useState<EmotionCategory | null>(null);
+  const { currentMood, previousMood, isTransitioning, changeMood, getMoodPattern } = useMoodFlow();
+  const { trackInteraction } = useVibeMemory(user?.uid || null);
   const { data, isLoading, error } = usePersonalizedFeed(
     user?.uid || null,
-    userMood,
-    !!userMood
+    currentMood,
+    !!currentMood
   );
 
-  if (!userMood) {
+  const handleMoodChange = (newMood: EmotionCategory | null) => {
+    changeMood(newMood);
+  };
+
+  const handleVibeInteraction = (
+    vibeId: string,
+    emotion: EmotionCategory,
+    type: 'view' | 'react' | 'comment',
+    duration: number = 0
+  ) => {
+    if (currentMood && user?.uid) {
+      trackInteraction(vibeId, emotion, type, duration, currentMood, 'neutral');
+    }
+  };
+
+  if (!currentMood) {
+    const moodPattern = getMoodPattern();
+    
     return (
       <div className="space-y-6">
         <div className="text-center">
@@ -29,13 +49,21 @@ export function SmartVibeFeed() {
           <p className="text-gray-600 mb-6">
             Select your current vibe to see personalized content that matches or heals your mood
           </p>
+          {moodPattern && (
+            <div className="mb-4 p-3 bg-purple-50 rounded-lg">
+              <p className="text-xs text-purple-600 flex items-center justify-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Your mood journey: {moodPattern.mostCommonTransition}
+              </p>
+            </div>
+          )}
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {emotions.map((emotion) => (
             <button
               key={emotion.name}
-              onClick={() => setUserMood(emotion.name)}
+              onClick={() => handleMoodChange(emotion.name)}
               className="group relative overflow-hidden rounded-2xl p-6 text-center transition-all hover:scale-105 hover:shadow-xl bg-white/80 backdrop-blur-sm border-2 border-transparent hover:border-purple-300"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${emotion.gradient} opacity-10 group-hover:opacity-20 transition-opacity`} />
@@ -80,24 +108,55 @@ export function SmartVibeFeed() {
   const { zones } = data;
 
   return (
-    <div className="space-y-12">
+    <motion.div 
+      key={currentMood}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-12"
+    >
       <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">
-            {emotions.find(e => e.name === userMood)?.emoji}
-          </span>
+          <motion.span 
+            key={`emoji-${currentMood}`}
+            initial={{ scale: 0.8, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200 }}
+            className="text-3xl"
+          >
+            {emotions.find(e => e.name === currentMood)?.emoji}
+          </motion.span>
           <div>
             <p className="text-sm text-gray-600">Currently feeling</p>
-            <p className="font-bold text-lg">{userMood}</p>
+            <p className="font-bold text-lg">{currentMood}</p>
+            {previousMood && (
+              <p className="text-xs text-gray-400">
+                Previously: {previousMood}
+              </p>
+            )}
           </div>
         </div>
         <button
-          onClick={() => setUserMood(null)}
+          onClick={() => handleMoodChange(null)}
           className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full font-semibold hover:scale-105 transition-transform"
         >
           Change Mood
         </button>
       </div>
+      
+      {isTransitioning && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-3 text-center"
+        >
+          <p className="text-sm text-purple-700">
+            ✨ Refreshing your feed for your new vibe...
+          </p>
+        </motion.div>
+      )}
 
       {zones.myVibeZone.length > 0 && (
         <motion.section
@@ -206,6 +265,6 @@ export function SmartVibeFeed() {
           <p>{data.metadata.algorithm} - {data.metadata.rankedVibes} vibes ranked emotionally for you</p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
