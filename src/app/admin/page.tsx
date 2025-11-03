@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit, addDoc, serverTimestamp, runTransaction, doc, increment } from 'firebase/firestore';
 import type { Author, Vibe } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, MessageSquarePlus, SmilePlus } from 'lucide-react';
+import { Loader2, MessageSquarePlus, SmilePlus, Eye } from 'lucide-react';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
@@ -91,26 +91,34 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
         setIsSubmittingComment(false);
     };
 
-    const handleFakeReaction = async () => {
+    const handleFakeReactionAndView = async () => {
         if (!firestore) return;
         setIsSubmittingReaction(true);
         try {
-            const reactionEmoji = fakeReactions[Math.floor(Math.random() * fakeReactions.length)];
-            const author = getFakeAuthor();
-            const reactionRef = collection(firestore, 'all-vibes', vibe.id, 'reactions');
-            
-            addDocumentNonBlocking(reactionRef, {
-                vibeId: vibe.id,
-                userId: `fake_user_${Date.now()}`,
-                emoji: reactionEmoji,
-                timestamp: serverTimestamp(),
-                isAnonymous: true,
-                author,
+            await runTransaction(firestore, async (transaction) => {
+                const reactionEmoji = fakeReactions[Math.floor(Math.random() * fakeReactions.length)];
+                const author = getFakeAuthor();
+                const reactionRef = doc(collection(firestore, 'all-vibes', vibe.id, 'reactions'));
+                
+                transaction.set(reactionRef, {
+                    vibeId: vibe.id,
+                    userId: `fake_user_${Date.now()}`,
+                    emoji: reactionEmoji,
+                    timestamp: serverTimestamp(),
+                    isAnonymous: true,
+                    author,
+                });
+
+                const vibeRef = doc(firestore, 'all-vibes', vibe.id);
+                const randomViews = Math.floor(Math.random() * 21) + 5; // Random number between 5 and 25
+                transaction.update(vibeRef, {
+                    viewCount: increment(randomViews)
+                });
             });
 
-            toast({ title: 'Success', description: `Added reaction: ${reactionEmoji}` });
+            toast({ title: 'Success', description: `Added a fake reaction and views.` });
         } catch (e: any) {
-            toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add reaction." });
+            toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add reaction/views." });
         }
         setIsSubmittingReaction(false);
     };
@@ -127,9 +135,9 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
                         {isSubmittingComment ? <Loader2 className="animate-spin" /> : <MessageSquarePlus />}
                         <span className="ml-2 hidden md:inline">Fake Comment</span>
                     </Button>
-                    <Button size="sm" variant="outline" onClick={handleFakeReaction} disabled={isSubmittingReaction}>
-                        {isSubmittingReaction ? <Loader2 className="animate-spin" /> : <SmilePlus />}
-                         <span className="ml-2 hidden md:inline">Fake Reaction</span>
+                    <Button size="sm" variant="outline" onClick={handleFakeReactionAndView} disabled={isSubmittingReaction}>
+                        {isSubmittingReaction ? <Loader2 className="animate-spin" /> : <><SmilePlus /><Eye className="ml-1"/></>}
+                         <span className="ml-2 hidden md:inline">Fake React & Views</span>
                     </Button>
                 </div>
             </CardContent>
