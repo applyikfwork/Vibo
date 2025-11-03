@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { UserCircle, BarChart3, LogOut, Settings, User } from 'lucide-react';
+import { UserCircle, BarChart3, LogOut, Settings, User, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import {
@@ -16,6 +16,8 @@ import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+
+const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
 
 function UserMenu() {
   const { user, isUserLoading } = useUser();
@@ -38,6 +40,8 @@ function UserMenu() {
 
   if (user && !user.isAnonymous) {
     const userInitial = user.displayName ? user.displayName.charAt(0) : (user.email ? user.email.charAt(0) : '?');
+    const isAdmin = user.email === ADMIN_EMAIL;
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -52,6 +56,14 @@ function UserMenu() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{user.displayName || user.email}</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {isAdmin && (
+             <DropdownMenuItem asChild>
+                <Link href="/admin">
+                  <Shield className="mr-2 h-4 w-4" />
+                  <span>Admin Panel</span>
+                </Link>
+              </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild>
             <Link href="/profile">
               <User className="mr-2 h-4 w-4" />
