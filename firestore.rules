@@ -62,7 +62,10 @@ service cloud.firestore {
      * @allow (delete) - Authenticated user can delete their own vibe.
      */
     match /users/{userId}/vibes/{vibeId} {
-      allow read, create, update, list: if isOwner(userId);
+      allow read, list: if isOwner(userId);
+      // Allow creating a doc with a specific ID if the user is the owner
+      allow create: if isOwner(userId) && request.resource.id == vibeId;
+      allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
     }
 
