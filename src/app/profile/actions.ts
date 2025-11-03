@@ -1,6 +1,6 @@
 'use server';
 
-import { getSdks, initializeFirebase } from '@/firebase';
+import { getAdminSdks } from '@/firebase/server-init';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { z } from 'zod';
@@ -23,7 +23,11 @@ export async function updateProfileSettings(data: { userId: string, displayName:
 
     const { userId, displayName } = validatedFields.data;
 
-    const { firestore } = getSdks(initializeFirebase());
+    // Note: Updating auth user display name requires the Admin SDK, which we are not using here for simplicity
+    // on the client, you would re-authenticate or use updateProfile from 'firebase/auth'
+    
+    // For now, we only update the Firestore document
+    const { firestore } = await getAdminSdks();
 
     try {
         const userDocRef = doc(firestore, 'users', userId);
@@ -61,7 +65,7 @@ export async function deleteVibe(data: { userId: string, vibeId: string }) {
     }
     
     const { userId, vibeId } = validatedFields.data;
-    const { firestore } = getSdks(initializeFirebase());
+    const { firestore } = await getAdminSdks();
 
     try {
         const batch = writeBatch(firestore);
