@@ -100,10 +100,11 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
 
       setVibeText('');
       setEmoji('✨');
-      onPost?.(); // Callback for successful post
+      if (onPost) onPost();
 
     } catch (error: any) {
-      console.error("Error posting vibe:", error);
+      // This will now only catch errors from getVibeDiagnosis or other non-firestore operations
+      console.error("Error preparing vibe:", error);
       toast({
         variant: 'destructive',
         title: 'Could not post vibe',
