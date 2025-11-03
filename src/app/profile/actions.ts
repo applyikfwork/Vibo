@@ -5,33 +5,13 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getApps, initializeApp, cert, App } from 'firebase-admin/app';
 
-// Helper function to initialize the admin app
-function initializeAdminApp() {
-  if (getApps().some(app => app.name === 'admin')) {
-    return getApps().find(app => app.name === 'admin')!;
-  }
-  
-  // This will fail if env vars are not set, which is expected.
-  // The error should be caught by the calling function.
-  const serviceAccount = cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  });
-
-  return initializeApp({ credential: serviceAccount }, 'admin');
+// Helper function to get the initialized admin app
+function getInitializedAdminApp(): App | null {
+  const adminApp = getApps().find(app => app.name === '[DEFAULT]');
+  return adminApp || null;
 }
-
-function getAdminSdks() {
-    const adminApp = initializeAdminApp();
-    return {
-        auth: getAuth(adminApp),
-        firestore: getFirestore(adminApp),
-    };
-}
-
 
 const profileSchema = z.object({
     userId: z.string(),
@@ -51,7 +31,13 @@ export async function updateProfileSettings(data: { userId: string, displayName:
     const { userId, displayName } = validatedFields.data;
     
     try {
-        const { firestore, auth } = getAdminSdks();
+        const adminApp = getInitializedAdminApp();
+        if (!adminApp) {
+          throw new Error("Firebase Admin SDK is not initialized. Check server logs.");
+        }
+        
+        const auth = getAuth(adminApp);
+        const firestore = getFirestore(adminApp);
         
         // Update auth user
         await auth.updateUser(userId, { displayName });
@@ -70,7 +56,7 @@ export async function updateProfileSettings(data: { userId: string, displayName:
     } catch (e: any) {
         console.error("Error updating profile:", e);
         
-        if (e.message.includes('FIREBASE_PROJECT_ID')) {
+        if (e.message.includes('FIREBASE_PROJECT_ID') || e.message.includes('Admin SDK')) {
              return {
                 error: true,
                 message: 'Firebase Admin credentials are not configured on the server.',

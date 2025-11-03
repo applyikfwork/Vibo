@@ -2,24 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getWeeklyReflection, type WeeklyReflectionInput } from '@/ai/flows/generate-weekly-reflection';
 import admin from 'firebase-admin';
 
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  } catch (error: any) {
-    console.log('Firebase admin initialization skipped:', error.message);
+// This function assumes the admin app has been initialized in another file (e.g. api/feed)
+// and safely gets a reference to it.
+function getInitializedAdminApp() {
+  if (admin.apps.length > 0) {
+    return admin.apps[0];
   }
+  return null;
 }
-
-const db = admin.firestore();
 
 export async function POST(request: NextRequest) {
   try {
+    const adminApp = getInitializedAdminApp();
+    if (!adminApp) {
+      throw new Error("Firebase Admin SDK is not initialized. Check server logs.");
+    }
+    const db = admin.firestore(adminApp);
+
     const { userId } = await request.json();
 
     if (!userId) {
@@ -33,9 +32,9 @@ export async function POST(request: NextRequest) {
     weekAgo.setDate(weekAgo.getDate() - 7);
 
     const vibesSnapshot = await db
-      .collection('vibes')
+      .collection('all-vibes') // Corrected collection name
       .where('userId', '==', userId)
-      .where('createdAt', '>=', weekAgo)
+      .where('timestamp', '>=', weekAgo)
       .get();
 
     if (vibesSnapshot.empty) {
@@ -58,21 +57,23 @@ export async function POST(request: NextRequest) {
 
     vibesSnapshot.docs.forEach((doc) => {
       const vibe = doc.data();
-      const emotion = vibe.emotion;
-      const date = vibe.createdAt.toDate().toLocaleDateString();
+      if (vibe.emotion && vibe.timestamp) {
+        const emotion = vibe.emotion;
+        const date = vibe.timestamp.toDate().toLocaleDateString();
 
-      if (!emotionCounts[emotion]) {
-        emotionCounts[emotion] = { count: 0, dates: [] };
-      }
-      emotionCounts[emotion].count++;
-      if (!emotionCounts[emotion].dates.includes(date)) {
-        emotionCounts[emotion].dates.push(date);
-      }
+        if (!emotionCounts[emotion]) {
+          emotionCounts[emotion] = { count: 0, dates: [] };
+        }
+        emotionCounts[emotion].count++;
+        if (!emotionCounts[emotion].dates.includes(date)) {
+          emotionCounts[emotion].dates.push(date);
+        }
 
-      vibeTexts.push({
-        emotion,
-        vibeText: vibe.text.substring(0, 100),
-      });
+        vibeTexts.push({
+          emotion,
+          vibeText: vibe.text.substring(0, 100),
+        });
+      }
     });
 
     const weeklyEmotions = Object.entries(emotionCounts).flatMap(

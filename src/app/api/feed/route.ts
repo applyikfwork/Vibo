@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirestore, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import type { Vibe, EmotionCategory, UserProfile, RankedVibe } from '@/lib/types';
 import { 
@@ -9,31 +9,28 @@ import {
   calculateBoostScore 
 } from '@/lib/feed-algorithm';
 
-if (!getApps().length) {
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+let adminApp: App;
 
-  if (!projectId || !clientEmail || !privateKey) {
-    console.error('Missing Firebase Admin credentials. Required environment variables:', {
-      NEXT_PUBLIC_FIREBASE_PROJECT_ID: !!projectId,
-      FIREBASE_CLIENT_EMAIL: !!clientEmail,
-      FIREBASE_PRIVATE_KEY: !!privateKey,
-    });
-  } else {
-    try {
-      initializeApp({
-        credential: cert({
-          projectId,
-          clientEmail,
-          privateKey: privateKey.replace(/\\n/g, '\n'),
-        }),
-      });
-    } catch (error) {
-      console.error('Firebase admin initialization error:', error);
+if (!getApps().length) {
+  try {
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error("FIREBASE_PRIVATE_KEY environment variable is not set.");
     }
+    adminApp = initializeApp({
+      credential: cert({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: privateKey.replace(/\\n/g, '\n'),
+      }),
+    });
+  } catch (error) {
+    console.error('Firebase admin initialization error:', error);
   }
+} else {
+    adminApp = getApps()[0];
 }
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,8 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if Firebase Admin is initialized
-    if (!getApps().length) {
+    if (!adminApp) {
       return NextResponse.json(
         { 
           error: 'Firebase Admin not initialized',
@@ -59,7 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = getAdminFirestore();
+    const db = getAdminFirestore(adminApp);
 
     // Fetch user profile
     let userProfile: UserProfile | undefined;
