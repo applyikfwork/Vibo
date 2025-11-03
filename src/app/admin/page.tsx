@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, limit, addDoc, serverTimestamp, runTransaction, doc, increment } from 'firebase/firestore';
+import { collection, query, orderBy, limit, runTransaction, doc, increment, serverTimestamp } from 'firebase/firestore';
 import type { Author, Vibe } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -11,6 +11,10 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, MessageSquarePlus, SmilePlus, Eye } from 'lucide-react';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 
 const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
 
@@ -47,6 +51,7 @@ function AdminLoading() {
                             <div className="flex gap-2">
                                 <Skeleton className="h-10 w-24" />
                                 <Skeleton className="h-10 w-24" />
+                                <Skeleton className="h-10 w-24" />
                             </div>
                         </CardContent>
                     </Card>
@@ -60,7 +65,12 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
     const { toast } = useToast();
     const firestore = useFirestore();
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-    const [isSubmittingReaction, setIsSubmittingReaction] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const [isReactViewsDialogOpen, setReactViewsDialogOpen] = useState(false);
+    const [isViewsDialogOpen, setViewsDialogOpen] = useState(false);
+    const [amount, setAmount] = useState(10);
+
 
     const getFakeAuthor = (): Author => ({
         name: 'Anonymous',
@@ -91,13 +101,12 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
         setIsSubmittingComment(false);
     };
 
-    const handleFakeReactionAndView = async () => {
+    const handleAddReactAndView = async () => {
         if (!firestore) return;
-        setIsSubmittingReaction(true);
+        setIsSubmitting(true);
         try {
             await runTransaction(firestore, async (transaction) => {
                 const reactionEmoji = fakeReactions[Math.floor(Math.random() * fakeReactions.length)];
-                const author = getFakeAuthor();
                 const reactionRef = doc(collection(firestore, 'all-vibes', vibe.id, 'reactions'));
                 
                 transaction.set(reactionRef, {
@@ -105,43 +114,126 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
                     userId: `fake_user_${Date.now()}`,
                     emoji: reactionEmoji,
                     timestamp: serverTimestamp(),
-                    isAnonymous: true,
-                    author,
                 });
 
                 const vibeRef = doc(firestore, 'all-vibes', vibe.id);
-                const randomViews = Math.floor(Math.random() * 21) + 5; // Random number between 5 and 25
                 transaction.update(vibeRef, {
-                    viewCount: increment(randomViews)
+                    viewCount: increment(amount)
                 });
             });
 
-            toast({ title: 'Success', description: `Added a fake reaction and views.` });
+            toast({ title: 'Success', description: `Added a fake reaction and ${amount} views.` });
+            setReactViewsDialogOpen(false);
         } catch (e: any) {
             toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add reaction/views." });
         }
-        setIsSubmittingReaction(false);
+        setIsSubmitting(false);
     };
 
+    const handleAddViews = async () => {
+        if (!firestore) return;
+        setIsSubmitting(true);
+        try {
+            const vibeRef = doc(firestore, 'all-vibes', vibe.id);
+            await updateDoc(vibeRef, {
+                viewCount: increment(amount)
+            });
+            toast({ title: 'Success', description: `Added ${amount} views.` });
+            setViewsDialogOpen(false);
+        } catch (e: any) {
+            toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add views." });
+        }
+        setIsSubmitting(false);
+    };
+
+
     return (
-        <Card>
-            <CardContent className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 gap-4">
-                <div>
-                    <p className="font-semibold line-clamp-1">"{vibe.text}"</p>
-                    <p className="text-sm text-muted-foreground">by {vibe.author.name} - {vibe.emotion} {vibe.emoji}</p>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                    <Button size="sm" onClick={handleFakeComment} disabled={isSubmittingComment}>
-                        {isSubmittingComment ? <Loader2 className="animate-spin" /> : <MessageSquarePlus />}
-                        <span className="ml-2 hidden md:inline">Fake Comment</span>
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={handleFakeReactionAndView} disabled={isSubmittingReaction}>
-                        {isSubmittingReaction ? <Loader2 className="animate-spin" /> : <><SmilePlus /><Eye className="ml-1"/></>}
-                         <span className="ml-2 hidden md:inline">Fake React & Views</span>
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+        <>
+            <Card>
+                <CardContent className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 gap-4">
+                    <div>
+                        <p className="font-semibold line-clamp-1">"{vibe.text}"</p>
+                        <p className="text-sm text-muted-foreground">by {vibe.author.name} - {vibe.emotion} {vibe.emoji}</p>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                        <Button size="sm" onClick={handleFakeComment} disabled={isSubmittingComment || isSubmitting}>
+                            {isSubmittingComment ? <Loader2 className="animate-spin" /> : <MessageSquarePlus />}
+                            <span className="ml-2 hidden md:inline">Fake Comment</span>
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setReactViewsDialogOpen(true)} disabled={isSubmitting}>
+                           <SmilePlus /><Eye className="ml-1"/>
+                           <span className="ml-2 hidden md:inline">Fake React & Views</span>
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setViewsDialogOpen(true)} disabled={isSubmitting}>
+                           <Eye className="ml-1"/>
+                           <span className="ml-2 hidden md:inline">Fake Views</span>
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Dialog open={isReactViewsDialogOpen} onOpenChange={setReactViewsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Fake Reaction & Views</DialogTitle>
+                        <DialogDescription>
+                            This will add one random reaction and a specified number of views to the vibe.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="react-views-amount" className="text-right">View Count</Label>
+                            <Input
+                                id="react-views-amount"
+                                type="number"
+                                value={amount}
+                                onChange={(e) => setAmount(Number(e.target.value))}
+                                className="col-span-3"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                         <DialogClose asChild>
+                            <Button type="button" variant="secondary">Cancel</Button>
+                         </DialogClose>
+                        <Button onClick={handleAddReactAndView} disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Add Engagement'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isViewsDialogOpen} onOpenChange={setViewsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Fake Views</DialogTitle>
+                         <DialogDescription>
+                            This will increase the view count for the vibe.
+                        </DialogDescription>
+                    </DialogHeader>
+                     <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="views-amount" className="text-right">View Count</Label>
+                            <Input
+                                id="views-amount"
+                                type="number"
+                                value={amount}
+                                onChange={(e) => setAmount(Number(e.target.value))}
+                                className="col-span-3"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                         <DialogClose asChild>
+                            <Button type="button" variant="secondary">Cancel</Button>
+                        </DialogClose>
+                        <Button onClick={handleAddViews} disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Add Views'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
 
@@ -186,6 +278,7 @@ export default function AdminPage() {
                                 <div className="flex gap-2">
                                     <Skeleton className="h-10 w-24" />
                                     <Skeleton className="h-10 w-24" />
+                                     <Skeleton className="h-10 w-24" />
                                 </div>
                             </CardContent>
                         </Card>
@@ -212,3 +305,5 @@ export default function AdminPage() {
         </div>
     );
 }
+
+    
