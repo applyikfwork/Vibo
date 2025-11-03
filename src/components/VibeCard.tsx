@@ -2,15 +2,29 @@
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, User, Zap, Sparkles, Heart } from 'lucide-react';
+import { MessageCircle, User, Zap, Sparkles, Heart, Trash2 } from 'lucide-react';
 import type { Vibe, Reaction } from '@/lib/types';
 import { getEmotionByName } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ReactionPalette } from './ReactionPalette';
 import Link from 'next/link';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { deleteVibe } from '@/app/profile/actions';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 interface VibeCardProps {
     vibe: Vibe;
@@ -18,6 +32,9 @@ interface VibeCardProps {
 }
 
 export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
+    const { user } = useUser();
+    const { toast } = useToast();
+    const [isDeleting, setIsDeleting] = useState(false);
     const emotion = getEmotionByName(vibe.emotion);
     const authorName = vibe.isAnonymous ? 'Anonymous User' : vibe.author.name;
     
@@ -30,6 +47,27 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     }, [firestore, vibe.id]);
     const { data: reactions } = useCollection<Reaction>(reactionsQuery);
     const reactionCount = reactions?.length ?? 0;
+
+    const isOwner = user?.uid === vibe.userId;
+
+    const handleDelete = async () => {
+        if (!isOwner) return;
+        setIsDeleting(true);
+        const result = await deleteVibe({ userId: vibe.userId, vibeId: vibe.id });
+        if (result.error) {
+            toast({
+                variant: 'destructive',
+                title: 'Deletion Failed',
+                description: result.message,
+            });
+        } else {
+            toast({
+                title: 'Vibe Deleted',
+                description: 'Your vibe has been successfully removed.',
+            });
+        }
+        setIsDeleting(false);
+    };
 
     const emotionGlowEffect: Record<string, string> = {
         'Happy': 'drop-shadow-[0_0_40px_rgba(255,184,77,1)] drop-shadow-[0_0_25px_rgba(255,167,38,0.9)] drop-shadow-[0_0_15px_rgba(255,149,0,0.8)]',
@@ -66,9 +104,32 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
             )}>
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10 opacity-50" />
                 
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-white/40 group-hover:animate-pulse" />
-                </div>
+                {isOwner && (
+                    <div className="absolute top-4 right-4 z-20" onClick={(e) => e.stopPropagation()}>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/20 text-white/70 hover:bg-black/40 hover:text-white">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete your vibe from all feeds.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+                                        {isDeleting ? 'Deleting...' : 'Delete'}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                )}
+                
                 <div className="absolute bottom-8 left-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
                     <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 text-white/30 group-hover:animate-pulse" />
                 </div>
@@ -114,7 +175,7 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                     </div>
 
                     <div className="flex justify-center items-center gap-2 sm:gap-3 mt-auto pt-4">
-                        <div onClick={(e) => e.stopPropagation()}>
+                        <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                             <ReactionPalette vibeId={vibe.id} />
                         </div>
                         <Button 

@@ -59,10 +59,11 @@ service cloud.firestore {
      * @path /users/{userId}/vibes/{vibeId}
      * @allow (read, write) - Authenticated user can read and write their own vibes.
      * @allow (list) - Authenticated user can list their own vibes for the profile page.
+     * @allow (delete) - Authenticated user can delete their own vibe.
      */
     match /users/{userId}/vibes/{vibeId} {
-      allow read, write: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow read, create, update, list: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
@@ -70,12 +71,14 @@ service cloud.firestore {
      * @path /all-vibes/{vibeId}
      * @allow (read) - Any authenticated user can read the global vibe feed.
      * @allow (create) - Any authenticated user can create a new vibe.
-     * @deny (update, delete) - Vibes cannot be updated or deleted from the global feed to maintain integrity.
+     * @allow (delete) - Owner of the vibe can delete it.
+     * @deny (update) - Vibes cannot be updated from the global feed to maintain integrity.
      */
     match /all-vibes/{vibeId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if false;
+      allow delete: if isOwner(resource.data.userId);
+      allow update: if false;
 
       /**
        * @description Rules for comments on a vibe.
@@ -102,7 +105,7 @@ service cloud.firestore {
         allow read: if isSignedIn();
         allow create: if isSignedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous';
         allow delete: if isOwner(resource.data.userId);
-        allow update: if false;
+        update: if false;
       }
     }
 
