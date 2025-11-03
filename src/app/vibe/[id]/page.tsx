@@ -9,6 +9,8 @@ import { doc, increment, updateDoc } from 'firebase/firestore';
 import type { Vibe } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Eye } from 'lucide-react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 function VibeDetailLoading() {
     return (
@@ -36,9 +38,16 @@ export default function VibeDetailPage({ params }: { params: Promise<{ id: strin
 
     useEffect(() => {
         if (vibeRef) {
-            updateDoc(vibeRef, {
-                viewCount: increment(1)
-            }).catch(err => console.error("Failed to increment view count: ", err));
+            const dataToUpdate = { viewCount: increment(1) };
+            updateDoc(vibeRef, dataToUpdate)
+                .catch(async (serverError) => {
+                    const permissionError = new FirestorePermissionError({
+                        path: vibeRef.path,
+                        operation: 'update',
+                        requestResourceData: dataToUpdate,
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                });
         }
     }, [vibeRef]);
 
