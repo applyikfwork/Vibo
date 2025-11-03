@@ -32,14 +32,6 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
       });
       return;
     }
-     if (user.isAnonymous) {
-      toast({
-        variant: 'destructive',
-        title: 'Anonymous User',
-        description: 'You must have an account to react.',
-      });
-      return;
-    }
 
     const reactionsRef = collection(firestore, 'all-vibes', vibeId, 'reactions');
     const newReaction: Omit<Reaction, 'id'> = {

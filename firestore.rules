@@ -97,13 +97,13 @@ service cloud.firestore {
        * @description Rules for reactions on a vibe.
        * @path /all-vibes/{vibeId}/reactions/{reactionId}
        * @allow (read) - Any authenticated user can read reactions.
-       * @allow (create) - Any authenticated, non-anonymous user can create a reaction.
+       * @allow (create) - Any authenticated user can create a reaction.
        * @allow (delete) - The user who created the reaction can delete it.
        * @deny (update) - Reactions are immutable.
        */
       match /reactions/{reactionId} {
         allow read: if isSignedIn();
-        allow create: if isSignedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous';
+        allow create: if isSignedIn();
         allow delete: if isOwner(resource.data.userId);
         allow update: if false;
       }
