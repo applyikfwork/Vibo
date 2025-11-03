@@ -20,24 +20,18 @@ const fakeComments = [
 
 const fakeReactions = ['🤗', '🙏', '❤️', '✨', '🔥', '💯', '🙌'];
 
-async function getAdminUser() {
-    // In a real app, you'd get this from a secure source.
+async function getAdminUser(): Promise<Author> {
     // For this prototype, we'll create a consistent anonymous-like author.
     return {
         name: 'Anonymous',
-        avatarUrl: '',
+        avatarUrl: '', // No avatar for fake users
     };
 }
 
 
 export async function addFakeComment(vibeId: string) {
-    const { firestore, auth } = await getAdminSdks();
-    const adminUser = await auth.getUserByEmail('xyzapplywork@gmail.com').catch(() => null);
-
-    if (!adminUser) {
-        throw new Error('Admin user not found. Operation not permitted.');
-    }
-
+    const { firestore } = await getAdminSdks();
+    
     const commentText = fakeComments[Math.floor(Math.random() * fakeComments.length)];
     const author = await getAdminUser();
 
@@ -45,7 +39,7 @@ export async function addFakeComment(vibeId: string) {
 
     await commentRef.set({
         vibeId,
-        userId: `admin_${Date.now()}`, // Fake user ID
+        userId: `fake_user_${Date.now()}`, // Fake user ID
         text: commentText,
         timestamp: FieldValue.serverTimestamp(),
         isAnonymous: true,
@@ -58,12 +52,7 @@ export async function addFakeComment(vibeId: string) {
 }
 
 export async function addFakeReaction(vibeId: string) {
-    const { firestore, auth } = await getAdminSdks();
-    const adminUser = await auth.getUserByEmail('xyzapplywork@gmail.com').catch(() => null);
-
-    if (!adminUser) {
-        throw new Error('Admin user not found. Operation not permitted.');
-    }
+    const { firestore } = await getAdminSdks();
     
     const reactionEmoji = fakeReactions[Math.floor(Math.random() * fakeReactions.length)];
     const author = await getAdminUser();
@@ -72,10 +61,10 @@ export async function addFakeReaction(vibeId: string) {
     
     await reactionRef.set({
         vibeId,
-        userId: `admin_${Date.now()}`, // Fake user ID
+        userId: `fake_user_${Date.now()}`, // Fake user ID
         emoji: reactionEmoji,
         timestamp: FieldValue.serverTimestamp(),
-        isAnonymous: true,
+        isAnonymous: true, // Reactions from this tool are anonymous
         author,
     });
 

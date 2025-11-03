@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { addFakeComment, addFakeReaction } from './actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, MessageSquarePlus, SmilePlus, Ban } from 'lucide-react';
+import { Loader2, MessageSquarePlus, SmilePlus } from 'lucide-react';
 
 const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
 
@@ -48,22 +48,26 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
 
     const handleFakeComment = async () => {
         setIsSubmittingComment(true);
-        const result = await addFakeComment(vibe.id);
-        if (result.success) {
-            toast({ title: 'Success', description: result.message });
-        } else {
-            toast({ variant: 'destructive', title: 'Error', description: (result as any).message });
+        try {
+            const result = await addFakeComment(vibe.id);
+            if (result.success) {
+                toast({ title: 'Success', description: result.message });
+            }
+        } catch (e: any) {
+             toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add comment." });
         }
         setIsSubmittingComment(false);
     };
 
     const handleFakeReaction = async () => {
         setIsSubmittingReaction(true);
-        const result = await addFakeReaction(vibe.id);
-        if (result.success) {
-            toast({ title: 'Success', description: result.message });
-        } else {
-            toast({ variant: 'destructive', title: 'Error', description: (result as any).message });
+        try {
+            const result = await addFakeReaction(vibe.id);
+            if (result.success) {
+                toast({ title: 'Success', description: result.message });
+            }
+        } catch (e: any) {
+            toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add reaction." });
         }
         setIsSubmittingReaction(false);
     };
@@ -108,7 +112,7 @@ export default function AdminPage() {
         }
     }, [user, isUserLoading, router]);
 
-    if (isUserLoading || user?.email !== ADMIN_EMAIL) {
+    if (isUserLoading || !user || user.email !== ADMIN_EMAIL) {
         return <AdminLoading />;
     }
 
