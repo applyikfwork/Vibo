@@ -51,9 +51,9 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     const isOwner = user?.uid === vibe.userId;
 
     const handleDelete = async () => {
-        if (!isOwner) return;
+        if (!isOwner || !user) return;
         setIsDeleting(true);
-        const result = await deleteVibe({ userId: vibe.userId, vibeId: vibe.id });
+        const result = await deleteVibe({ userId: user.uid, vibeId: vibe.id });
         if (result.error) {
             toast({
                 variant: 'destructive',
