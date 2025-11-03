@@ -10,12 +10,10 @@ import { Switch } from '@/components/ui/switch';
 import { Send, Loader2 } from 'lucide-react';
 import { getVibeDiagnosis } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, doc } from 'firebase/firestore';
-import { addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { getEmotionByName } from '@/lib/data';
 import type { Vibe } from '@/lib/types';
-import { addDoc } from 'firebase/firestore';
 
 function PostButton({ pending }: { pending: boolean }) {
   const { pending: formPending } = useFormStatus();
@@ -84,12 +82,15 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
 
       // 1. Create the document in the public 'all-vibes' collection to get its ID
       const globalVibesRef = collection(firestore, 'all-vibes');
-      const globalVibeDocRef = await addDoc(globalVibesRef, newVibeData);
-      const newVibeId = globalVibeDocRef.id;
+      const globalVibeDocRef = await addDocumentNonBlocking(globalVibesRef, newVibeData);
+      
+      if (globalVibeDocRef) {
+        const newVibeId = globalVibeDocRef.id;
 
-      // 2. Create the document in the private `users/{uid}/vibes` collection using the SAME ID
-      const userVibeDocRef = doc(firestore, 'users', user.uid, 'vibes', newVibeId);
-      setDocumentNonBlocking(userVibeDocRef, newVibeData, {});
+        // 2. Create the document in the private `users/{uid}/vibes` collection using the SAME ID
+        const userVibeDocRef = doc(firestore, 'users', user.uid, 'vibes', newVibeId);
+        setDocumentNonBlocking(userVibeDocRef, newVibeData, {});
+      }
 
 
       toast({

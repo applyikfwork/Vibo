@@ -79,7 +79,7 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
         avatarUrl: '',
     });
 
-    const handleFakeComment = async () => {
+    const handleFakeComment = () => {
         if (!firestore) return;
         setIsSubmittingComment(true);
         try {
@@ -137,7 +137,7 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
         setIsSubmitting(false);
     };
 
-    const handleAddViews = async () => {
+    const handleAddViews = () => {
         if (!firestore) return;
         setIsSubmitting(true);
         const vibeRef = doc(firestore, 'all-vibes', vibe.id);

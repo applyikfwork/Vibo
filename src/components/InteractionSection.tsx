@@ -111,7 +111,7 @@ export function InteractionSection({ vibeId }: { vibeId: string }) {
     const { data: comments, isLoading: isLoadingComments } = useCollection<Comment>(commentsQuery);
     const { data: reactions, isLoading: isLoadingReactions } = useCollection<Reaction>(reactionsQuery);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !firestore || !commentText.trim()) {
             toast({

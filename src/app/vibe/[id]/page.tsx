@@ -1,16 +1,13 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect } from 'react';
 import { VibeCard } from '@/components/VibeCard';
 import { InteractionSection } from '@/components/InteractionSection';
-import { useDoc, useMemoFirebase } from '@/firebase';
-import { useFirestore } from '@/firebase';
-import { doc, increment, updateDoc } from 'firebase/firestore';
+import { useDoc, useMemoFirebase, useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { doc, increment } from 'firebase/firestore';
 import type { Vibe } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Eye } from 'lucide-react';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 function VibeDetailLoading() {
     return (
@@ -38,16 +35,7 @@ export default function VibeDetailPage({ params }: { params: Promise<{ id: strin
 
     useEffect(() => {
         if (vibeRef) {
-            const dataToUpdate = { viewCount: increment(1) };
-            updateDoc(vibeRef, dataToUpdate)
-                .catch(async (serverError) => {
-                    const permissionError = new FirestorePermissionError({
-                        path: vibeRef.path,
-                        operation: 'update',
-                        requestResourceData: dataToUpdate,
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                });
+            updateDocumentNonBlocking(vibeRef, { viewCount: increment(1) });
         }
     }, [vibeRef]);
 

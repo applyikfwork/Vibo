@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ReactionPalette } from './ReactionPalette';
 import Link from 'next/link';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, writeBatch, doc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,21 +52,17 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
 
     const isOwner = user?.uid === vibe.userId;
 
-    const handleDelete = async () => {
+    const handleDelete = () => {
         if (!isOwner || !user || !firestore) return;
         setIsDeleting(true);
 
         try {
-            const batch = writeBatch(firestore);
-
             const userVibeRef = doc(firestore, 'users', user.uid, 'vibes', vibe.id);
-            batch.delete(userVibeRef);
+            deleteDocumentNonBlocking(userVibeRef);
 
             const globalVibeRef = doc(firestore, 'all-vibes', vibe.id);
-            batch.delete(globalVibeRef);
+            deleteDocumentNonBlocking(globalVibeRef);
             
-            await batch.commit();
-
             toast({
                 title: 'Vibe Deleted',
                 description: 'Your vibe has been successfully removed.',

@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { useAuth, initiateEmailSignIn, initiateEmailSignUp } from '@/firebase';
+import { updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -25,45 +25,33 @@ export default function LoginPage() {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
-      toast({ title: 'Welcome back!', description: "You've been successfully signed in." });
-      router.push('/');
-    } catch (error: any) {
-      console.error('Login Error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message || 'An unknown error occurred.',
-      });
-      setIsLoading(false);
-    }
+    initiateEmailSignIn(auth, loginEmail, loginPassword);
+    toast({ title: 'Welcome back!', description: "You've been successfully signed in." });
+    router.push('/');
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
-      await updateProfile(userCredential.user, { displayName: signupName });
-      
-      // We need to re-fetch the user to get the updated profile
-      await userCredential.user.reload();
-
-      toast({ title: 'Account Created!', description: 'Welcome! Your new account is ready.' });
-      router.push('/');
-    } catch (error: any) {
-      console.error('Sign Up Error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Sign Up Failed',
-        description: error.message || 'Could not create your account.',
-      });
-      setIsLoading(false);
-    }
+    initiateEmailSignUp(auth, signupEmail, signupPassword, (user) => {
+        if(user) {
+            updateProfile(user, { displayName: signupName }).then(() => {
+                toast({ title: 'Account Created!', description: 'Welcome! Your new account is ready.' });
+                router.push('/');
+            }).catch((error) => {
+                console.error('Sign Up Error:', error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Sign Up Failed',
+                    description: error.message || 'Could not create your account.',
+                });
+                setIsLoading(false);
+            });
+        }
+    });
   };
 
   return (
