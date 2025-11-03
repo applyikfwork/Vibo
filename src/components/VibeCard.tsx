@@ -54,11 +54,11 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     const CardContent = () => (
       <div className="group relative">
             <Card className={cn(
-                "rounded-[24px] sm:rounded-[28px] p-5 sm:p-6 md:p-7",
+                "rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] p-5 sm:p-6 lg:p-7",
                 "text-white transition-all duration-500 ease-out",
                  isLink && "hover:scale-[1.05] sm:hover:scale-[1.06] hover:-translate-y-3",
                 "flex flex-col relative overflow-hidden",
-                "h-auto min-h-[380px]",
+                "h-auto min-h-[380px] sm:min-h-[400px] lg:min-h-[420px]",
                 "bg-gradient-to-br group-hover:animate-gradient-shift", 
                 vibe.backgroundColor,
                 "border-2 border-white/20",
@@ -67,22 +67,22 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10 opacity-50" />
                 
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Sparkles className="w-5 h-5 text-white/40 group-hover:animate-pulse" />
+                    <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 text-white/40 group-hover:animate-pulse" />
                 </div>
                 <div className="absolute bottom-8 left-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-                    <Sparkles className="w-4 h-4 text-white/30 group-hover:animate-pulse" />
+                    <Sparkles className="w-4 h-4 lg:w-5 lg:h-5 text-white/30 group-hover:animate-pulse" />
                 </div>
 
                 <div className="relative z-10 flex flex-col h-full">
                     <div className="flex items-center mb-3 sm:mb-4 gap-2">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                            <User className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white drop-shadow-md" />
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                            <User className="w-4 h-4 sm:w-4.5 sm:h-4.5 lg:w-5 lg:h-5 text-white drop-shadow-md" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-bold leading-none text-sm sm:text-base text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+                            <span className="font-bold leading-none text-sm sm:text-base lg:text-lg text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
                                 {authorName}
                             </span>
-                            <span className="text-xs leading-tight text-white/95 mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
+                            <span className="text-xs lg:text-sm leading-tight text-white/95 mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
                                 {timeAgo}
                             </span>
                         </div>
@@ -91,7 +91,7 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                     <div className="flex flex-col items-center justify-center text-center flex-grow py-4">
                         <div className="relative">
                             <span className={cn(
-                                "text-[70px] sm:text-[80px]",
+                                "text-[70px] sm:text-[80px] lg:text-[90px]",
                                 "leading-none inline-block",
                                 "transition-transform duration-300 group-hover:scale-110",
                                 emotion && emotionGlowEffect[emotion.name]
@@ -101,20 +101,22 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                         </div>
                         
                         <h3 className={cn(
-                            "text-3xl sm:text-4xl font-black tracking-tight mt-2",
+                            "text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter mt-2",
                             "text-white",
                             "drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
                         )}>
                             {vibe.emotion}
                         </h3>
 
-                        <p className="font-medium text-white/90 text-base sm:text-lg mt-4 px-2 line-clamp-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                        <p className="font-medium text-white/90 text-base sm:text-lg lg:text-xl mt-4 px-2 line-clamp-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                             "{vibe.text}"
                         </p>
                     </div>
 
                     <div className="flex justify-center items-center gap-2 sm:gap-3 mt-auto pt-4">
-                        <ReactionPalette vibeId={vibe.id} />
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <ReactionPalette vibeId={vibe.id} />
+                        </div>
                         <Button 
                             variant="ghost" 
                             size="sm" 
@@ -123,8 +125,8 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                                 "text-white bg-white/25 hover:bg-white/40 backdrop-blur-md",
                                 "border-2 border-white/40 hover:border-white/60",
                                 "rounded-full font-bold",
-                                "px-3 sm:px-4 h-8 sm:h-9",
-                                "text-xs sm:text-sm",
+                                "px-3 sm:px-4 h-8 sm:h-9 lg:h-10 lg:px-5",
+                                "text-xs sm:text-sm lg:text-base",
                                 "transition-all duration-300 hover:scale-110",
                                 "shadow-[0_4px_20px_rgba(255,255,255,0.3)] hover:shadow-[0_6px_30px_rgba(255,255,255,0.5)]",
                                 "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
@@ -147,8 +149,8 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                                     "text-white bg-white/25 backdrop-blur-md flex items-center",
                                     "border-2 border-white/40",
                                     "rounded-full font-bold",
-                                    "px-3 h-8 sm:h-9",
-                                    "text-xs sm:text-sm",
+                                    "px-3 h-8 sm:h-9 lg:h-10",
+                                    "text-xs sm:text-sm lg:text-base",
                                     "shadow-[0_4px_20px_rgba(255,255,255,0.3)]",
                                     "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
                                 )}

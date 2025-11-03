@@ -72,8 +72,8 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
                 "text-white bg-white/25 hover:bg-white/40 backdrop-blur-md",
                 "border-2 border-white/40 hover:border-white/60",
                 "rounded-full font-bold",
-                "px-3 sm:px-4 h-8 sm:h-9",
-                "text-xs sm:text-sm",
+                "px-3 sm:px-4 h-8 sm:h-9 lg:h-10 lg:px-5",
+                "text-xs sm:text-sm lg:text-base",
                 "transition-all duration-300 hover:scale-110",
                 "shadow-[0_4px_20px_rgba(255,255,255,0.3)] hover:shadow-[0_6px_30px_rgba(255,255,255,0.5)]",
                 "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
@@ -89,7 +89,7 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
             <button
               key={emoji}
               onClick={() => handleReaction(emoji)}
-              className="text-2xl p-2 rounded-full hover:bg-white/50 transition-colors duration-200"
+              className="text-2xl p-2 rounded-full hover:bg-white/50 transition-all duration-200 hover:scale-125"
             >
               {emoji}
             </button>

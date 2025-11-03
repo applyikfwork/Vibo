@@ -15,8 +15,9 @@ import { Label } from './ui/label';
 import { Loader2, MessageCircle, Send, Heart } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from '@/lib/utils';
+
 
 function CommentCard({ comment }: { comment: Comment }) {
     const authorName = comment.isAnonymous ? 'Anonymous' : comment.author.name;
@@ -24,19 +25,19 @@ function CommentCard({ comment }: { comment: Comment }) {
     const authorFallback = comment.isAnonymous ? 'A' : authorName.charAt(0).toUpperCase();
 
     return (
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-4 bg-background/5 p-4 rounded-xl border border-border/10">
             <Avatar>
                 <AvatarImage src={authorImage} alt={authorName} />
                 <AvatarFallback>{authorFallback}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
                 <div className="flex items-center gap-2">
-                    <p className="font-semibold">{authorName}</p>
+                    <p className="font-semibold text-foreground">{authorName}</p>
                     <p className="text-xs text-muted-foreground">
                         {comment.timestamp ? formatDistanceToNow(comment.timestamp.toDate(), { addSuffix: true }) : '...'}
                     </p>
                 </div>
-                <p className="text-muted-foreground">{comment.text}</p>
+                <p className="text-muted-foreground mt-1">{comment.text}</p>
             </div>
         </div>
     );
@@ -49,14 +50,14 @@ function ReactionItem({ reaction }: { reaction: Reaction }) {
     const authorFallback = authorName.charAt(0).toUpperCase();
 
     return (
-        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
-            <div className="text-2xl">{reaction.emoji}</div>
-            <Avatar className="h-8 w-8">
+        <div className="flex items-center gap-4 p-3 rounded-xl bg-background/5 hover:bg-background/10 transition-colors border border-border/10">
+            <div className="text-3xl bg-muted/10 p-2 rounded-full">{reaction.emoji}</div>
+            <Avatar className="h-10 w-10">
                 <AvatarImage src={authorImage} alt={authorName} />
                 <AvatarFallback>{authorFallback}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-                 <p className="font-semibold text-sm">{authorName}</p>
+                 <p className="font-semibold text-sm text-foreground">{authorName}</p>
                  <p className="text-xs text-muted-foreground">
                     Reacted {reaction.timestamp ? formatDistanceToNow(reaction.timestamp.toDate(), { addSuffix: true }) : '...'}
                  </p>
@@ -94,6 +95,8 @@ export function InteractionSection({ vibeId }: { vibeId: string }) {
     const [commentText, setCommentText] = useState('');
     const [isAnonymous, setIsAnonymous] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState('comments');
+
 
     const commentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -142,61 +145,86 @@ export function InteractionSection({ vibeId }: { vibeId: string }) {
 
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Vibe Chat & Reactions</CardTitle>
+        <Card className="bg-white/30 dark:bg-black/30 backdrop-blur-2xl border-white/20 dark:border-black/20 shadow-2xl rounded-2xl">
+            <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+                    Join the Conversation
+                </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-8">
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <CardContent className="space-y-8 p-4 sm:p-6">
+                <form onSubmit={handleSubmit} className="space-y-4 p-4 rounded-xl bg-background/20 border border-border/10">
                     <Textarea
                         id="comment-textarea"
                         placeholder="Share your thoughts or send good vibes..."
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
+                        className="bg-background/50 border-border/20 focus:bg-background/70"
                         required
                     />
                     <div className="flex justify-between items-center">
                          <div className="flex items-center space-x-2">
                             <Switch id="anonymous-comment" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
-                            <Label htmlFor="anonymous-comment">Post Anonymously</Label>
+                            <Label htmlFor="anonymous-comment" className="text-muted-foreground font-medium">Post Anonymously</Label>
                         </div>
-                        <Button type="submit" disabled={isSubmitting}>
+                        <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold hover:scale-105 transition-transform">
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                             Post
                         </Button>
                     </div>
                 </form>
 
-                <Tabs defaultValue="comments" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="comments">
-                            <MessageCircle className="mr-2 h-4 w-4" />
-                            Comments ({comments?.length ?? 0})
+                <Tabs defaultValue="comments" onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="h-auto p-1.5 flex flex-wrap justify-center gap-2 bg-background/20 rounded-xl shadow-inner">
+                        <TabsTrigger 
+                            value="comments"
+                            className={cn("flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2",
+                                activeTab === 'comments'
+                                    ? 'bg-white dark:bg-zinc-800 text-primary shadow-md'
+                                    : 'bg-transparent text-muted-foreground hover:bg-background/30'
+                            )}
+                        >
+                            <MessageCircle className="h-5 w-5" />
+                            Comments <span className="ml-1.5 bg-muted/50 text-muted-foreground text-xs font-bold px-2 py-0.5 rounded-full">{comments?.length ?? 0}</span>
                         </TabsTrigger>
-                        <TabsTrigger value="reactions">
-                            <Heart className="mr-2 h-4 w-4" />
-                            Reactions ({reactions?.length ?? 0})
+                        <TabsTrigger
+                            value="reactions"
+                             className={cn("flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2",
+                                activeTab === 'reactions'
+                                    ? 'bg-white dark:bg-zinc-800 text-primary shadow-md'
+                                    : 'bg-transparent text-muted-foreground hover:bg-background/30'
+                            )}
+                        >
+                           <Heart className="h-5 w-5" />
+                           Reactions <span className="ml-1.5 bg-muted/50 text-muted-foreground text-xs font-bold px-2 py-0.5 rounded-full">{reactions?.length ?? 0}</span>
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="comments" className="mt-6">
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                             {isLoadingComments && <ListLoading />}
                             {comments && comments.length > 0 && comments.map(comment => (
                                 <CommentCard key={comment.id} comment={comment} />
                             ))}
                             {comments && comments.length === 0 && !isLoadingComments && (
-                                <p className="text-center text-muted-foreground py-8">Be the first to leave a comment!</p>
+                                <div className="text-center text-muted-foreground py-10">
+                                    <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                                    <p className="font-bold">No Comments Yet</p>
+                                    <p className="text-sm">Be the first to share your thoughts!</p>
+                                </div>
                             )}
                         </div>
                     </TabsContent>
                     <TabsContent value="reactions" className="mt-6">
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             {isLoadingReactions && <ListLoading />}
                             {reactions && reactions.length > 0 && reactions.map(reaction => (
                                 <ReactionItem key={reaction.id} reaction={reaction} />
                             ))}
                             {reactions && reactions.length === 0 && !isLoadingReactions && (
-                                <p className="text-center text-muted-foreground py-8">No reactions yet. Be the first!</p>
+                                <div className="text-center text-muted-foreground py-10">
+                                    <Heart className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                                    <p className="font-bold">No Reactions Yet</p>
+                                    <p className="text-sm">Be the first one to react!</p>
+                                </div>
                             )}
                         </div>
                     </TabsContent>
@@ -205,5 +233,3 @@ export function InteractionSection({ vibeId }: { vibeId: string }) {
         </Card>
     );
 }
-
-    
