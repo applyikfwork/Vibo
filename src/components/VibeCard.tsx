@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface VibeCardProps {
     vibe: Vibe;
@@ -34,6 +35,7 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     const { user } = useUser();
     const { toast } = useToast();
     const firestore = useFirestore();
+    const router = useRouter();
     const [isDeleting, setIsDeleting] = useState(false);
     const emotion = getEmotionByName(vibe.emotion);
     const authorName = vibe.isAnonymous ? 'Anonymous User' : vibe.author.name;
@@ -68,6 +70,9 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                 title: 'Vibe Deleted',
                 description: 'Your vibe has been successfully removed.',
             });
+            
+            router.push('/');
+
         } catch (e: any) {
             console.error("Error deleting vibe:", e);
             toast({
@@ -116,10 +121,10 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10 opacity-50" />
                 
                 {isOwner && (
-                    <div className="absolute top-4 right-4 z-20" onClick={(e) => e.stopPropagation()}>
+                    <div className="absolute top-4 right-4 z-20">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/20 text-white/70 hover:bg-black/40 hover:text-white">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/20 text-white/70 hover:bg-black/40 hover:text-white" onClick={(e) => e.stopPropagation()}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </AlertDialogTrigger>
