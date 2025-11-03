@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import { VibeCard } from '@/components/VibeCard';
 import { CommentSection } from '@/components/CommentSection';
 import { useDoc, useMemoFirebase } from '@/firebase';
@@ -21,9 +22,9 @@ function VibeDetailLoading() {
     );
 }
 
-export default function VibeDetailPage({ params }: { params: { id: string } }) {
+export default function VibeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const firestore = useFirestore();
-    const { id } = params;
+    const { id } = use(params);
 
     const vibeRef = useMemoFirebase(() => {
         if (!firestore) return null;
