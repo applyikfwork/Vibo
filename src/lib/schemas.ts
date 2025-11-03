@@ -19,3 +19,23 @@ export const DiagnoseVibeOutputSchema = z.object({
     .string()
     .describe('A single emoji that best represents the detected emotion and text.'),
 });
+
+export const AnalyzeEmotionStrengthInputSchema = z.object({
+  text: z
+    .string()
+    .describe('The text to analyze for emotional intensity.'),
+  emotion: z
+    .enum(emotionNames)
+    .describe('The primary emotion category to analyze intensity for.'),
+});
+
+export const AnalyzeEmotionStrengthOutputSchema = z.object({
+  emotionStrength: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe('The intensity/strength of the emotion from 0 (very mild) to 1 (extremely intense).'),
+  reasoning: z
+    .string()
+    .describe('Brief explanation of why this intensity score was given.'),
+});

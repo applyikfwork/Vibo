@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { VibeForm } from '@/components/VibeForm';
 import { EmotionTabs } from '@/components/EmotionTabs';
 import { VibeCard } from '@/components/VibeCard';
+import { SmartVibeFeed } from '@/components/SmartVibeFeed';
 import { emotions } from '@/lib/data';
 import { useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
@@ -12,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useDailyPrompt } from '@/hooks/useDailyPrompt';
 import { DailyVibePrompt } from '@/components/DailyVibePrompt';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Sparkles, List } from 'lucide-react';
 
 function VibeListLoading() {
     return (
@@ -27,6 +30,7 @@ export default function Home() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { shouldShowPrompt, closePrompt } = useDailyPrompt();
+  const [feedMode, setFeedMode] = useState<'smart' | 'classic'>('smart');
 
   const globalVibesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -72,36 +76,65 @@ export default function Home() {
             <VibeForm />
           </motion.section>
 
+          <div className="mb-8 flex justify-center gap-4">
+            <button
+              onClick={() => setFeedMode('smart')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
+                feedMode === 'smart'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              Smart Feed
+            </button>
+            <button
+              onClick={() => setFeedMode('classic')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
+                feedMode === 'classic'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
+                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+              }`}
+            >
+              <List className="w-4 h-4" />
+              Classic Feed
+            </button>
+          </div>
+
           <section>
-            <EmotionTabs 
-                emotions={emotions} 
-                initialVibes={vibes || []}
-                renderContent={(filteredVibes) => {
-                  if (isLoading) {
-                    return <VibeListLoading />;
-                  }
-                  
-                  if (filteredVibes.length > 0) {
+            {feedMode === 'smart' ? (
+              <SmartVibeFeed />
+            ) : (
+              <EmotionTabs 
+                  emotions={emotions} 
+                  initialVibes={vibes || []}
+                  renderContent={(filteredVibes) => {
+                    if (isLoading) {
+                      return <VibeListLoading />;
+                    }
+                    
+                    if (filteredVibes.length > 0) {
+                      return (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredVibes.map((vibe) => (
+                                <VibeCard key={vibe.id} vibe={vibe} />
+                            ))}
+                        </div>
+                      )
+                    }
+
                     return (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {filteredVibes.map((vibe) => (
-                              <VibeCard key={vibe.id} vibe={vibe} />
-                          ))}
+                      <div className="text-center py-16 text-muted-foreground bg-muted/20 rounded-lg">
+                        <p className="text-xl mb-2">🌍</p>
+                        <p className="font-bold">This is the global feed!</p>
+                        <p className="text-sm max-w-md mx-auto">
+                          This is where vibes from everyone would appear. For now, only vibes you post will show up here. Try posting one!
+                        </p>
                       </div>
                     )
-                  }
-
-                  return (
-                    <div className="text-center py-16 text-muted-foreground bg-muted/20 rounded-lg">
-                      <p className="text-xl mb-2">🌍</p>
-                      <p className="font-bold">This is the global feed!</p>
-                      <p className="text-sm max-w-md mx-auto">
-                        This is where vibes from everyone would appear. For now, only vibes you post will show up here. Try posting one!
-                      </p>
-                    </div>
-                  )
-                }}
-            />
+                  }}
+              />
+            )}
           </section>
         </div>
       </div>
