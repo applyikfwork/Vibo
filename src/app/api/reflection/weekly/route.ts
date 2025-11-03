@@ -1,23 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWeeklyReflection, type WeeklyReflectionInput } from '@/ai/flows/generate-weekly-reflection';
-import admin from 'firebase-admin';
-
-// This function assumes the admin app has been initialized in another file (e.g. api/feed)
-// and safely gets a reference to it.
-function getInitializedAdminApp() {
-  if (admin.apps.length > 0) {
-    return admin.apps[0];
-  }
-  return null;
-}
+import { getFirebaseAdmin } from '@/firebase/admin';
 
 export async function POST(request: NextRequest) {
   try {
-    const adminApp = getInitializedAdminApp();
-    if (!adminApp) {
+    const admin = getFirebaseAdmin();
+    if (!admin.apps.length) {
       throw new Error("Firebase Admin SDK is not initialized. Check server logs.");
     }
-    const db = admin.firestore(adminApp);
+    const db = admin.firestore();
 
     const { userId } = await request.json();
 

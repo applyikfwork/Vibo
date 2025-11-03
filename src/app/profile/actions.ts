@@ -1,17 +1,9 @@
-
 'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getApps, initializeApp, cert, App } from 'firebase-admin/app';
+import { getFirebaseAdmin } from '@/firebase/admin';
 
-// Helper function to get the initialized admin app
-function getInitializedAdminApp(): App | null {
-  const adminApp = getApps().find(app => app.name === '[DEFAULT]');
-  return adminApp || null;
-}
 
 const profileSchema = z.object({
     userId: z.string(),
@@ -31,13 +23,13 @@ export async function updateProfileSettings(data: { userId: string, displayName:
     const { userId, displayName } = validatedFields.data;
     
     try {
-        const adminApp = getInitializedAdminApp();
-        if (!adminApp) {
+        const admin = getFirebaseAdmin();
+        if (!admin.apps.length) {
           throw new Error("Firebase Admin SDK is not initialized. Check server logs.");
         }
         
-        const auth = getAuth(adminApp);
-        const firestore = getFirestore(adminApp);
+        const auth = admin.auth();
+        const firestore = admin.firestore();
         
         // Update auth user
         await auth.updateUser(userId, { displayName });
@@ -56,7 +48,7 @@ export async function updateProfileSettings(data: { userId: string, displayName:
     } catch (e: any) {
         console.error("Error updating profile:", e);
         
-        if (e.message.includes('FIREBASE_PROJECT_ID') || e.message.includes('Admin SDK')) {
+        if (e.message.includes('FIREBASE_PRIVATE_KEY') || e.message.includes('Admin SDK')) {
              return {
                 error: true,
                 message: 'Firebase Admin credentials are not configured on the server.',

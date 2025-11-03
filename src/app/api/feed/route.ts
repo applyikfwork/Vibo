@@ -1,36 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFirestore, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
-import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { getFirebaseAdmin } from '@/firebase/admin';
 import type { Vibe, EmotionCategory, UserProfile, RankedVibe } from '@/lib/types';
 import { 
   rankVibesForUser, 
   generateSmartVibeFeed,
   calculateBoostScore 
 } from '@/lib/feed-algorithm';
-
-let adminApp: App;
-
-if (!getApps().length) {
-  try {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-    if (!privateKey) {
-      throw new Error("FIREBASE_PRIVATE_KEY environment variable is not set.");
-    }
-    adminApp = initializeApp({
-      credential: cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey.replace(/\\n/g, '\n'),
-      }),
-    });
-  } catch (error) {
-    console.error('Firebase admin initialization error:', error);
-  }
-} else {
-    adminApp = getApps()[0];
-}
-
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,8 +18,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    if (!adminApp) {
+    
+    const admin = getFirebaseAdmin();
+    if (!admin.apps.length) {
       return NextResponse.json(
         { 
           error: 'Firebase Admin not initialized',
@@ -55,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = getAdminFirestore(adminApp);
+    const db = admin.firestore();
 
     // Fetch user profile
     let userProfile: UserProfile | undefined;
