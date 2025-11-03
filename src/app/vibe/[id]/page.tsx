@@ -23,10 +23,12 @@ function VibeDetailLoading() {
 
 export default function VibeDetailPage({ params }: { params: { id: string } }) {
     const firestore = useFirestore();
+    const { id } = params;
+
     const vibeRef = useMemoFirebase(() => {
         if (!firestore) return null;
-        return doc(firestore, 'all-vibes', params.id);
-    }, [firestore, params.id]);
+        return doc(firestore, 'all-vibes', id);
+    }, [firestore, id]);
 
     const { data: vibe, isLoading: isLoadingVibe } = useDoc<Vibe>(vibeRef);
 
@@ -57,5 +59,3 @@ export default function VibeDetailPage({ params }: { params: { id: string } }) {
         </div>
     );
 }
-
-    
