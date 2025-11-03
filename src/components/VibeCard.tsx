@@ -10,7 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ReactionPalette } from './ReactionPalette';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +22,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { deleteVibe } from '@/app/profile/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -34,13 +33,13 @@ interface VibeCardProps {
 export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     const { user } = useUser();
     const { toast } = useToast();
+    const firestore = useFirestore();
     const [isDeleting, setIsDeleting] = useState(false);
     const emotion = getEmotionByName(vibe.emotion);
     const authorName = vibe.isAnonymous ? 'Anonymous User' : vibe.author.name;
     
     const timeAgo = vibe.timestamp ? formatDistanceToNow(vibe.timestamp.toDate(), { addSuffix: true }) : 'just now';
 
-    const firestore = useFirestore();
     const reactionsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         return collection(firestore, 'all-vibes', vibe.id, 'reactions');
@@ -51,22 +50,34 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     const isOwner = user?.uid === vibe.userId;
 
     const handleDelete = async () => {
-        if (!isOwner || !user) return;
+        if (!isOwner || !user || !firestore) return;
         setIsDeleting(true);
-        const result = await deleteVibe({ userId: user.uid, vibeId: vibe.id });
-        if (result.error) {
-            toast({
-                variant: 'destructive',
-                title: 'Deletion Failed',
-                description: result.message,
-            });
-        } else {
+
+        try {
+            const batch = writeBatch(firestore);
+
+            const userVibeRef = doc(firestore, 'users', user.uid, 'vibes', vibe.id);
+            batch.delete(userVibeRef);
+
+            const globalVibeRef = doc(firestore, 'all-vibes', vibe.id);
+            batch.delete(globalVibeRef);
+            
+            await batch.commit();
+
             toast({
                 title: 'Vibe Deleted',
                 description: 'Your vibe has been successfully removed.',
             });
+        } catch (e: any) {
+            console.error("Error deleting vibe:", e);
+            toast({
+                variant: 'destructive',
+                title: 'Deletion Failed',
+                description: e.message || 'An unexpected error occurred while deleting the vibe.',
+            });
+        } finally {
+            setIsDeleting(false);
         }
-        setIsDeleting(false);
     };
 
     const emotionGlowEffect: Record<string, string> = {
