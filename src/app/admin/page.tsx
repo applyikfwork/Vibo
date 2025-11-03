@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, limit, runTransaction, doc, increment, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit, runTransaction, doc, increment, serverTimestamp, updateDoc } from 'firebase/firestore';
 import type { Author, Vibe } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -305,5 +305,3 @@ export default function AdminPage() {
         </div>
     );
 }
-
-    
