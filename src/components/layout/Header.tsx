@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { UserCircle, BarChart3, LogOut } from 'lucide-react';
+import { UserCircle, BarChart3, LogOut, Settings, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import {
@@ -52,8 +52,18 @@ function UserMenu() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{user.displayName || user.email}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/profile">
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />

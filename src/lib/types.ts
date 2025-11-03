@@ -9,6 +9,14 @@ export type Author = {
   avatarUrl: string;
 };
 
+export type UserProfile = {
+    id: string;
+    username: string;
+    email: string;
+    displayName?: string;
+    anonymous?: boolean;
+};
+
 export type Vibe = {
   id: string;
   userId: string;

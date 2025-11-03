@@ -50,17 +50,19 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if false; // User listing is disabled for privacy.
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow update: if isOwner(userId); // Allow owner to update their own profile document
       allow delete: if isExistingOwner(userId);
     }
 
     /**
      * @description Rules for the private /users/{userId}/vibes/{vibeId} collection.
      * @path /users/{userId}/vibes/{vibeId}
-     * @allow (read, write) - Authenticated user can read their own vibes.
+     * @allow (read, write) - Authenticated user can read and write their own vibes.
+     * @allow (list) - Authenticated user can list their own vibes for the profile page.
      */
     match /users/{userId}/vibes/{vibeId} {
       allow read, write: if isOwner(userId);
+      allow list: if isOwner(userId);
     }
 
     /**
