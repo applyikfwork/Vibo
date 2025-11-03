@@ -43,8 +43,9 @@ function CommentCard({ comment }: { comment: Comment }) {
 }
 
 function ReactionItem({ reaction }: { reaction: Reaction }) {
-    const authorName = reaction.author.name;
-    const authorImage = reaction.author.avatarUrl;
+    // Defensive check for author
+    const authorName = reaction.author?.name || 'Anonymous';
+    const authorImage = reaction.author?.avatarUrl || '';
     const authorFallback = authorName.charAt(0).toUpperCase();
 
     return (
@@ -204,3 +205,5 @@ export function InteractionSection({ vibeId }: { vibeId: string }) {
         </Card>
     );
 }
+
+    
