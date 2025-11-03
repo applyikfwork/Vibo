@@ -1,18 +1,33 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
-import type { Vibe } from '@/lib/types';
+import { collection, query, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
+import type { Author, Vibe } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { addFakeComment, addFakeReaction } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, MessageSquarePlus, SmilePlus } from 'lucide-react';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const ADMIN_EMAIL = 'xyzapplywork@gmail.com';
+
+const fakeComments = [
+    "This is such a mood!",
+    "I feel this on a spiritual level.",
+    "Sending good vibes your way! ✨",
+    "Totally get that.",
+    "Thanks for sharing this!",
+    "This is so relatable.",
+    "What a great post.",
+    "Love this energy.",
+    "Hope you have a great day!",
+    "This made me smile.",
+];
+
+const fakeReactions = ['🤗', '🙏', '❤️', '✨', '🔥', '💯', '🙌'];
 
 function AdminLoading() {
     return (
@@ -43,16 +58,33 @@ function AdminLoading() {
 
 function VibeRow({ vibe }: { vibe: Vibe }) {
     const { toast } = useToast();
+    const firestore = useFirestore();
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isSubmittingReaction, setIsSubmittingReaction] = useState(false);
 
+    const getFakeAuthor = (): Author => ({
+        name: 'Anonymous',
+        avatarUrl: '',
+    });
+
     const handleFakeComment = async () => {
+        if (!firestore) return;
         setIsSubmittingComment(true);
         try {
-            const result = await addFakeComment(vibe.id);
-            if (result.success) {
-                toast({ title: 'Success', description: result.message });
-            }
+            const commentText = fakeComments[Math.floor(Math.random() * fakeComments.length)];
+            const author = getFakeAuthor();
+            const commentRef = collection(firestore, 'all-vibes', vibe.id, 'comments');
+            
+            addDocumentNonBlocking(commentRef, {
+                vibeId: vibe.id,
+                userId: `fake_user_${Date.now()}`, // Fake user ID
+                text: commentText,
+                timestamp: serverTimestamp(),
+                isAnonymous: true,
+                author,
+            });
+
+            toast({ title: 'Success', description: `Added comment: "${commentText}"` });
         } catch (e: any) {
              toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add comment." });
         }
@@ -60,12 +92,23 @@ function VibeRow({ vibe }: { vibe: Vibe }) {
     };
 
     const handleFakeReaction = async () => {
+        if (!firestore) return;
         setIsSubmittingReaction(true);
         try {
-            const result = await addFakeReaction(vibe.id);
-            if (result.success) {
-                toast({ title: 'Success', description: result.message });
-            }
+            const reactionEmoji = fakeReactions[Math.floor(Math.random() * fakeReactions.length)];
+            const author = getFakeAuthor();
+            const reactionRef = collection(firestore, 'all-vibes', vibe.id, 'reactions');
+            
+            addDocumentNonBlocking(reactionRef, {
+                vibeId: vibe.id,
+                userId: `fake_user_${Date.now()}`,
+                emoji: reactionEmoji,
+                timestamp: serverTimestamp(),
+                isAnonymous: true,
+                author,
+            });
+
+            toast({ title: 'Success', description: `Added reaction: ${reactionEmoji}` });
         } catch (e: any) {
             toast({ variant: 'destructive', title: 'Error', description: e.message || "Could not add reaction." });
         }
