@@ -1,8 +1,7 @@
+
 'use server';
 
 import { getAdminSdks } from '@/firebase/server-init';
-import { updateProfile } from 'firebase/auth';
-import { doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -23,15 +22,15 @@ export async function updateProfileSettings(data: { userId: string, displayName:
 
     const { userId, displayName } = validatedFields.data;
 
-    // Note: Updating auth user display name requires the Admin SDK, which we are not using here for simplicity
-    // on the client, you would re-authenticate or use updateProfile from 'firebase/auth'
-    
-    // For now, we only update the Firestore document
-    const { firestore } = await getAdminSdks();
+    const { firestore, auth } = await getAdminSdks();
 
     try {
-        const userDocRef = doc(firestore, 'users', userId);
-        await updateDoc(userDocRef, {
+        // Update auth user
+        await auth.updateUser(userId, { displayName });
+
+        // Update firestore user document
+        const userDocRef = firestore.collection('users').doc(userId);
+        await userDocRef.update({
              displayName: displayName
         });
         
@@ -68,12 +67,12 @@ export async function deleteVibe(data: { userId: string, vibeId: string }) {
     const { firestore } = await getAdminSdks();
 
     try {
-        const batch = writeBatch(firestore);
+        const batch = firestore.batch();
 
-        const userVibeRef = doc(firestore, 'users', userId, 'vibes', vibeId);
+        const userVibeRef = firestore.doc(`users/${userId}/vibes/${vibeId}`);
         batch.delete(userVibeRef);
 
-        const globalVibeRef = doc(firestore, 'all-vibes', vibeId);
+        const globalVibeRef = firestore.doc(`all-vibes/${vibeId}`);
         batch.delete(globalVibeRef);
         
         await batch.commit();
