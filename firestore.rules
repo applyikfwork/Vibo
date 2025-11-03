@@ -64,7 +64,7 @@ service cloud.firestore {
     match /users/{userId}/vibes/{vibeId} {
       allow read, list: if isOwner(userId);
       // Allow creating a doc with a specific ID if the user is the owner
-      allow create: if isOwner(userId) && request.resource.id == vibeId;
+      allow create: if isOwner(userId);
       allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
     }
@@ -72,13 +72,13 @@ service cloud.firestore {
     /**
      * @description Rules for the public /all-vibes collection.
      * @path /all-vibes/{vibeId}
-     * @allow (read) - Any authenticated user can read the global vibe feed.
+     * @allow (read) - Any user can read the global vibe feed.
      * @allow (create) - Any authenticated user can create a new vibe.
      * @allow (update) - Any user can update a vibe (e.g., for view counts).
      * @allow (delete) - Owner of the vibe can delete it.
      */
     match /all-vibes/{vibeId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn();
       allow update: if true;
       allow delete: if isOwner(resource.data.userId);
@@ -91,7 +91,7 @@ service cloud.firestore {
        * @deny (update, delete) - Comments are immutable.
        */
       match /comments/{commentId} {
-        allow read: if isSignedIn();
+        allow read: if true;
         allow create: if isSignedIn();
         allow update, delete: if false;
       }
@@ -105,7 +105,7 @@ service cloud.firestore {
        * @deny (update) - Reactions are immutable.
        */
       match /reactions/{reactionId} {
-        allow read: if isSignedIn();
+        allow read: if true;
         allow create: if true;
         allow delete: if isOwner(resource.data.userId);
         allow update: if false;
