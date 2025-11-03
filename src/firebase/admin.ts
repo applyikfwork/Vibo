@@ -26,7 +26,6 @@ if (!admin.apps.length) {
 }
 
 const firebaseAdmin = admin;
-export default firebaseAdmin;
 
 /**
  * Gets the initialized Firebase Admin SDK instance.
