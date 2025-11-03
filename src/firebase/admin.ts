@@ -32,6 +32,6 @@ export default firebaseAdmin;
  * Gets the initialized Firebase Admin SDK instance.
  * It's structured this way to be easily mocked for testing if needed.
  */
-export const getFirebaseAdmin = () => {
+export const getFirebaseAdmin = async () => {
     return firebaseAdmin;
 }
