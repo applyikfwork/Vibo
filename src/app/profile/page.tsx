@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 
 function ProfileLoading() {
   return (
-    <div className="container mx-auto max-w-4xl py-8 px-4">
+    <div className="container mx-auto max-w-5xl py-8 px-4">
       <div className="flex flex-col sm:flex-row items-center gap-6 mb-12">
         <Skeleton className="h-24 w-24 rounded-full" />
         <div className="space-y-2 text-center sm:text-left">
@@ -64,7 +64,7 @@ export default function ProfilePage() {
   const userInitial = user.displayName ? user.displayName.charAt(0) : (user.email ? user.email.charAt(0) : '?');
 
   return (
-    <div className="container mx-auto max-w-4xl py-8 px-4">
+    <div className="container mx-auto max-w-5xl py-8 px-4">
       <header className="flex flex-col sm:flex-row items-center gap-6 mb-12">
         <Avatar className="h-24 w-24 text-4xl">
           {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} />}

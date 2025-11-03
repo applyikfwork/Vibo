@@ -112,7 +112,7 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                 "text-white transition-all duration-500 ease-out",
                  isLink && "hover:scale-[1.05] sm:hover:scale-[1.06] hover:-translate-y-3",
                 "flex flex-col relative overflow-hidden",
-                "h-auto min-h-[380px] sm:min-h-[400px] lg:min-h-[420px]",
+                "h-auto min-h-[380px]",
                 "bg-gradient-to-br group-hover:animate-gradient-shift", 
                 vibe.backgroundColor,
                 "border-2 border-white/20",

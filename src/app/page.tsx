@@ -48,7 +48,7 @@ export default function Home() {
         <div className="fixed top-40 right-10 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float delay-1000" style={{animationDelay: '2s'}} />
         <div className="fixed bottom-20 left-1/2 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float delay-500" style={{animationDelay: '4s'}} />
         
-        <div className="container mx-auto max-w-4xl py-8 px-4 relative z-10">
+        <div className="container mx-auto max-w-5xl py-8 px-4 relative z-10">
           <motion.header 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
