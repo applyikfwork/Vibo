@@ -48,21 +48,19 @@ export function usePersonalizedFeed(
           }),
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch feed: ${response.statusText}`);
-        }
-
         const result = await response.json();
-        
-        if (result.success) {
-          setData({
-            feed: result.feed,
-            zones: result.zones,
-            metadata: result.metadata,
-          });
-        } else {
-          throw new Error(result.error || 'Failed to fetch personalized feed');
+
+        if (!response.ok || !result.success) {
+           const errorMessage = result.details || result.error || `Failed to fetch feed: ${response.statusText}`;
+           throw new Error(errorMessage);
         }
+        
+        setData({
+          feed: result.feed,
+          zones: result.zones,
+          metadata: result.metadata,
+        });
+        
       } catch (err) {
         console.error('Error fetching personalized feed:', err);
         setError(err instanceof Error ? err : new Error(String(err)));

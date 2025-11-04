@@ -9,6 +9,19 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
+    const admin = await getFirebaseAdmin();
+    if (!admin.apps.length) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'Firebase Admin not initialized',
+          details: 'Missing required server-side environment variables. Please check your .env.local file for FIREBASE_PRIVATE_KEY and FIREBASE_CLIENT_EMAIL.',
+        },
+        { status: 500 }
+      );
+    }
+    const db = admin.firestore();
+
     const body = await request.json();
     const { userId, userMood, limit: requestLimit = 30 } = body;
 
@@ -18,20 +31,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
-    const admin = getFirebaseAdmin();
-    if (!admin.apps.length) {
-      return NextResponse.json(
-        { 
-          error: 'Firebase Admin not initialized',
-          details: 'Missing required environment variables: FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL',
-          hint: 'Please set up Firebase Admin credentials in your environment variables'
-        },
-        { status: 500 }
-      );
-    }
-
-    const db = admin.firestore();
 
     // Fetch user profile
     let userProfile: UserProfile | undefined;
@@ -129,7 +128,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Feed API error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate personalized feed', details: error instanceof Error ? error.message : String(error) },
+      { success: false, error: 'Failed to generate personalized feed', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
