@@ -80,18 +80,18 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
         viewCount: 0,
       };
 
-      // 1. Create the document in the public 'all-vibes' collection to get its ID
+      // 1. Create the document in the public 'all-vibes' collection and get its ref
       const globalVibesRef = collection(firestore, 'all-vibes');
       const globalVibeDocRef = await addDocumentNonBlocking(globalVibesRef, newVibeData);
       
+      // 2. If the public doc was created, save a copy to the private user collection with the SAME ID
       if (globalVibeDocRef) {
         const newVibeId = globalVibeDocRef.id;
-
-        // 2. Create the document in the private `users/{uid}/vibes` collection using the SAME ID
         const userVibeDocRef = doc(firestore, 'users', user.uid, 'vibes', newVibeId);
         setDocumentNonBlocking(userVibeDocRef, newVibeData, {});
+      } else {
+        throw new Error("Failed to create the vibe in the public feed.");
       }
-
 
       toast({
         title: 'Vibe Posted!',
@@ -103,8 +103,7 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
       if (onPost) onPost();
 
     } catch (error: any) {
-      // This will now only catch errors from getVibeDiagnosis or other non-firestore operations
-      console.error("Error preparing vibe:", error);
+      console.error("Error posting vibe:", error);
       toast({
         variant: 'destructive',
         title: 'Could not post vibe',
