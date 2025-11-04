@@ -10,6 +10,7 @@ export const emotions: Emotion[] = [
   { name: 'Lonely', emoji: '😔', gradient: 'from-[#CE93D8] via-[#BA68C8] to-[#AB47BC]' },
   { name: 'Angry', emoji: '😠', gradient: 'from-[#FF7043] via-[#FF5722] to-[#F4511E]' },
   { name: 'Neutral', emoji: '😶', gradient: 'from-[#90A4AE] via-[#78909C] to-[#607D8B]' },
+  { name: 'Funny', emoji: '😂', gradient: 'from-[#D4E157] via-[#CDDC39] to-[#C0CA33]' },
 ];
 
 // This file now contains only static definitions.

@@ -11,7 +11,7 @@ interface EmotionTabsProps {
     renderContent: (filteredVibes: Vibe[]) => React.ReactNode;
 }
 
-const mainEmotions: string[] = ['Happy', 'Sad', 'Chill', 'Motivated', 'Lonely'];
+const mainEmotions: string[] = ['Happy', 'Sad', 'Chill', 'Motivated', 'Funny'];
 
 const emotionColors: Record<string, { bg: string; activeBg: string; text: string; border: string; shadow: string }> = {
     'Happy': { 
@@ -49,6 +49,13 @@ const emotionColors: Record<string, { bg: string; activeBg: string; text: string
         border: 'border-purple-400',
         shadow: 'shadow-lg shadow-purple-500/30'
     },
+    'Funny': { 
+        bg: 'bg-gradient-to-r from-lime-100 to-green-100', 
+        activeBg: 'bg-gradient-to-r from-lime-400 to-green-500', 
+        text: 'text-green-700',
+        border: 'border-lime-400',
+        shadow: 'shadow-lg shadow-lime-500/30'
+    },
 };
 
 export function EmotionTabs({ emotions, initialVibes, renderContent }: EmotionTabsProps) {
@@ -63,39 +70,41 @@ export function EmotionTabs({ emotions, initialVibes, renderContent }: EmotionTa
     return (
         <Tabs defaultValue="All" onValueChange={setActiveTab} className="w-full">
             <div className="flex justify-center mb-10">
-                <TabsList className="h-auto p-2 flex flex-wrap justify-center gap-2 bg-white/60 backdrop-blur-md rounded-2xl shadow-xl border-2 border-white/40">
-                    <TabsTrigger 
-                        value="All" 
-                        className={cn(
-                            "px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300",
-                            "hover:scale-105",
-                            activeTab === 'All' 
-                                ? "bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 text-white shadow-lg shadow-purple-500/40" 
-                                : "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:shadow-md"
-                        )}
-                    >
-                        ✨ All Vibes
-                    </TabsTrigger>
-                    {displayEmotions.map(emotion => {
-                        const colors = emotionColors[emotion.name];
-                        const isActive = activeTab === emotion.name;
-                        return (
-                            <TabsTrigger 
-                                key={emotion.name} 
-                                value={emotion.name} 
-                                className={cn(
-                                    "px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all duration-300",
-                                    "hover:scale-105 border-2",
-                                    isActive 
-                                        ? `${colors.activeBg} text-white ${colors.shadow} border-white/40` 
-                                        : `${colors.bg} ${colors.text} hover:shadow-md ${colors.border}`
-                                )}
-                            >
-                                <span className="text-lg">{emotion.emoji}</span>
-                                <span className="hidden sm:inline">{emotion.name}</span>
-                            </TabsTrigger>
-                        );
-                    })}
+                <TabsList className="h-auto p-2 bg-white/60 backdrop-blur-md rounded-2xl shadow-xl border-2 border-white/40 overflow-x-auto w-full justify-start md:justify-center">
+                    <div className="flex flex-nowrap gap-2 px-2 md:px-0">
+                        <TabsTrigger 
+                            value="All" 
+                            className={cn(
+                                "px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex-shrink-0",
+                                "hover:scale-105",
+                                activeTab === 'All' 
+                                    ? "bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 text-white shadow-lg shadow-purple-500/40" 
+                                    : "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:shadow-md"
+                            )}
+                        >
+                            ✨ All Vibes
+                        </TabsTrigger>
+                        {displayEmotions.map(emotion => {
+                            const colors = emotionColors[emotion.name];
+                            const isActive = activeTab === emotion.name;
+                            return (
+                                <TabsTrigger 
+                                    key={emotion.name} 
+                                    value={emotion.name} 
+                                    className={cn(
+                                        "px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all duration-300 flex-shrink-0",
+                                        "hover:scale-105 border-2",
+                                        isActive 
+                                            ? `${colors.activeBg} text-white ${colors.shadow} border-white/40` 
+                                            : `${colors.bg} ${colors.text} hover:shadow-md ${colors.border}`
+                                    )}
+                                >
+                                    <span className="text-lg">{emotion.emoji}</span>
+                                    <span>{emotion.name}</span>
+                                </TabsTrigger>
+                            );
+                        })}
+                    </div>
                 </TabsList>
             </div>
             <TabsContent value={activeTab}>

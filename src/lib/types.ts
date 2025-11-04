@@ -2,7 +2,7 @@ import { Timestamp } from "firebase/firestore";
 import { z } from 'zod';
 import { DiagnoseVibeInputSchema, DiagnoseVibeOutputSchema } from './schemas';
 
-export type EmotionCategory = 'Happy' | 'Sad' | 'Chill' | 'Motivated' | 'Lonely' | 'Angry' | 'Neutral';
+export type EmotionCategory = 'Happy' | 'Sad' | 'Chill' | 'Motivated' | 'Lonely' | 'Angry' | 'Neutral' | 'Funny';
 
 export type Author = {
   name: string;

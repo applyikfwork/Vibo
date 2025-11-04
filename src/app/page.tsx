@@ -31,7 +31,7 @@ export default function Home() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { shouldShowPrompt, closePrompt } = useDailyPrompt();
-  const [feedMode, setFeedMode] = useState<'smart' | 'classic'>('smart');
+  const [feedMode, setFeedMode] = useState<'smart' | 'classic'>('classic');
 
   const globalVibesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;

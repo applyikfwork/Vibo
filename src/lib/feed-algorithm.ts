@@ -13,38 +13,43 @@ import { Timestamp } from 'firebase/firestore';
 const EMOTION_MATCH_CONFIGS: Record<EmotionCategory, EmotionMatchConfig> = {
   'Sad': {
     primaryEmotion: 'Sad',
-    complementaryEmotions: ['Motivated', 'Happy', 'Chill'],
+    complementaryEmotions: ['Motivated', 'Happy', 'Chill', 'Funny'],
     oppositeEmotions: ['Angry', 'Neutral', 'Lonely'],
   },
   'Happy': {
     primaryEmotion: 'Happy',
-    complementaryEmotions: ['Motivated', 'Chill'],
+    complementaryEmotions: ['Motivated', 'Chill', 'Funny'],
     oppositeEmotions: ['Sad', 'Lonely', 'Angry'],
   },
   'Motivated': {
     primaryEmotion: 'Motivated',
-    complementaryEmotions: ['Happy', 'Chill'],
+    complementaryEmotions: ['Happy', 'Chill', 'Funny'],
     oppositeEmotions: ['Sad', 'Lonely', 'Angry'],
   },
   'Lonely': {
     primaryEmotion: 'Lonely',
-    complementaryEmotions: ['Chill', 'Happy', 'Motivated'],
+    complementaryEmotions: ['Chill', 'Happy', 'Motivated', 'Funny'],
     oppositeEmotions: ['Angry', 'Neutral'],
   },
   'Chill': {
     primaryEmotion: 'Chill',
-    complementaryEmotions: ['Happy', 'Motivated'],
+    complementaryEmotions: ['Happy', 'Motivated', 'Funny'],
     oppositeEmotions: ['Angry', 'Sad'],
   },
   'Angry': {
     primaryEmotion: 'Angry',
-    complementaryEmotions: ['Chill', 'Motivated'],
+    complementaryEmotions: ['Chill', 'Motivated', 'Funny'],
     oppositeEmotions: ['Happy', 'Sad', 'Lonely'],
   },
   'Neutral': {
     primaryEmotion: 'Neutral',
-    complementaryEmotions: ['Chill', 'Happy'],
+    complementaryEmotions: ['Chill', 'Happy', 'Funny'],
     oppositeEmotions: ['Angry', 'Sad', 'Motivated'],
+  },
+  'Funny': {
+    primaryEmotion: 'Funny',
+    complementaryEmotions: ['Happy', 'Chill', 'Motivated'],
+    oppositeEmotions: ['Sad', 'Angry', 'Lonely'],
   },
 };
 
@@ -57,6 +62,7 @@ const DECAY_RATES: Record<EmotionCategory, number> = {
   'Motivated': 0.85,  // Faster decay (short energy bursts)
   'Chill': 0.91,      // Slower decay
   'Neutral': 0.9,     // Standard decay
+  'Funny': 0.87,      // Faster decay for humor
 };
 
 /**
@@ -199,7 +205,7 @@ export function calculateBoostScore(
   // Triggers when post has healing emotion after user had intense negative emotion
   if (userPreviousMood) {
     const negativeIntenseEmotions: EmotionCategory[] = ['Angry', 'Sad', 'Lonely'];
-    const calmingEmotions: EmotionCategory[] = ['Chill', 'Happy', 'Motivated'];
+    const calmingEmotions: EmotionCategory[] = ['Chill', 'Happy', 'Motivated', 'Funny'];
     
     if (negativeIntenseEmotions.includes(userPreviousMood) && 
         calmingEmotions.includes(vibe.emotion)) {

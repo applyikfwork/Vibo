@@ -99,6 +99,7 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
         'Lonely': 'drop-shadow-[0_0_40px_rgba(206,147,216,1)] drop-shadow-[0_0_25px_rgba(186,104,200,0.9)] drop-shadow-[0_0_15px_rgba(171,71,188,0.8)]',
         'Angry': 'drop-shadow-[0_0_40px_rgba(255,112,67,1)] drop-shadow-[0_0_25px_rgba(255,87,34,0.9)] drop-shadow-[0_0_15px_rgba(244,81,30,0.8)]',
         'Neutral': 'drop-shadow-[0_0_35px_rgba(144,164,174,0.9)] drop-shadow-[0_0_20px_rgba(120,144,156,0.8)]',
+        'Funny': 'drop-shadow-[0_0_40px_rgba(212,225,87,1)] drop-shadow-[0_0_25px_rgba(205,220,57,0.9)] drop-shadow-[0_0_15px_rgba(192,202,51,0.8)]',
     }
 
     const emotionBorderGlow: Record<string, string> = {
@@ -109,6 +110,7 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
         'Lonely': 'shadow-[0_0_30px_rgba(206,147,216,0.6),0_0_60px_rgba(186,104,200,0.4),0_0_90px_rgba(171,71,188,0.2)]',
         'Angry': 'shadow-[0_0_30px_rgba(255,112,67,0.6),0_0_60px_rgba(255,87,34,0.4),0_0_90px_rgba(244,81,30,0.2)]',
         'Neutral': 'shadow-[0_0_30px_rgba(144,164,174,0.5),0_0_60px_rgba(120,144,156,0.3)]',
+        'Funny': 'shadow-[0_0_30px_rgba(212,225,87,0.6),0_0_60px_rgba(205,220,57,0.4),0_0_90px_rgba(192,202,51,0.2)]',
     }
     
     const CardContent = () => (
