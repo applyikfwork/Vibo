@@ -28,106 +28,81 @@ service cloud.firestore {
     }
 
     /**
-     * @description Checks if the request is made by the owner of the existing resource.
-     * @param {string} userId The user ID to compare against the resource's data.
-     * @return {boolean} True if the request is made by the owner and the resource exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
      * @description Rules for the /users/{userId} collection.
      * @path /users/{userId}
-     * @allow (create) - Authenticated user can create their own profile with matching userId.
-     * @allow (get) - Authenticated user can read their own profile.
-     * @allow (update) - Authenticated user can update their own profile.
-     * @allow (delete) - Authenticated user can delete their own profile.
-     * @deny (create) - Another user attempts to create a profile with a different userId.
-     * @principle Enforces document ownership for writes.
+     * @allow (get, update) - Owner can read and update their own profile.
+     * @allow (create) - Authenticated user can create their own profile.
+     * @deny (list, delete) - Listing users is disabled for privacy. Deletion is restricted.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false; // User listing is disabled for privacy.
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId); // Allow owner to update their own profile document
-      allow delete: if isExistingOwner(userId);
+      allow get, update: if isOwner(userId);
+      allow list: if false; 
+      allow create: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
      * @description Rules for the private /users/{userId}/vibes/{vibeId} collection.
      * @path /users/{userId}/vibes/{vibeId}
-     * @allow (read, write) - Authenticated user can read and write their own vibes.
-     * @allow (list) - Authenticated user can list their own vibes for the profile page.
-     * @allow (delete) - Authenticated user can delete their own vibe.
+     * @allow (read, write) - Authenticated user can manage their own vibes.
      */
     match /users/{userId}/vibes/{vibeId} {
-      allow read, list: if isOwner(userId);
-      // Allow creating a doc with a specific ID if the user is the owner
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
     /**
      * @description Rules for the public /all-vibes collection.
      * @path /all-vibes/{vibeId}
-     * @allow (read) - Any user can read the global vibe feed.
-     * @allow (create) - Any authenticated user can create a new vibe.
-     * @allow (update) - Any user can update a vibe (e.g., for view counts).
+     * @allow (read, create, update) - Any signed-in user can read/create/update vibes.
      * @allow (delete) - Owner of the vibe can delete it.
      */
     match /all-vibes/{vibeId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if true;
+      allow read, create: if isSignedIn();
+      allow update: if isSignedIn(); // Allows for incrementing view counts, etc.
       allow delete: if isOwner(resource.data.userId);
 
       /**
        * @description Rules for comments on a vibe.
        * @path /all-vibes/{vibeId}/comments/{commentId}
-       * @allow (read) - Any authenticated user can read comments.
-       * @allow (create) - Any authenticated user can create a comment.
-       * @deny (update, delete) - Comments are immutable.
        */
       match /comments/{commentId} {
-        allow read: if true;
-        allow create: if isSignedIn();
-        allow update, delete: if false;
+        allow read, create: if isSignedIn();
+        allow update, delete: if false; // Comments are immutable.
       }
 
       /**
        * @description Rules for reactions on a vibe.
        * @path /all-vibes/{vibeId}/reactions/{reactionId}
-       * @allow (read) - Any authenticated user can read reactions.
-       * @allow (create) - Any user (including anonymous) can create a reaction.
-       * @allow (delete) - The user who created the reaction can delete it.
-       * @deny (update) - Reactions are immutable.
        */
       match /reactions/{reactionId} {
-        allow read: if true;
-        allow create: if true;
+        allow read, create: if isSignedIn();
+        // Allow user to delete their own reaction
         allow delete: if isOwner(resource.data.userId);
-        allow update: if false;
+        allow update: if false; // Reactions are immutable.
       }
     }
 
     /**
      * @description Rules for the /tags/{tagId} collection.
      * @path /tags/{tagId}
-     * @allow (get) - Any user can read a tag.
-     * @allow (list) - Any user can list tags.
-     * @deny (create, update, delete) - Tag management is restricted (e.g., admin only).
      */
     match /tags/{tagId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create, update, delete: if false; // Admin-only
+    }
+    
+    /**
+     * @description Rules for the /vibeMemory/{userId} collection.
+     * @path /vibeMemory/{userId}
+     * @allow (read, write) - Only the owner can manage their vibe memory.
+     */
+    match /vibeMemory/{userId} {
+        allow read, write: if isOwner(userId);
     }
 
     /**
      * @description Rules for the /users/{userId}/moodHistory/{moodHistoryId} collection.
      * @path /users/{userId}/moodHistory/{moodHistoryId}
-     * @allow (read, write) - Only the owner can manage their mood history.
      */
     match /users/{userId}/moodHistory/{moodHistoryId} {
       allow read, write: if isOwner(userId);
