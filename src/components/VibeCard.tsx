@@ -10,7 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ReactionPalette } from './ReactionPalette';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase, useUser, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, Timestamp } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +40,16 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     const emotion = getEmotionByName(vibe.emotion);
     const authorName = vibe.isAnonymous ? 'Anonymous User' : vibe.author.name;
     
-    const timeAgo = vibe.timestamp ? formatDistanceToNow(vibe.timestamp.toDate(), { addSuffix: true }) : 'just now';
+    // Helper to handle both Timestamp object and serialized object
+    const getSafeDate = (timestamp: any): Date | null => {
+        if (!timestamp) return null;
+        if (timestamp.toDate) return timestamp.toDate(); // Firestore Timestamp
+        if (timestamp._seconds) return new Timestamp(timestamp._seconds, timestamp._nanoseconds).toDate(); // Serialized object
+        return new Date(timestamp); // Fallback for ISO string
+    };
+
+    const safeDate = getSafeDate(vibe.timestamp);
+    const timeAgo = safeDate ? formatDistanceToNow(safeDate, { addSuffix: true }) : 'just now';
 
     const reactionsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
