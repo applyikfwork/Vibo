@@ -1,10 +1,13 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getWeeklyReflection, type WeeklyReflectionInput } from '@/ai/flows/generate-weekly-reflection';
 import { getFirebaseAdmin } from '@/firebase/admin';
+import type { Vibe, EmotionCategory } from '@/lib/types';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   try {
-    const admin = getFirebaseAdmin();
+    const admin = await getFirebaseAdmin();
     if (!admin.apps.length) {
       throw new Error("Firebase Admin SDK is not initialized. Check server logs.");
     }
@@ -21,18 +24,20 @@ export async function POST(request: NextRequest) {
 
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoTimestamp = Timestamp.fromDate(weekAgo);
 
     const vibesSnapshot = await db
-      .collection('all-vibes') // Corrected collection name
-      .where('userId', '==', userId)
-      .where('timestamp', '>=', weekAgo)
+      .collection('users')
+      .doc(userId)
+      .collection('vibes')
+      .where('timestamp', '>=', weekAgoTimestamp)
       .get();
 
     if (vibesSnapshot.empty) {
       return NextResponse.json({
         success: true,
         reflection: {
-          summary: "You haven't shared any vibes this week yet. Start sharing your feelings to get personalized insights!",
+          summary: "You haven't shared any vibes this week. Start sharing your feelings to get personalized insights!",
           emotionalPattern: "No data available for this week",
           growthMoments: [],
           healingInsights: [],
@@ -47,10 +52,10 @@ export async function POST(request: NextRequest) {
     const vibeTexts: Array<{ emotion: string; vibeText: string }> = [];
 
     vibesSnapshot.docs.forEach((doc) => {
-      const vibe = doc.data();
+      const vibe = doc.data() as Vibe;
       if (vibe.emotion && vibe.timestamp) {
         const emotion = vibe.emotion;
-        const date = vibe.timestamp.toDate().toLocaleDateString();
+        const date = (vibe.timestamp as any).toDate().toLocaleDateString();
 
         if (!emotionCounts[emotion]) {
           emotionCounts[emotion] = { count: 0, dates: [] };
@@ -75,8 +80,11 @@ export async function POST(request: NextRequest) {
           date,
         }))
     );
+    
+    const emotionSequence = vibesSnapshot.docs
+        .map(doc => doc.data().emotion as EmotionCategory)
+        .filter(Boolean);
 
-    const emotionSequence = Object.keys(emotionCounts);
     const moodTransitions = emotionSequence.slice(0, 5);
 
     const vibeMemorySnapshot = await db
@@ -107,6 +115,9 @@ export async function POST(request: NextRequest) {
     };
 
     const reflection = await getWeeklyReflection(input);
+     if (!reflection) {
+      throw new Error('The AI model failed to return a reflection. Please try again later.');
+    }
 
     return NextResponse.json({
       success: true,
