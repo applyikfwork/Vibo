@@ -56,7 +56,7 @@ GOOGLE_GENAI_API_KEY="your-gemini-api-key"
 ### 2. Fill in the Values for Local Development
 
 - Replace all the `"your-..."` placeholders with your actual keys from Firebase and Google AI Studio.
-- For `FIREBASE_PRIVATE_KEY` locally, you can choose to Base64 encode it or just use the raw string with `\n` characters. Base64 is recommended to match the production setup.
+- For `FIREBASE_PRIVATE_KEY` locally, you must Base64 encode it to match the production setup. Follow the instructions below.
 
 ---
 
@@ -66,22 +66,22 @@ For your live website to connect to Firebase, you **must** add your environment 
 
 ### Step 1: Base64 Encode Your Private Key
 
-The `FIREBASE_PRIVATE_KEY` is a multi-line string. To ensure it's read correctly by the server, you **must** encode it into a single line of text using Base64.
+The `FIREBASE_PRIVATE_KEY` from the downloaded JSON file contains newline characters (`\n`) that can cause parsing errors in serverless environments. To prevent this, you **must** encode it into a single-line Base64 string.
 
 **On macOS / Linux:**
 
-1.  Open your downloaded Firebase service account JSON file.
-2.  Copy the entire private key, including the `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----` lines.
-3.  Open your terminal and run the following command, pasting your key inside the single quotes:
+1.  Open your downloaded Firebase service account JSON file in a text editor.
+2.  Copy the **entire private key value**, starting from `-----BEGIN PRIVATE KEY-----` and ending with `-----END PRIVATE KEY-----\n`.
+3.  Open your terminal and run the following command, pasting your key **exactly as copied** inside the single quotes:
     ```bash
     echo 'PASTE_YOUR_ENTIRE_PRIVATE_KEY_HERE' | base64
     ```
 4.  The command will output a long, single-line string. This is your Base64 encoded key. Copy it.
 
-**On Windows:**
+**On Windows (PowerShell):**
 
-1.  Open your downloaded Firebase service account JSON file and copy the entire private key.
-2.  Open PowerShell and run the following command, pasting your key inside the single quotes:
+1.  Open your downloaded Firebase service account JSON file and copy the entire private key value.
+2.  Open PowerShell and run the following command, pasting your key inside the single quotes. Make sure the newlines are preserved when you paste.
     ```powershell
     [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes('PASTE_YOUR_ENTIRE_PRIVATE_KEY_HERE'))
     ```
@@ -96,9 +96,13 @@ The `FIREBASE_PRIVATE_KEY` is a multi-line string. To ensure it's read correctly
 3.  Add each variable from your `.env.local` file one by one.
     - **Key**: e.g., `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
     - **Value**: The corresponding value.
-4.  For the `FIREBASE_PRIVATE_KEY`, paste the **Base64 encoded string** you generated in the previous step.
+4.  For the `FIREBASE_PRIVATE_KEY` variable, paste the **new Base64 encoded string** you generated in the previous step.
 
-**This is the most critical step.** Your deployed site will not work without these variables.
+**This is the most critical step.** Your deployed site will not work without these variables set correctly in the hosting provider's dashboard.
+
+### Step 3: Redeploy
+
+After adding or changing environment variables, you **must** redeploy your project for the changes to take effect.
 
 ---
 
@@ -111,7 +115,7 @@ The `FIREBASE_PRIVATE_KEY` is a multi-line string. To ensure it's read correctly
     npm install
     ```
 2.  **Configure Environment:**
-    - Create the `.env.local` file as described above and fill in your keys.
+    - Create the `.env.local` file as described above and fill in your keys. Make sure to use the Base64 encoded key for `FIREBASE_PRIVATE_KEY`.
 3.  **Run Development Server:**
     ```bash
     npm run dev
@@ -122,16 +126,12 @@ The `FIREBASE_PRIVATE_KEY` is a multi-line string. To ensure it's read correctly
 
 ## 🚨 Troubleshooting
 
-### "Firebase Admin SDK failed to initialize" in Production
+### "Firebase Admin SDK failed to initialize" or "Invalid PEM formatted message"
 
-This error almost always means there is a problem with your environment variables on Vercel/Netlify.
+This error almost always means there is a problem with the `FIREBASE_PRIVATE_KEY` environment variable on Vercel/Netlify.
 
-1.  **Check `FIREBASE_PRIVATE_KEY`:**
-    - Did you Base64 encode it? It **must** be encoded.
-    - Did you copy the entire encoded string?
-2.  **Check `FIREBASE_CLIENT_EMAIL` and `NEXT_PUBLIC_FIREBASE_PROJECT_ID`:**
-    - Are they correct?
-    - Are there any extra spaces or characters?
-3.  **Redeploy:** After adding or changing environment variables in your provider's dashboard, you often need to redeploy your project for the changes to take effect.
+1.  **Re-encode your key:** Carefully follow the Base64 encoding instructions again. This is the most common point of failure.
+2.  **Check `FIREBASE_CLIENT_EMAIL` and `NEXT_PUBLIC_FIREBASE_PROJECT_ID`:** Ensure they are correct and have no extra spaces.
+3.  **Redeploy:** After updating environment variables in your provider's dashboard, you **must** redeploy your project.
 
-By following these instructions carefully, especially the Base64 encoding and setting variables in your deployment environment, you will resolve the connection issues.
+By following these updated instructions carefully, you will resolve the connection issues.
