@@ -2,35 +2,55 @@
 
 import admin from 'firebase-admin';
 
-// Check if the app is already initialized to prevent re-initialization errors.
-if (!admin.apps.length) {
+let adminApp: admin.app.App | undefined;
+
+function initializeAdmin() {
+  if (admin.apps.length > 0) {
+    return admin.apps[0];
+  }
+  
+  const privateKeyBase64 = process.env.FIREBASE_PRIVATE_KEY;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+  if (!privateKeyBase64) {
+    throw new Error("FIREBASE_PRIVATE_KEY environment variable is not set or is empty. Please ensure it is Base64 encoded.");
+  }
+  if (!clientEmail) {
+    throw new Error("FIREBASE_CLIENT_EMAIL environment variable is not set or is empty.");
+  }
+  if (!projectId) {
+    throw new Error("NEXT_PUBLIC_FIREBASE_PROJECT_ID environment variable is not set or is empty.");
+  }
+
   try {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-    if (!privateKey) {
-      throw new Error("FIREBASE_PRIVATE_KEY environment variable is not set.");
-    }
-    
-    admin.initializeApp({
+    // Decode the Base64 private key
+    const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf8');
+
+    return admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // Replace the escaped newline characters with actual newlines.
-        privateKey: privateKey.replace(/\\n/g, '\n'),
+        projectId,
+        clientEmail,
+        privateKey,
       }),
     });
-  } catch (error) {
-    console.error('Firebase admin initialization error:', error);
-    // Depending on the desired behavior, you might want to throw the error
-    // or handle it gracefully. For now, we log it.
+  } catch (error: any) {
+    // Provide a more detailed error message for easier debugging
+    if (error.code === 'ERR_INVALID_ARG_TYPE') {
+         throw new Error(`Failed to decode Base64 private key. Make sure the FIREBASE_PRIVATE_KEY environment variable is a valid Base64 encoded string. Original error: ${error.message}`);
+    }
+    throw new Error(`Firebase admin initialization error: ${error.message}`);
   }
 }
 
-const firebaseAdmin = admin;
-
 /**
  * Gets the initialized Firebase Admin SDK instance.
- * It's structured this way to be easily mocked for testing if needed.
+ * It's structured this way to be easily mocked for testing if needed
+ * and to ensure initialization only happens once.
  */
 export async function getFirebaseAdmin() {
-    return firebaseAdmin;
+  if (!adminApp) {
+    adminApp = initializeAdmin()!;
+  }
+  return adminApp;
 }

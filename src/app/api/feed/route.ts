@@ -10,16 +10,6 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const admin = await getFirebaseAdmin();
-    if (!admin.apps.length) {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'Firebase Admin not initialized',
-          details: 'Missing required server-side environment variables. Please check your .env.local file for FIREBASE_PRIVATE_KEY and FIREBASE_CLIENT_EMAIL.',
-        },
-        { status: 500 }
-      );
-    }
     const db = admin.firestore();
 
     const body = await request.json();
@@ -62,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const vibes: Vibe[] = [];
     
-    for (const doc of vibesSnapshot.docs) {
+    const fetchCountsPromises = vibesSnapshot.docs.map(async (doc) => {
       const data = doc.data();
       
       // Fetch reactions count
@@ -78,20 +68,34 @@ export async function POST(request: NextRequest) {
         .doc(doc.id)
         .collection('comments')
         .get();
-      
+
+      return {
+        doc,
+        data,
+        reactionsCount: reactionsSnapshot.size,
+        commentsCount: commentsSnapshot.size,
+        reactions: reactionsSnapshot.docs.map(d => d.data()),
+        comments: commentsSnapshot.docs.map(d => d.data()),
+      };
+    });
+
+    const results = await Promise.all(fetchCountsPromises);
+
+    for (const result of results) {
+      const { doc, data, reactionsCount, commentsCount, reactions, comments } = result;
       // Calculate boost score
       const { boostScore } = calculateBoostScore(
         { ...data, id: doc.id } as Vibe,
-        reactionsSnapshot.docs.map(d => d.data()),
-        commentsSnapshot.docs.map(d => d.data()),
+        reactions,
+        comments,
         userPreviousMood
       );
       
       vibes.push({
         id: doc.id,
         ...data,
-        reactionCount: reactionsSnapshot.size,
-        commentCount: commentsSnapshot.size,
+        reactionCount: reactionsCount,
+        commentCount: commentsCount,
         boostScore,
       } as Vibe);
     }
@@ -127,8 +131,22 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Feed API error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Check if the error is from our admin SDK initialization
+    if (errorMessage.includes('FIREBASE_') || errorMessage.includes('Firebase admin initialization error')) {
+       return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Firebase Admin SDK failed to initialize. Check the server logs for the original error.',
+          details: errorMessage
+        }, 
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
-      { success: false, error: 'Failed to generate personalized feed', details: error instanceof Error ? error.message : String(error) },
+      { success: false, error: 'Failed to generate personalized feed', details: errorMessage },
       { status: 500 }
     );
   }
@@ -148,10 +166,11 @@ export async function GET(request: NextRequest) {
   }
 
   // Call POST with extracted params
-  return POST(
-    new NextRequest(request.url, {
-      method: 'POST',
-      body: JSON.stringify({ userId, userMood }),
-    })
-  );
+  const postRequest = new NextRequest(request.url, {
+    method: 'POST',
+    headers: new Headers({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ userId, userMood }),
+  });
+
+  return POST(postRequest);
 }
