@@ -43,3 +43,6 @@ next-env.d.ts
 replit.nix
 .config
 dump.rdb
+
+# Local Netlify folder
+.netlify
