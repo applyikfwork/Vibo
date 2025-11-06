@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-# Vibo 🌈
-=======
-git# Firebase Studio
->>>>>>> Stashed changes
+# Firebase Studio
 
 **Feel it. Share it. Find your vibe.**
 
