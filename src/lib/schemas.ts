@@ -39,3 +39,36 @@ export const AnalyzeEmotionStrengthOutputSchema = z.object({
     .string()
     .describe('Brief explanation of why this intensity score was given.'),
 });
+
+export const DailyHoroscopeInputSchema = z.object({
+  zodiacSign: z
+    .string()
+    .describe('The zodiac sign for which to generate the horoscope.'),
+  currentMood: z
+    .string()
+    .optional()
+    .describe('The user\'s current emotional state.'),
+});
+
+export const DailyHoroscopeOutputSchema = z.object({
+  emotionalForecast: z
+    .string()
+    .describe('Prediction of emotional state for today based on zodiac.'),
+  moodAdvice: z
+    .string()
+    .describe('Specific advice for managing emotions today.'),
+  luckyEmotion: z
+    .enum(emotionNames)
+    .describe('The emotion that will bring most benefit today.'),
+  challengeEmotion: z
+    .enum(emotionNames)
+    .describe('The emotion to be mindful of today.'),
+  spiritualFocus: z
+    .string()
+    .describe('Spiritual practice or focus for the day.'),
+  connectionScore: z
+    .number()
+    .min(0)
+    .max(10)
+    .describe('Expected emotional connection strength today (0-10).'),
+});

@@ -115,6 +115,10 @@ import type { AnalyzeEmotionStrengthInputSchema, AnalyzeEmotionStrengthOutputSch
 export type AnalyzeEmotionStrengthInput = z.infer<typeof AnalyzeEmotionStrengthInputSchema>;
 export type AnalyzeEmotionStrengthOutput = z.infer<typeof AnalyzeEmotionStrengthOutputSchema>;
 
+import type { DailyHoroscopeInputSchema, DailyHoroscopeOutputSchema } from './schemas';
+export type DailyHoroscopeInput = z.infer<typeof DailyHoroscopeInputSchema>;
+export type DailyHoroscopeOutput = z.infer<typeof DailyHoroscopeOutputSchema>;
+
 // Algorithm-specific types
 export type FeedZone = 'my-vibe' | 'healing' | 'explore';
 
