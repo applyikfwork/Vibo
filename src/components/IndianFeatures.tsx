@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FestivalCountdown } from './FestivalCountdown';
 import { AstrologyDashboard } from './AstrologyDashboard';
-import { useUser } from '@/firebase/hooks';
+import { useUser } from '@/firebase';
 import type { ZodiacSign, EmotionCategory } from '@/lib/types';
 import { motion } from 'framer-motion';
 

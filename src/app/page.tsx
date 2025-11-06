@@ -6,6 +6,7 @@ import { EmotionTabs } from '@/components/EmotionTabs';
 import { VibeCard } from '@/components/VibeCard';
 import { SmartVibeFeed } from '@/components/SmartVibeFeed';
 import { WeeklyReflection } from '@/components/WeeklyReflection';
+import { IndianFeatures } from '@/components/IndianFeatures';
 import { emotions } from '@/lib/data';
 import { useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
@@ -75,6 +76,16 @@ export default function Home() {
             className="mb-16"
           >
             <VibeForm />
+          </motion.section>
+
+          {/* Indian Features: Festivals & Astrology */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mb-16"
+          >
+            <IndianFeatures />
           </motion.section>
 
           <div className="mb-8 flex justify-center gap-4">
