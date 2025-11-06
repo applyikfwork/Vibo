@@ -12,7 +12,7 @@ import {
   DiagnoseVibeInputSchema,
   DiagnoseVibeOutputSchema,
 } from '@/lib/schemas';
-import type { DiagnoseVibeInput, DiagnoseVibeOutput } from '@/lib/types';
+import type { DiagnoseVibeInput, DiagnoseVibeOutput, EmotionCategory } from '@/lib/types';
 
 export async function diagnoseVibe(input: DiagnoseVibeInput): Promise<DiagnoseVibeOutput> {
   return diagnoseVibeFlow(input);
@@ -66,7 +66,32 @@ const diagnoseVibeFlow = ai.defineFlow(
     outputSchema: DiagnoseVibeOutputSchema,
   },
   async input => {
-    const { output } = await prompt(input);
-    return output!;
+    try {
+      const { output } = await prompt(input);
+      
+      // Validate that the detected emotion is valid
+      const validEmotions = [
+        'Happy', 'Sad', 'Chill', 'Motivated', 'Lonely', 'Angry', 'Neutral', 'Funny',
+        'Festival Joy', 'Missing Home', 'Exam Stress', 'Wedding Excitement',
+        'Religious Peace', 'Family Bonding', 'Career Anxiety', 'Festive Nostalgia'
+      ];
+      
+      if (output && !validEmotions.includes(output.detectedEmotion)) {
+        console.warn(`Invalid emotion detected: ${output.detectedEmotion}. Falling back to Neutral.`);
+        return {
+          detectedEmotion: 'Neutral' as EmotionCategory,
+          emoji: output.emoji || '😐',
+        };
+      }
+      
+      return output!;
+    } catch (error) {
+      console.error('Error in diagnoseVibe flow:', error);
+      // Fallback to neutral emotion on error
+      return {
+        detectedEmotion: 'Neutral' as EmotionCategory,
+        emoji: '😐',
+      };
+    }
   }
 );

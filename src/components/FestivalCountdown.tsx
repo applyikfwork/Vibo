@@ -1,18 +1,49 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getUpcomingFestivals, type IndianFestival } from '@/lib/indian-festivals';
+import type { IndianFestival } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
 
 export function FestivalCountdown() {
   const [upcomingFestivals, setUpcomingFestivals] = useState<(IndianFestival & { daysUntil?: number })[]>([]);
+  const [currentSeason, setCurrentSeason] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const festivals = getUpcomingFestivals(60); // Get festivals in next 60 days
-    setUpcomingFestivals(festivals);
+    async function fetchFestivals() {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/festivals/upcoming?days=60');
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUpcomingFestivals(data.upcoming || []);
+          setCurrentSeason(data.currentSeason || '');
+        }
+      } catch (error) {
+        console.error('Error fetching festivals:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchFestivals();
   }, []);
+
+  if (isLoading) {
+    return (
+      <Card className="bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-500/10 border-2 border-purple-500/30">
+        <CardContent className="py-8">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            <p className="ml-3 text-purple-600 dark:text-purple-400">Loading festivals...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (upcomingFestivals.length === 0) {
     return null;

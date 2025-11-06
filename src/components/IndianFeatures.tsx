@@ -5,20 +5,64 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FestivalCountdown } from './FestivalCountdown';
 import { AstrologyDashboard } from './AstrologyDashboard';
 import { useUser } from '@/firebase';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import type { ZodiacSign, EmotionCategory } from '@/lib/types';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { updateIndianFeatures } from '@/app/profile/actions';
+import { useState as useReactState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 interface IndianFeaturesProps {
   currentMood?: EmotionCategory;
-  userZodiacSign?: ZodiacSign;
 }
 
-export function IndianFeatures({ currentMood, userZodiacSign }: IndianFeaturesProps) {
-  const { user } = useUser();
-  const [activeTab, setActiveTab] = useState<string>('festivals');
+const zodiacSigns: ZodiacSign[] = [
+  'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+  'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
+];
 
-  // Default zodiac for demo purposes (should be from user profile in production)
-  const zodiacSign = userZodiacSign || 'Aries';
+export function IndianFeatures({ currentMood }: IndianFeaturesProps) {
+  const { user } = useUser();
+  const { profile, isLoading: isProfileLoading, refetch } = useUserProfile();
+  const [activeTab, setActiveTab] = useReactState<string>('festivals');
+  const [selectedZodiac, setSelectedZodiac] = useReactState<ZodiacSign | undefined>(undefined);
+  const [isSaving, setIsSaving] = useReactState(false);
+  const { toast } = useToast();
+
+  // Use profile zodiac sign or fallback to selection or default
+  const zodiacSign = profile?.zodiacSign || selectedZodiac || 'Aries';
+  const needsSetup = !profile?.zodiacSign;
+
+  const handleSaveZodiac = async () => {
+    if (!user || !selectedZodiac) return;
+    
+    setIsSaving(true);
+    const result = await updateIndianFeatures({
+      userId: user.uid,
+      zodiacSign: selectedZodiac,
+      enableAstrology: true,
+      enableSpiritualSuggestions: true,
+    });
+
+    if (result.error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: result.message,
+      });
+    } else {
+      toast({
+        title: 'Success',
+        description: 'Your zodiac sign has been saved!',
+      });
+      // Refetch profile to update UI immediately
+      refetch();
+    }
+    setIsSaving(false);
+  };
 
   return (
     <motion.div
@@ -35,6 +79,38 @@ export function IndianFeatures({ currentMood, userZodiacSign }: IndianFeaturesPr
           Festivals, Astrology & Spiritual Wellness for Indian Users
         </p>
       </div>
+
+      {/* Zodiac Setup Card (show if no zodiac sign set) */}
+      {needsSetup && user && !user.isAnonymous && (
+        <Card className="mb-4 p-4 bg-gradient-to-r from-purple-100/50 to-pink-100/50 dark:from-purple-900/20 dark:to-pink-900/20 border-2 border-purple-300/50">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
+                ⭐ Set Your Zodiac Sign for Personalized Horoscope
+              </p>
+              <Select value={selectedZodiac} onValueChange={(value) => setSelectedZodiac(value as ZodiacSign)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select your zodiac sign..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {zodiacSigns.map((sign) => (
+                    <SelectItem key={sign} value={sign}>
+                      {sign}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              onClick={handleSaveZodiac} 
+              disabled={!selectedZodiac || isSaving}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-purple-100/50 dark:bg-purple-900/20">
