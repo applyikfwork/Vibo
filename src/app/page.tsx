@@ -60,11 +60,12 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="text-center mb-12"
+            role="banner"
           >
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent animate-gradient-shift mb-4">
               Feel it. Share it. Find your vibe.
             </h1>
-            <p className="text-gray-700 mt-2 text-lg md:text-xl font-medium bg-white/50 backdrop-blur-sm rounded-full px-6 py-2 inline-block shadow-lg">
+            <p className="text-gray-700 mt-2 text-lg md:text-xl font-medium bg-white/50 backdrop-blur-sm rounded-full px-6 py-2 inline-block shadow-lg" role="doc-subtitle">
               ✨ How do you feel right now? ✨
             </p>
           </motion.header>
