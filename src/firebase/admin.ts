@@ -9,7 +9,7 @@ function initializeAdmin() {
     return admin.apps[0];
   }
   
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const projectId = process.env.FIREBASE_PROJECT_ID;
 
@@ -24,11 +24,22 @@ function initializeAdmin() {
   }
 
   try {
+    // Handle different formats of the private key
+    // If the key contains literal \n characters (as text), replace them with actual newlines
+    if (privateKey.includes('\\n')) {
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
+    
+    // Ensure the key starts and ends with the proper PEM markers
+    if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+      throw new Error('Private key must be in PEM format starting with -----BEGIN PRIVATE KEY-----');
+    }
+
     return admin.initializeApp({
       credential: admin.credential.cert({
         projectId,
         clientEmail,
-        privateKey: privateKey.replace(/\\n/g, '\n'),
+        privateKey,
       }),
     });
   } catch (error: any) {
