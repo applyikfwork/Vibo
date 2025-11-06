@@ -3,6 +3,7 @@ import { PlaceHolderImages } from './placeholder-images';
 
 // Super vibrant emotion gradients matching the reference design
 export const emotions: Emotion[] = [
+  // Core Emotions
   { name: 'Happy', emoji: '😊', gradient: 'from-[#FFB84D] via-[#FFA726] to-[#FF9500]' },
   { name: 'Sad', emoji: '😢', gradient: 'from-[#64B5F6] via-[#42A5F5] to-[#2196F3]' },
   { name: 'Chill', emoji: '😌', gradient: 'from-[#4DD0E1] via-[#26C6DA] to-[#00BCD4]' },
@@ -11,6 +12,16 @@ export const emotions: Emotion[] = [
   { name: 'Angry', emoji: '😠', gradient: 'from-[#FF7043] via-[#FF5722] to-[#F4511E]' },
   { name: 'Neutral', emoji: '😶', gradient: 'from-[#90A4AE] via-[#78909C] to-[#607D8B]' },
   { name: 'Funny', emoji: '😂', gradient: 'from-[#D4E157] via-[#CDDC39] to-[#C0CA33]' },
+  
+  // Festival & Occasion Moods (Indian Specific)
+  { name: 'Festival Joy', emoji: '🎊', gradient: 'from-[#FF6B9D] via-[#FFA06B] to-[#FFD56B]' },
+  { name: 'Missing Home', emoji: '🏠', gradient: 'from-[#9D84B7] via-[#7B68A6] to-[#5E4C87]' },
+  { name: 'Exam Stress', emoji: '📚', gradient: 'from-[#FF8A80] via-[#FF5252] to-[#D32F2F]' },
+  { name: 'Wedding Excitement', emoji: '💒', gradient: 'from-[#FF9CE5] via-[#FF6FD8] to-[#FF4DC7]' },
+  { name: 'Religious Peace', emoji: '🕉️', gradient: 'from-[#FFB74D] via-[#FFA726] to-[#FF9800]' },
+  { name: 'Family Bonding', emoji: '👨‍👩‍👧‍👦', gradient: 'from-[#A5D6A7] via-[#81C784] to-[#66BB6A]' },
+  { name: 'Career Anxiety', emoji: '💼', gradient: 'from-[#B0BEC5] via-[#90A4AE] to-[#78909C]' },
+  { name: 'Festive Nostalgia', emoji: '🪔', gradient: 'from-[#CE93D8] via-[#AB47BC] to-[#8E24AA]' },
 ];
 
 // This file now contains only static definitions.

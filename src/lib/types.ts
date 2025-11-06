@@ -2,7 +2,18 @@ import { Timestamp } from "firebase/firestore";
 import { z } from 'zod';
 import { DiagnoseVibeInputSchema, DiagnoseVibeOutputSchema } from './schemas';
 
-export type EmotionCategory = 'Happy' | 'Sad' | 'Chill' | 'Motivated' | 'Lonely' | 'Angry' | 'Neutral' | 'Funny';
+export type EmotionCategory = 
+  | 'Happy' | 'Sad' | 'Chill' | 'Motivated' | 'Lonely' | 'Angry' | 'Neutral' | 'Funny'
+  | 'Festival Joy' | 'Missing Home' | 'Exam Stress' | 'Wedding Excitement' 
+  | 'Religious Peace' | 'Family Bonding' | 'Career Anxiety' | 'Festive Nostalgia';
+
+export type ZodiacSign = 
+  | 'Aries' | 'Taurus' | 'Gemini' | 'Cancer' | 'Leo' | 'Virgo'
+  | 'Libra' | 'Scorpio' | 'Sagittarius' | 'Capricorn' | 'Aquarius' | 'Pisces';
+
+export type HinduMonth = 
+  | 'Chaitra' | 'Vaishakha' | 'Jyeshtha' | 'Ashadha' | 'Shravana' | 'Bhadrapada'
+  | 'Ashwin' | 'Kartika' | 'Margashirsha' | 'Pausha' | 'Magha' | 'Phalguna';
 
 export type Author = {
   name: string;
@@ -31,6 +42,11 @@ export type UserProfile = {
     activeTimePreference?: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
     vibeAffinityScores?: Record<EmotionCategory, number>; // Tracks emotional preferences
     lastMoodUpdate?: Timestamp;
+    // Astrology & Spiritual
+    zodiacSign?: ZodiacSign;
+    dateOfBirth?: Timestamp;
+    enableAstrology?: boolean;
+    enableSpiritualSuggestions?: boolean;
 };
 
 export type Vibe = {
