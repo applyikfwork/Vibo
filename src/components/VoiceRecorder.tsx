@@ -10,6 +10,7 @@ import { EmotionCategory } from '@/lib/types';
 import { emotions } from '@/lib/data';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
+import { VoiceNoteWaveform, VoiceNoteStats } from './VoiceNoteEnhancements';
 
 interface VoiceRecorderProps {
   onRecordingComplete: (audioBlob: Blob, duration: number, selectedEmotion: EmotionCategory) => void;
@@ -22,6 +23,8 @@ export function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRecorderPr
     audioBlob,
     duration,
     errorMessage,
+    audioLevels,
+    actualBlobSize,
     startRecording,
     stopRecording,
     resetRecording,
@@ -118,17 +121,26 @@ export function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRecorderPr
                 <div className="text-6xl animate-bounce mb-2">🔴</div>
                 <p className="text-red-600 font-bold">Recording...</p>
               </div>
-              <div className="mb-4">
+              
+              {/* Waveform Visualization */}
+              <VoiceNoteWaveform audioLevels={audioLevels} isRecording={true} />
+              
+              <div className="mb-4 mt-4">
                 <p className="text-3xl font-mono font-bold text-purple-600">
                   {formatTime(duration)}
                 </p>
                 <p className="text-sm text-gray-500">/ {formatTime(30)}</p>
               </div>
               <Progress value={progressPercentage} className="h-2 mb-4" />
+              
+              {/* Real-time Stats */}
+              <VoiceNoteStats duration={duration} actualBlobSize={actualBlobSize} />
+              
               <Button
                 onClick={stopRecording}
                 size="lg"
                 variant="destructive"
+                className="mt-4"
               >
                 <StopCircle className="mr-2 h-5 w-5" />
                 Stop Recording
@@ -150,8 +162,11 @@ export function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRecorderPr
                 <p className="text-sm text-gray-600">Duration: {formatTime(duration)}</p>
               </div>
 
+              {/* Compression Stats */}
+              <VoiceNoteStats duration={duration} actualBlobSize={actualBlobSize} />
+
               {/* Preview Playback */}
-              <div className="bg-white p-4 rounded-lg border-2 border-purple-200">
+              <div className="bg-white p-4 rounded-lg border-2 border-purple-200 mt-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-gray-700">Preview:</span>
                   <Button
@@ -166,6 +181,8 @@ export function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRecorderPr
                     )}
                   </Button>
                 </div>
+                {/* Static waveform for playback preview */}
+                {isPlaying && <VoiceNoteWaveform audioLevels={audioLevels} isRecording={false} />}
               </div>
 
               {/* Emotion Selection */}

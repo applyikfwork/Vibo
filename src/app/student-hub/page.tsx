@@ -4,14 +4,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { BookOpen, Brain, Users, Heart, Calendar, Bell } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { BookOpen, Brain, Users, Heart, Calendar, Bell, Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useStudentHub } from '@/hooks/useStudentHub';
+import { useStudyBreakNotifications } from '@/hooks/useStudyBreakNotifications';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 export default function StudentHubPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
+  const {
+    profile,
+    loading,
+    toggleExamStressMode,
+    toggleStudyBreakReminders,
+    joinPeerCircle,
+    linkParent,
+    updateMoodTrend,
+  } = useStudentHub();
+  const { recordBreak } = useStudyBreakNotifications();
+
+  const [parentEmail, setParentEmail] = useState('');
+  const [isLinkingParent, setIsLinkingParent] = useState(false);
+  const [isJoiningCircle, setIsJoiningCircle] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && (!user || user.isAnonymous)) {
@@ -19,8 +46,75 @@ export default function StudentHubPage() {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || !user) {
-    return null;
+  const handleShareExamStress = () => {
+    router.push('/?emotion=Exam Stress');
+  };
+
+  const handleJoinCircle = async () => {
+    setIsJoiningCircle(true);
+    try {
+      const circleId = await joinPeerCircle('exam-stress');
+      if (circleId) {
+        toast({
+          title: '👥 Joined Student Circle!',
+          description: 'You are now connected with peers facing similar challenges.',
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not join circle. Please try again.',
+      });
+    } finally {
+      setIsJoiningCircle(false);
+    }
+  };
+
+  const handleLinkParent = async () => {
+    if (!parentEmail || !parentEmail.includes('@')) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Email',
+        description: 'Please enter a valid parent email address.',
+      });
+      return;
+    }
+
+    setIsLinkingParent(true);
+    try {
+      await linkParent(parentEmail);
+      await updateMoodTrend();
+      toast({
+        title: '✅ Parent Account Linked!',
+        description: `Your parent (${parentEmail}) can now see your general mood trends.`,
+      });
+      setParentEmail('');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not link parent account. Please try again.',
+      });
+    } finally {
+      setIsLinkingParent(false);
+    }
+  };
+
+  const handleTakeBreak = async () => {
+    await recordBreak(10);
+    toast({
+      title: '🧘‍♂️ Break Recorded!',
+      description: 'Great job taking a study break. You deserve it!',
+    });
+  };
+
+  if (isUserLoading || !user || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+      </div>
+    );
   }
 
   return (
@@ -32,6 +126,22 @@ export default function StudentHubPage() {
         <p className="text-gray-600 text-lg">
           Your safe space for exam stress, peer support, and emotional wellness
         </p>
+        {profile && (
+          <div className="mt-4 inline-flex items-center gap-2 bg-purple-50 px-4 py-2 rounded-full">
+            <span className="text-sm font-medium text-purple-900">
+              Current Mood Trend:
+            </span>
+            <span className={`text-sm font-bold ${
+              profile.currentMoodTrend === 'improving' ? 'text-green-600' :
+              profile.currentMoodTrend === 'struggling' ? 'text-red-600' :
+              'text-blue-600'
+            }`}>
+              {profile.currentMoodTrend === 'improving' ? '📈 Improving' :
+               profile.currentMoodTrend === 'struggling' ? '📉 Struggling' :
+               '➡️ Stable'}
+            </span>
+          </div>
+        )}
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -49,14 +159,26 @@ export default function StudentHubPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="exam-stress-mode">Enable Exam Mode</Label>
-              <Switch id="exam-stress-mode" />
+              <Switch
+                id="exam-stress-mode"
+                checked={profile?.examStressModeEnabled || false}
+                onCheckedChange={toggleExamStressMode}
+              />
             </div>
-            <Button className="w-full bg-red-500 hover:bg-red-600">
+            <Button
+              onClick={handleShareExamStress}
+              className="w-full bg-red-500 hover:bg-red-600"
+            >
               📝 Share Exam Stress
             </Button>
             <p className="text-xs text-gray-500">
               Get supportive vibes, study break reminders, and connect with students facing similar pressure
             </p>
+            {profile?.examStressModeEnabled && (
+              <div className="bg-red-50 p-3 rounded-lg text-xs text-red-700">
+                ✅ Exam Stress Mode is active. You'll receive special support!
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -74,7 +196,11 @@ export default function StudentHubPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="study-reminders">Enable Reminders</Label>
-              <Switch id="study-reminders" />
+              <Switch
+                id="study-reminders"
+                checked={profile?.studyBreakRemindersEnabled || false}
+                onCheckedChange={toggleStudyBreakReminders}
+              />
             </div>
             <div className="bg-blue-50 p-3 rounded-lg text-sm">
               <p className="font-medium text-blue-900 mb-1">Smart Detection</p>
@@ -82,6 +208,15 @@ export default function StudentHubPage() {
                 When you post "Exam Stress" vibes for 2+ hours, we'll remind you to take a 10-minute break
               </p>
             </div>
+            {profile?.studyBreakRemindersEnabled && (
+              <Button
+                onClick={handleTakeBreak}
+                variant="outline"
+                className="w-full border-blue-300 hover:bg-blue-50"
+              >
+                🧘‍♂️ Take a Break Now
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -97,8 +232,16 @@ export default function StudentHubPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button className="w-full bg-purple-500 hover:bg-purple-600">
-              👥 Join Student Circle
+            <Button
+              onClick={handleJoinCircle}
+              disabled={isJoiningCircle}
+              className="w-full bg-purple-500 hover:bg-purple-600"
+            >
+              {isJoiningCircle ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Joining...</>
+              ) : (
+                <>👥 Join Student Circle</>
+              )}
             </Button>
             <div className="text-sm text-gray-600 space-y-1">
               <p>• Share exam anxiety</p>
@@ -129,14 +272,48 @@ export default function StudentHubPage() {
                 <li>💬 You stay anonymous with full privacy</li>
               </ul>
             </div>
-            <div className="flex gap-4">
-              <Button className="flex-1 bg-green-500 hover:bg-green-600">
-                Link Parent Account
-              </Button>
-              <Button variant="outline" className="flex-1">
-                Learn More
-              </Button>
-            </div>
+            {profile?.linkedParentEmail ? (
+              <div className="bg-green-100 p-3 rounded-lg">
+                <p className="text-sm font-medium text-green-900">
+                  ✅ Linked to: {profile.linkedParentEmail}
+                </p>
+              </div>
+            ) : (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="w-full bg-green-500 hover:bg-green-600">
+                    Link Parent Account
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Link Parent Account</DialogTitle>
+                    <DialogDescription>
+                      Enter your parent's email address to share your general mood trends
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <Input
+                      type="email"
+                      placeholder="parent@example.com"
+                      value={parentEmail}
+                      onChange={(e) => setParentEmail(e.target.value)}
+                    />
+                    <Button
+                      onClick={handleLinkParent}
+                      disabled={isLinkingParent}
+                      className="w-full bg-green-500 hover:bg-green-600"
+                    >
+                      {isLinkingParent ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Linking...</>
+                      ) : (
+                        'Link Account'
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </CardContent>
         </Card>
 

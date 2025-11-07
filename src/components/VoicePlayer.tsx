@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { VoiceNoteIndicator, VoiceNoteWaveform } from './VoiceNoteEnhancements';
 
 interface VoicePlayerProps {
   audioUrl: string;
@@ -56,6 +57,9 @@ export function VoicePlayer({ audioUrl, duration }: VoicePlayerProps) {
 
   return (
     <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
+      <div className="mb-2">
+        <VoiceNoteIndicator />
+      </div>
       <div className="flex items-center gap-3">
         <Button
           onClick={togglePlayPause}
@@ -83,6 +87,11 @@ export function VoicePlayer({ audioUrl, duration }: VoicePlayerProps) {
           <Progress value={progress} className="h-1 bg-white/20" />
         </div>
       </div>
+      {isPlaying && (
+        <div className="mt-3 bg-white/10 rounded-lg p-2">
+          <VoiceNoteWaveform isRecording={false} />
+        </div>
+      )}
     </div>
   );
 }

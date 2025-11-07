@@ -122,6 +122,12 @@ export default function Header() {
             >
               📚 Student Hub
             </Link>
+            <Link
+              href="/parent-dashboard"
+              className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-green-600 hover:to-blue-600 hover:bg-clip-text font-semibold"
+            >
+              💛 Parent Dashboard
+            </Link>
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
