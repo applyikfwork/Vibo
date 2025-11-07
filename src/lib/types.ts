@@ -100,6 +100,99 @@ export type CityMoodAggregate = {
   lastAggregated: Timestamp;
 };
 
+export type Badge = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  requirement: string;
+  earnedAt?: Timestamp;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  category: 'positivity' | 'empathy' | 'consistency' | 'generosity' | 'achievement';
+};
+
+export type Mission = {
+  id: string;
+  type: 'daily' | 'weekly' | 'special' | 'event';
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  reward: {
+    xp: number;
+    coins: number;
+    badge?: string;
+  };
+  expiresAt?: Timestamp;
+  completedAt?: Timestamp;
+  isCompleted: boolean;
+};
+
+export type InventoryItem = {
+  id: string;
+  itemId: string;
+  name: string;
+  type: 'boost' | 'badge' | 'theme' | 'filter' | 'skip_token';
+  quantity: number;
+  acquiredAt: Timestamp;
+  expiresAt?: Timestamp;
+};
+
+export type RewardTransaction = {
+  id: string;
+  userId: string;
+  type: 'earn' | 'spend';
+  action: string;
+  xpChange?: number;
+  coinsChange?: number;
+  timestamp: Timestamp;
+  metadata?: Record<string, any>;
+};
+
+export type ReactionStreak = {
+  userId: string;
+  username: string;
+  streakCount: number;
+  lastInteraction: Timestamp;
+};
+
+export type CommunityHub = {
+  id: string;
+  name: string;
+  description: string;
+  theme: EmotionCategory;
+  icon: string;
+  memberCount: number;
+  activeChallenge?: Mission;
+  topContributors: string[];
+};
+
+export type LeaderboardEntry = {
+  rank: number;
+  userId: string;
+  username: string;
+  displayName?: string;
+  xp: number;
+  level: number;
+  badges: Badge[];
+  profileImage?: string;
+  mood?: EmotionCategory;
+  city?: string;
+};
+
+export type StoreItem = {
+  id: string;
+  name: string;
+  description: string;
+  type: 'boost' | 'badge' | 'theme' | 'filter' | 'skip_token';
+  price: number;
+  icon: string;
+  isLimitedTime?: boolean;
+  expiresAt?: Timestamp;
+  stock?: number;
+  effectDuration?: number;
+};
+
 export type UserProfile = {
     id: string;
     username: string;
@@ -127,6 +220,26 @@ export type UserProfile = {
     enableLocationSharing?: boolean;
     xp?: number;
     cityBadges?: string[];
+    coins?: number;
+    level?: number;
+    badges?: Badge[];
+    dailyMissions?: Mission[];
+    weeklyMissions?: Mission[];
+    specialMissions?: Mission[];
+    inventory?: InventoryItem[];
+    postingStreak?: number;
+    lastPostDate?: Timestamp;
+    reactionStreaks?: ReactionStreak[];
+    helpfulCommentsGiven?: number;
+    helpfulCommentsReceived?: number;
+    lastDailyMissionReset?: Timestamp;
+    lastWeeklyMissionReset?: Timestamp;
+    totalVibesPosted?: number;
+    totalReactionsGiven?: number;
+    totalCommentsGiven?: number;
+    joinedHubs?: string[];
+    isPremium?: boolean;
+    premiumExpiresAt?: Timestamp;
 };
 
 export type Vibe = {
@@ -165,6 +278,9 @@ export type Comment = {
   timestamp: Timestamp;
   author: Author;
   isAnonymous: boolean;
+  helpfulCount?: number;
+  helpfulVoters?: string[];
+  isFeatured?: boolean;
 };
 
 export type Reaction = {
