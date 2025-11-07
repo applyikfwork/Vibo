@@ -35,32 +35,42 @@ export type ExamSchedule = {
   importance: 'high' | 'medium' | 'low';
 };
 
+export type Location = {
+  lat: number;
+  lng: number;
+  city?: string;
+  state?: string;
+  country?: string;
+  geohash?: string;
+};
+
 export type UserProfile = {
     id: string;
     username: string;
     email: string;
     displayName?: string;
     anonymous?: boolean;
-    // Algorithm fields
     currentMood?: EmotionCategory;
     moodHistory?: MoodHistoryEntry[];
     interactionStyle?: InteractionStyle;
-    averageSessionTime?: number; // in minutes
+    averageSessionTime?: number;
     activeTimePreference?: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
-    vibeAffinityScores?: Record<EmotionCategory, number>; // Tracks emotional preferences
+    vibeAffinityScores?: Record<EmotionCategory, number>;
     lastMoodUpdate?: Timestamp;
-    // Astrology & Spiritual
     zodiacSign?: ZodiacSign;
     dateOfBirth?: Timestamp;
     enableAstrology?: boolean;
     enableSpiritualSuggestions?: boolean;
-    // Student Mental Health Hub
     isStudent?: boolean;
-    parentLinkedUserId?: string; // For parent-student emotional bridge
+    parentLinkedUserId?: string;
     enableStudyReminders?: boolean;
     examSchedule?: ExamSchedule[];
     lastStudyBreakReminder?: Timestamp;
-    consecutiveStressHours?: number; // Track stress hours for study break reminders
+    consecutiveStressHours?: number;
+    location?: Location;
+    enableLocationSharing?: boolean;
+    xp?: number;
+    cityBadges?: string[];
 };
 
 export type Vibe = {
@@ -69,27 +79,26 @@ export type Vibe = {
   text: string;
   emoji: string;
   emotion: EmotionCategory;
-  backgroundColor: string; // This should be the tailwind gradient class string
+  backgroundColor: string;
   timestamp: Timestamp;
   tagIds?: string[];
-  // Denormalized author data for easier feed display
   author: Author;
   isAnonymous: boolean;
   viewCount?: number;
-  // Voice Notes
-  isVoiceNote?: boolean; // True if this is a voice vibe
-  audioUrl?: string; // Firebase Storage URL for the audio file
-  audioDuration?: number; // Duration in seconds (max 30)
-  // Algorithm signals
-  emotionStrength?: number; // 0-1, AI-analyzed sentiment intensity
-  reactionCount?: number; // Total reactions
-  commentCount?: number; // Total comments
-  viewDuration?: number; // Average view time in seconds
-  emotionMatchScore?: number; // Calculated per-user
-  diversityScore?: number; // Global diversity metric
-  vibeScore?: number; // Final ranking score
-  boostScore?: number; // Temporary boost from engagement
-  lastDecayUpdate?: Timestamp; // For decay system
+  isVoiceNote?: boolean;
+  audioUrl?: string;
+  audioDuration?: number;
+  emotionStrength?: number;
+  reactionCount?: number;
+  commentCount?: number;
+  viewDuration?: number;
+  emotionMatchScore?: number;
+  diversityScore?: number;
+  vibeScore?: number;
+  boostScore?: number;
+  lastDecayUpdate?: Timestamp;
+  location?: Location;
+  distance?: number;
 };
 
 export type Comment = {
@@ -114,7 +123,7 @@ export type Reaction = {
 export type Emotion = {
   name: EmotionCategory;
   emoji: string;
-  gradient: string; // tailwind gradient class
+  gradient: string;
 };
 
 export type MoodHistoryData = {
@@ -137,7 +146,6 @@ import type { DailyHoroscopeInputSchema, DailyHoroscopeOutputSchema } from './sc
 export type DailyHoroscopeInput = z.infer<typeof DailyHoroscopeInputSchema>;
 export type DailyHoroscopeOutput = z.infer<typeof DailyHoroscopeOutputSchema>;
 
-// Algorithm-specific types
 export type FeedZone = 'my-vibe' | 'healing' | 'explore';
 
 export type RankedVibe = Vibe & {
@@ -171,4 +179,42 @@ export type FeedAlgorithmOutput = {
   myVibeZone: RankedVibe[];
   healingZone: RankedVibe[];
   exploreZone: RankedVibe[];
+};
+
+export type CityMoodPulse = {
+  city: string;
+  state?: string;
+  country?: string;
+  timestamp: Timestamp;
+  totalVibes: number;
+  moodBreakdown: Record<EmotionCategory, number>;
+  dominantMood: EmotionCategory;
+  happinessPercentage: number;
+  activeUsers: number;
+};
+
+export type CityChallenge = {
+  id: string;
+  city: string;
+  title: string;
+  description: string;
+  goal: number;
+  current: number;
+  reward: {
+    xp: number;
+    badge?: string;
+  };
+  startDate: Timestamp;
+  endDate: Timestamp;
+  isActive: boolean;
+  participants: string[];
+};
+
+export type MoodZone = {
+  id: string;
+  emotion: EmotionCategory;
+  location: Location;
+  userIds: string[];
+  createdAt: Timestamp;
+  isActive: boolean;
 };

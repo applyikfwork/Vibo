@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,12 @@ import { Send, Loader2, Mic, Type } from 'lucide-react';
 import { getVibeDiagnosis } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp, doc } from 'firebase/firestore';
+import { collection, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { getEmotionByName } from '@/lib/data';
-import type { Vibe, EmotionCategory } from '@/lib/types';
+import type { Vibe, EmotionCategory, Location } from '@/lib/types';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
 import { uploadVoiceNote } from '@/lib/firebase-storage';
+import { generateGeohash } from '@/lib/geo-utils';
 
 function PostButton({ pending }: { pending: boolean }) {
   const { pending: formPending } = useFormStatus();
@@ -36,9 +37,30 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
   const [isPosting, setIsPosting] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
+  const [userLocation, setUserLocation] = useState<Location | undefined>();
 
   const { user } = useUser();
   const firestore = useFirestore();
+
+  useEffect(() => {
+    if (!user || !firestore) return;
+    
+    const loadLocation = async () => {
+      try {
+        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.enableLocationSharing && data.location) {
+            setUserLocation(data.location as Location);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading location:', error);
+      }
+    };
+    
+    loadLocation();
+  }, [user, firestore]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,19 +91,27 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
       const finalEmoji = diagnosis.emoji || emotionDetails.emoji;
       setEmoji(finalEmoji);
 
-      const newVibeData: Omit<Vibe, 'id'> = {
+      const locationData = userLocation
+        ? {
+            ...userLocation,
+            geohash: generateGeohash(userLocation.lat, userLocation.lng),
+          }
+        : undefined;
+
+      const newVibeData = {
         userId: user.uid,
         text: vibeText,
         emoji: finalEmoji,
         emotion: diagnosis.emotion,
         backgroundColor: emotionDetails.gradient,
-        timestamp: serverTimestamp(),
+        timestamp: serverTimestamp() as any,
         author: {
           name: user.displayName || 'Anonymous User',
           avatarUrl: user.photoURL || '',
         },
         isAnonymous: isAnonymous,
         viewCount: 0,
+        ...(locationData && { location: locationData }),
       };
 
       // 1. Create the document in the public 'all-vibes' collection and get its ref
@@ -138,13 +168,20 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
       // Upload audio to Firebase Storage
       const audioUrl = await uploadVoiceNote(user.uid, audioBlob, tempVibeId);
 
-      const newVibeData: Omit<Vibe, 'id'> = {
+      const locationData = userLocation
+        ? {
+            ...userLocation,
+            geohash: generateGeohash(userLocation.lat, userLocation.lng),
+          }
+        : undefined;
+
+      const newVibeData = {
         userId: user.uid,
         text: `🎙️ Voice Vibe - ${selectedEmotion}`,
         emoji: emotionDetails.emoji,
         emotion: selectedEmotion,
         backgroundColor: emotionDetails.gradient,
-        timestamp: serverTimestamp(),
+        timestamp: serverTimestamp() as any,
         author: {
           name: user.displayName || 'Anonymous User',
           avatarUrl: user.photoURL || '',
@@ -154,6 +191,7 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
         isVoiceNote: true,
         audioUrl: audioUrl,
         audioDuration: duration,
+        ...(locationData && { location: locationData }),
       };
 
       const globalVibesRef = collection(firestore, 'all-vibes');

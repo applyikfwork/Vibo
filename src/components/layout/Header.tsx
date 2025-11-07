@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { UserCircle, BarChart3, LogOut, Settings, User, Shield } from 'lucide-react';
+import { UserCircle, BarChart3, LogOut, Settings, User, Shield, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import {
@@ -110,6 +110,12 @@ export default function Header() {
             </span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm md:flex">
+            <Link
+              href="/geovibe"
+              className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:bg-clip-text font-semibold flex items-center gap-1"
+            >
+              🌍 GeoVibe
+            </Link>
             <Link
               href="/history"
               className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:bg-clip-text font-semibold"
