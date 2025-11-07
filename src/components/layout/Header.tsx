@@ -123,6 +123,12 @@ export default function Header() {
               🎮 Rewards
             </Link>
             <Link
+              href="/hubs"
+              className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-blue-600 hover:to-cyan-600 hover:bg-clip-text font-semibold flex items-center gap-1"
+            >
+              🏘️ Hubs
+            </Link>
+            <Link
               href="/history"
               className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:bg-clip-text font-semibold"
             >
