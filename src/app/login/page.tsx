@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth, initiateEmailSignIn, initiateEmailSignUp } from '@/firebase';
-import { updateProfile } from 'firebase/auth';
+import { useAuth } from '@/firebase';
+import { updateProfile, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -25,33 +25,47 @@ export default function LoginPage() {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    initiateEmailSignIn(auth, loginEmail, loginPassword);
-    toast({ title: 'Welcome back!', description: "You've been successfully signed in." });
-    router.push('/');
+    try {
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      toast({ title: 'Welcome back!', description: "You've been successfully signed in." });
+      router.push('/');
+    } catch (error: any) {
+      console.error('Login Error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Sign In Failed',
+        description: error.code === 'auth/invalid-credential' 
+          ? 'Invalid email or password. Please try again.'
+          : error.message || 'Could not sign you in.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    initiateEmailSignUp(auth, signupEmail, signupPassword, (user) => {
-        if(user) {
-            updateProfile(user, { displayName: signupName }).then(() => {
-                toast({ title: 'Account Created!', description: 'Welcome! Your new account is ready.' });
-                router.push('/');
-            }).catch((error) => {
-                console.error('Sign Up Error:', error);
-                toast({
-                    variant: 'destructive',
-                    title: 'Sign Up Failed',
-                    description: error.message || 'Could not create your account.',
-                });
-                setIsLoading(false);
-            });
-        }
-    });
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
+      if (userCredential.user) {
+        await updateProfile(userCredential.user, { displayName: signupName });
+        toast({ title: 'Account Created!', description: 'Welcome! Your new account is ready.' });
+        router.push('/');
+      }
+    } catch (error: any) {
+      console.error('Sign Up Error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Sign Up Failed',
+        description: error.message || 'Could not create your account.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

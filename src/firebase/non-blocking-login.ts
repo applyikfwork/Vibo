@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   User,
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
@@ -13,20 +14,30 @@ export function initiateAnonymousSignIn(authInstance: Auth): void {
 }
 
 /** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string, callback: (user: User | null) => void): void {
-  createUserWithEmailAndPassword(authInstance, email, password)
-    .then(userCredential => callback(userCredential.user))
-    .catch(error => {
-      console.error("Email SignUp Error:", error);
-      callback(null);
-    });
+export async function initiateEmailSignUp(
+  authInstance: Auth, 
+  email: string, 
+  password: string
+): Promise<User> {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+    return userCredential.user;
+  } catch (error) {
+    console.error("Email SignUp Error:", error);
+    throw error;
+  }
 }
 
 /** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  signInWithEmailAndPassword(authInstance, email, password)
-    .catch(error => {
-        // Errors will be caught by the onAuthStateChanged listener in the provider
-        console.error("Email SignIn Error:", error);
-    });
+export async function initiateEmailSignIn(authInstance: Auth, email: string, password: string): Promise<User> {
+  try {
+    const userCredential = await signInWithEmailAndPassword(authInstance, email, password);
+    return userCredential.user;
+  } catch (error) {
+    console.error("Email SignIn Error:", error);
+    if (error instanceof FirebaseError && error.code === 'auth/invalid-credential') {
+        throw new Error('Invalid email or password.');
+    }
+    throw error;
+  }
 }
