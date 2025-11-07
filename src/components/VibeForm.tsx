@@ -18,6 +18,7 @@ import type { Vibe, EmotionCategory, Location } from '@/lib/types';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
 import { uploadVoiceNote } from '@/lib/firebase-storage';
 import { generateGeohash } from '@/lib/geo-utils';
+import { useGamification } from '@/hooks/useGamification';
 
 function PostButton({ pending }: { pending: boolean }) {
   const { pending: formPending } = useFormStatus();
@@ -41,6 +42,7 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
 
   const { user } = useUser();
   const firestore = useFirestore();
+  const { awardPostReward } = useGamification();
 
   useEffect(() => {
     if (!user || !firestore) return;
@@ -132,6 +134,8 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
         description: `You shared: "${vibeText}" ${finalEmoji}`,
       });
 
+      awardPostReward(false);
+
       setVibeText('');
       setEmoji('✨');
       if (onPost) onPost();
@@ -207,6 +211,8 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
         title: '🎙️ Voice Vibe Posted!',
         description: `Your ${duration}s voice note is now live!`,
       });
+
+      awardPostReward(true);
 
       setInputMode('text');
       if (onPost) onPost();

@@ -117,6 +117,12 @@ export default function Header() {
               🌍 GeoVibe
             </Link>
             <Link
+              href="/gamification"
+              className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-yellow-600 hover:to-orange-600 hover:bg-clip-text font-semibold flex items-center gap-1"
+            >
+              🎮 Rewards
+            </Link>
+            <Link
               href="/history"
               className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:bg-clip-text font-semibold"
             >
