@@ -44,6 +44,62 @@ export type Location = {
   geohash?: string;
 };
 
+export type FestivalEvent = {
+  id: string;
+  title: string;
+  description: string;
+  city: string;
+  state?: string;
+  targetEmotion: EmotionCategory;
+  startDate: Timestamp;
+  endDate: Timestamp;
+  goal: number;
+  current: number;
+  participants: string[];
+  rewards: {
+    xp: number;
+    badge: string;
+    specialEmoji?: string;
+  };
+  festivalType: 'cultural' | 'national' | 'religious' | 'seasonal';
+  isActive: boolean;
+  bannerImage?: string;
+  location?: Location;
+};
+
+export type MoodZone = {
+  id: string;
+  name: string;
+  city: string;
+  center: Location;
+  radiusKm: number;
+  dominantEmotion: EmotionCategory;
+  emotionIntensity: number;
+  vibeCount: number;
+  lastUpdated: Timestamp;
+  boundary?: {
+    lat: number;
+    lng: number;
+  }[];
+  zoneType: 'hotspot' | 'calm' | 'energetic' | 'supportive';
+  activeHours?: {
+    start: number;
+    end: number;
+  };
+};
+
+export type CityMoodAggregate = {
+  city: string;
+  date: string;
+  emotionCounts: Record<EmotionCategory, number>;
+  totalVibes: number;
+  dominantEmotion: EmotionCategory;
+  averageIntensity: number;
+  activeUsers: number;
+  moodZones: string[];
+  lastAggregated: Timestamp;
+};
+
 export type UserProfile = {
     id: string;
     username: string;
@@ -210,11 +266,3 @@ export type CityChallenge = {
   participants: string[];
 };
 
-export type MoodZone = {
-  id: string;
-  emotion: EmotionCategory;
-  location: Location;
-  userIds: string[];
-  createdAt: Timestamp;
-  isActive: boolean;
-};
