@@ -116,6 +116,12 @@ export default function Header() {
             >
               Mood History
             </Link>
+            <Link
+              href="/student-hub"
+              className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 hover:bg-clip-text font-semibold"
+            >
+              📚 Student Hub
+            </Link>
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">

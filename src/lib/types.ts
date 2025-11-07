@@ -28,6 +28,13 @@ export type MoodHistoryEntry = {
   vibeId?: string;
 };
 
+export type ExamSchedule = {
+  examName: string;
+  examDate: Timestamp;
+  subject: string;
+  importance: 'high' | 'medium' | 'low';
+};
+
 export type UserProfile = {
     id: string;
     username: string;
@@ -47,6 +54,13 @@ export type UserProfile = {
     dateOfBirth?: Timestamp;
     enableAstrology?: boolean;
     enableSpiritualSuggestions?: boolean;
+    // Student Mental Health Hub
+    isStudent?: boolean;
+    parentLinkedUserId?: string; // For parent-student emotional bridge
+    enableStudyReminders?: boolean;
+    examSchedule?: ExamSchedule[];
+    lastStudyBreakReminder?: Timestamp;
+    consecutiveStressHours?: number; // Track stress hours for study break reminders
 };
 
 export type Vibe = {
@@ -62,6 +76,10 @@ export type Vibe = {
   author: Author;
   isAnonymous: boolean;
   viewCount?: number;
+  // Voice Notes
+  isVoiceNote?: boolean; // True if this is a voice vibe
+  audioUrl?: string; // Firebase Storage URL for the audio file
+  audioDuration?: number; // Duration in seconds (max 30)
   // Algorithm signals
   emotionStrength?: number; // 0-1, AI-analyzed sentiment intensity
   reactionCount?: number; // Total reactions

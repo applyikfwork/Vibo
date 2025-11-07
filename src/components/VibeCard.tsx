@@ -8,6 +8,7 @@ import { getEmotionByName } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ReactionPalette } from './ReactionPalette';
+import { VoicePlayer } from '@/components/VoicePlayer';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase, useUser, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, Timestamp } from 'firebase/firestore';
@@ -196,6 +197,12 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                         <p className="font-medium text-white/90 text-base sm:text-lg mt-4 px-2 line-clamp-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                             "{vibe.text}"
                         </p>
+                        
+                        {vibe.isVoiceNote && vibe.audioUrl && vibe.audioDuration && (
+                            <div className="w-full px-2 mt-4" onClick={(e) => e.stopPropagation()}>
+                                <VoicePlayer audioUrl={vibe.audioUrl} duration={vibe.audioDuration} />
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-center items-center gap-2 sm:gap-3 mt-auto pt-4">

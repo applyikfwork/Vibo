@@ -7,13 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Send, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Send, Loader2, Mic, Type } from 'lucide-react';
 import { getVibeDiagnosis } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp, doc } from 'firebase/firestore';
 import { getEmotionByName } from '@/lib/data';
-import type { Vibe } from '@/lib/types';
+import type { Vibe, EmotionCategory } from '@/lib/types';
+import { VoiceRecorder } from '@/components/VoiceRecorder';
+import { uploadVoiceNote } from '@/lib/firebase-storage';
 
 function PostButton({ pending }: { pending: boolean }) {
   const { pending: formPending } = useFormStatus();
@@ -32,6 +35,7 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -114,35 +118,124 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
     }
   };
 
+  const handleVoiceRecording = async (audioBlob: Blob, duration: number, selectedEmotion: EmotionCategory) => {
+    if (!user || !firestore) {
+      toast({ variant: 'destructive', title: 'Not signed in', description: 'You must be signed in to post a voice vibe.' });
+      return;
+    }
+
+    setIsPosting(true);
+
+    try {
+      const emotionDetails = getEmotionByName(selectedEmotion);
+      if (!emotionDetails) {
+        throw new Error('Could not identify a valid emotion.');
+      }
+
+      // Create a temporary vibe ID
+      const tempVibeId = `temp_${Date.now()}`;
+      
+      // Upload audio to Firebase Storage
+      const audioUrl = await uploadVoiceNote(user.uid, audioBlob, tempVibeId);
+
+      const newVibeData: Omit<Vibe, 'id'> = {
+        userId: user.uid,
+        text: `🎙️ Voice Vibe - ${selectedEmotion}`,
+        emoji: emotionDetails.emoji,
+        emotion: selectedEmotion,
+        backgroundColor: emotionDetails.gradient,
+        timestamp: serverTimestamp(),
+        author: {
+          name: user.displayName || 'Anonymous User',
+          avatarUrl: user.photoURL || '',
+        },
+        isAnonymous: isAnonymous,
+        viewCount: 0,
+        isVoiceNote: true,
+        audioUrl: audioUrl,
+        audioDuration: duration,
+      };
+
+      const globalVibesRef = collection(firestore, 'all-vibes');
+      const globalVibeDocRef = await addDocumentNonBlocking(globalVibesRef, newVibeData);
+      
+      if (globalVibeDocRef) {
+        const newVibeId = globalVibeDocRef.id;
+        const userVibeDocRef = doc(firestore, 'users', user.uid, 'vibes', newVibeId);
+        setDocumentNonBlocking(userVibeDocRef, newVibeData, {});
+      }
+
+      toast({
+        title: '🎙️ Voice Vibe Posted!',
+        description: `Your ${duration}s voice note is now live!`,
+      });
+
+      setInputMode('text');
+      if (onPost) onPost();
+
+    } catch (error: any) {
+      console.error("Error posting voice vibe:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Could not post voice vibe',
+        description: error.message || 'An unexpected error occurred.',
+      });
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
   return (
     <Card className="shadow-2xl shadow-purple-500/10 border-purple-200/30 bg-white/50 backdrop-blur-xl rounded-2xl transition-all duration-300 data-[focused=true]:shadow-purple-500/20" data-focused={isFocused}>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex items-start space-x-4">
-            <div className="text-5xl sm:text-6xl pt-2 transition-transform duration-300 ease-out hover:scale-110 cursor-pointer animate-pulse-glow">{emoji}</div>
-            <Textarea
-              name="vibeText"
-              placeholder="What's your vibe right now?"
-              className="text-base sm:text-lg border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 shadow-none min-h-[80px] sm:min-h-[100px] resize-none bg-transparent placeholder:text-gray-500/80"
-              value={vibeText}
-              onChange={(e) => setVibeText(e.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              required
-              minLength={3}
+      <CardContent className="p-4 sm:p-5">
+        <Tabs value={inputMode} onValueChange={(value) => setInputMode(value as 'text' | 'voice')}>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="text" className="flex items-center gap-2">
+              <Type className="h-4 w-4" />
+              Text Vibe
+            </TabsTrigger>
+            <TabsTrigger value="voice" className="flex items-center gap-2">
+              <Mic className="h-4 w-4" />
+              🎙️ Voice Vibe
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="text">
+            <form onSubmit={handleSubmit}>
+              <div className="flex items-start space-x-4 mb-4">
+                <div className="text-5xl sm:text-6xl pt-2 transition-transform duration-300 ease-out hover:scale-110 cursor-pointer animate-pulse-glow">{emoji}</div>
+                <Textarea
+                  name="vibeText"
+                  placeholder="What's your vibe right now?"
+                  className="text-base sm:text-lg border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 shadow-none min-h-[80px] sm:min-h-[100px] resize-none bg-transparent placeholder:text-gray-500/80"
+                  value={vibeText}
+                  onChange={(e) => setVibeText(e.target.value)}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  required
+                  minLength={3}
+                />
+              </div>
+              <div className="bg-muted/10 px-4 py-3 flex justify-between items-center border-t border-purple-200/20 rounded-b-lg">
+                <div className="flex items-center space-x-2">
+                  <Switch id="anonymous-mode" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
+                  <Label htmlFor="anonymous-mode" className="text-sm font-medium text-muted-foreground">Post Anonymously</Label>
+                </div>
+                <div className="flex gap-2">
+                  <PostButton pending={isPosting} />
+                </div>
+              </div>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="voice">
+            <VoiceRecorder
+              onRecordingComplete={handleVoiceRecording}
+              onCancel={() => setInputMode('text')}
             />
-          </div>
-        </CardContent>
-        <div className="bg-muted/10 px-4 py-3 flex justify-between items-center border-t border-purple-200/20 rounded-b-2xl">
-          <div className="flex items-center space-x-2">
-            <Switch id="anonymous-mode" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
-            <Label htmlFor="anonymous-mode" className="text-sm font-medium text-muted-foreground">Post Anonymously</Label>
-          </div>
-          <div className="flex gap-2">
-            <PostButton pending={isPosting} />
-          </div>
-        </div>
-      </form>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
     </Card>
   );
 }
