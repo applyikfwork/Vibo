@@ -76,10 +76,10 @@ const diagnoseVibeFlow = ai.defineFlow(
         'Religious Peace', 'Family Bonding', 'Career Anxiety', 'Festive Nostalgia'
       ];
       
-      if (output && !validEmotions.includes(output.detectedEmotion)) {
-        console.warn(`Invalid emotion detected: ${output.detectedEmotion}. Falling back to Neutral.`);
+      if (output && !validEmotions.includes(output.emotion)) {
+        console.warn(`Invalid emotion detected: ${output.emotion}. Falling back to Neutral.`);
         return {
-          detectedEmotion: 'Neutral' as EmotionCategory,
+          emotion: 'Neutral' as EmotionCategory,
           emoji: output.emoji || '😐',
         };
       }
@@ -89,7 +89,7 @@ const diagnoseVibeFlow = ai.defineFlow(
       console.error('Error in diagnoseVibe flow:', error);
       // Fallback to neutral emotion on error
       return {
-        detectedEmotion: 'Neutral' as EmotionCategory,
+        emotion: 'Neutral' as EmotionCategory,
         emoji: '😐',
       };
     }
