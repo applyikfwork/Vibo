@@ -223,7 +223,8 @@ export async function GET(req: NextRequest) {
       totalReactionsGiven: userData?.totalReactionsGiven || 0,
       totalCommentsGiven: userData?.totalCommentsGiven || 0,
       postingStreak: userData?.postingStreak || 0,
-      helpfulCommentsReceived: userData?.helpfulCommentsReceived || 0
+      helpfulCommentsReceived: userData?.helpfulCommentsReceived || 0,
+      joinedHubs: userData?.joinedHubs || []
     });
 
   } catch (error: any) {
