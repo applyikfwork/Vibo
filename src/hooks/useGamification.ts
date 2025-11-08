@@ -29,10 +29,28 @@ interface ErrorResponse {
 }
 
 function generateIdempotencyKey(action: string, metadata?: Record<string, any>): string {
-  const timestamp = Date.now();
-  const randomStr = Math.random().toString(36).substring(2, 15);
-  const metadataStr = metadata ? JSON.stringify(metadata) : '';
-  return `${action}_${timestamp}_${randomStr}_${metadataStr}`.substring(0, 100);
+  const roundedTimestamp = Math.floor(Date.now() / 30000) * 30000;
+  
+  const metadataStr = metadata ? JSON.stringify(
+    Object.keys(metadata)
+      .sort()
+      .reduce((obj: any, key) => {
+        if (key !== 'idempotencyKey' && key !== 'timestamp') {
+          obj[key] = metadata[key];
+        }
+        return obj;
+      }, {})
+  ) : '';
+  
+  const baseStr = `${action}_${metadataStr}_${roundedTimestamp}`;
+  let hash = 0;
+  for (let i = 0; i < baseStr.length; i++) {
+    const char = baseStr.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  
+  return `${action}_${Math.abs(hash).toString(36)}`;
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -224,9 +242,9 @@ export function useGamification() {
   );
 
   const awardPostReward = useCallback(
-    async (isVoiceNote = false) => {
+    async (isVoiceNote = false, vibeId?: string) => {
       const action = isVoiceNote ? 'VOICE_NOTE' : 'POST_VIBE';
-      const result = await awardReward(action);
+      const result = await awardReward(action, vibeId ? { vibeId } : undefined);
       
       await updateMissionProgress('daily-post', 'daily');
       
@@ -235,13 +253,13 @@ export function useGamification() {
     [awardReward, updateMissionProgress]
   );
 
-  const awardReactionReward = useCallback(async () => {
-    await awardReward('REACT_TO_VIBE');
+  const awardReactionReward = useCallback(async (vibeId?: string) => {
+    await awardReward('REACT_TO_VIBE', vibeId ? { vibeId } : undefined);
     await updateMissionProgress('daily-react', 'daily');
   }, [awardReward, updateMissionProgress]);
 
-  const awardCommentReward = useCallback(async () => {
-    await awardReward('HELPFUL_COMMENT');
+  const awardCommentReward = useCallback(async (vibeId?: string, commentId?: string) => {
+    await awardReward('HELPFUL_COMMENT', vibeId && commentId ? { vibeId, commentId } : undefined);
     await updateMissionProgress('daily-comment', 'daily');
   }, [awardReward, updateMissionProgress]);
 

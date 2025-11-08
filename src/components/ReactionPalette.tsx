@@ -54,7 +54,7 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
       description: `You reacted with ${emoji}`,
     });
     setIsOpen(false);
-    awardReactionReward();
+    awardReactionReward(vibeId);
   };
 
   return (

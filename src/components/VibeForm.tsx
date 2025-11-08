@@ -125,16 +125,16 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
         const newVibeId = globalVibeDocRef.id;
         const userVibeDocRef = doc(firestore, 'users', user.uid, 'vibes', newVibeId);
         setDocumentNonBlocking(userVibeDocRef, newVibeData, {});
+        
+        toast({
+          title: 'Vibe Posted!',
+          description: `You shared: "${vibeText}" ${finalEmoji}`,
+        });
+
+        awardPostReward(false, newVibeId);
       } else {
         throw new Error("Failed to create the vibe in the public feed.");
       }
-
-      toast({
-        title: 'Vibe Posted!',
-        description: `You shared: "${vibeText}" ${finalEmoji}`,
-      });
-
-      awardPostReward(false);
 
       setVibeText('');
       setEmoji('✨');
@@ -205,14 +205,14 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
         const newVibeId = globalVibeDocRef.id;
         const userVibeDocRef = doc(firestore, 'users', user.uid, 'vibes', newVibeId);
         setDocumentNonBlocking(userVibeDocRef, newVibeData, {});
+        
+        toast({
+          title: '🎙️ Voice Vibe Posted!',
+          description: `Your ${duration}s voice note is now live!`,
+        });
+
+        awardPostReward(true, newVibeId);
       }
-
-      toast({
-        title: '🎙️ Voice Vibe Posted!',
-        description: `Your ${duration}s voice note is now live!`,
-      });
-
-      awardPostReward(true);
 
       setInputMode('text');
       if (onPost) onPost();

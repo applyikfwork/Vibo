@@ -59,19 +59,8 @@ async function checkRateLimit(
   return recentTransactions.size < limit.count;
 }
 
-async function checkIdempotency(
-  db: FirebaseFirestore.Firestore,
-  userId: string,
-  idempotencyKey: string
-): Promise<boolean> {
-  const existingTransaction = await db
-    .collection('reward-transactions')
-    .where('userId', '==', userId)
-    .where('metadata.idempotencyKey', '==', idempotencyKey)
-    .limit(1)
-    .get();
-
-  return existingTransaction.empty;
+function getIdempotencyDocId(userId: string, idempotencyKey: string): string {
+  return `${userId}_${idempotencyKey}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -109,37 +98,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let idempotencyDocId: string | null = null;
     if (metadata.idempotencyKey) {
-      const isUnique = await checkIdempotency(db, userId, metadata.idempotencyKey);
-      if (!isUnique) {
-        const existingReward = await db
-          .collection('reward-transactions')
-          .where('userId', '==', userId)
-          .where('metadata.idempotencyKey', '==', metadata.idempotencyKey)
-          .limit(1)
-          .get();
-
-        if (!existingReward.empty) {
-          const rewardData = existingReward.docs[0].data();
-          return NextResponse.json({
-            success: true,
-            duplicate: true,
-            rewards: {
-              xp: rewardData.xpChange || 0,
-              coins: rewardData.coinsChange || 0,
-              totalXP: 0,
-              totalCoins: 0,
-              level: 0,
-              leveledUp: false,
-              newBadges: []
-            }
-          });
-        }
-      }
+      idempotencyDocId = getIdempotencyDocId(userId, metadata.idempotencyKey);
     }
 
     const result = await db.runTransaction(async (transaction) => {
       const userRef = db.collection('users').doc(userId);
+      
+      if (idempotencyDocId) {
+        const idempotencyRef = db.collection('reward-transactions').doc(idempotencyDocId);
+        const idempotencyDoc = await transaction.get(idempotencyRef);
+        
+        if (idempotencyDoc.exists) {
+          const existingData = idempotencyDoc.data();
+          const userDoc = await transaction.get(userRef);
+          const userData = userDoc.data();
+          
+          return {
+            xpGain: existingData?.xpChange || 0,
+            coinGain: existingData?.coinsChange || 0,
+            newXP: userData?.xp || 0,
+            newCoins: userData?.coins || 0,
+            newLevel: userData?.level || 1,
+            leveledUp: false,
+            newBadges: [],
+            isDuplicate: true
+          };
+        }
+      }
+      
       const userDoc = await transaction.get(userRef);
 
       if (!userDoc.exists) {
@@ -278,7 +266,10 @@ export async function POST(req: NextRequest) {
 
       transaction.update(userRef, userUpdates);
 
-      const transactionRef = db.collection('reward-transactions').doc();
+      const transactionRef = idempotencyDocId 
+        ? db.collection('reward-transactions').doc(idempotencyDocId)
+        : db.collection('reward-transactions').doc();
+        
       transaction.set(transactionRef, {
         userId,
         type: 'earn',
@@ -300,12 +291,14 @@ export async function POST(req: NextRequest) {
         newCoins,
         newLevel,
         leveledUp,
-        newBadges
+        newBadges,
+        isDuplicate: false
       };
     });
 
     return NextResponse.json({
       success: true,
+      duplicate: result.isDuplicate || false,
       rewards: {
         xp: result.xpGain,
         coins: result.coinGain,

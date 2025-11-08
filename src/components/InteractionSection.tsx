@@ -111,7 +111,7 @@ export function InteractionSection({ vibeId }: { vibeId: string }) {
     const { data: comments, isLoading: isLoadingComments } = useCollection<Comment>(commentsQuery);
     const { data: reactions, isLoading: isLoadingReactions } = useCollection<Reaction>(reactionsQuery);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !firestore || !commentText.trim()) {
             toast({
@@ -136,12 +136,13 @@ export function InteractionSection({ vibeId }: { vibeId: string }) {
             },
         };
         
-        addDocumentNonBlocking(commentsRef, newComment);
+        const commentDocRef = await addDocumentNonBlocking(commentsRef, newComment);
+        const commentId = commentDocRef?.id;
 
         setCommentText('');
         setIsSubmitting(false);
         toast({ title: 'Comment posted!' });
-        awardCommentReward();
+        awardCommentReward(vibeId, commentId);
     };
 
 
