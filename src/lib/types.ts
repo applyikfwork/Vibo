@@ -108,12 +108,22 @@ export type Badge = {
   requirement: string;
   earnedAt?: Timestamp;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  category: 'positivity' | 'empathy' | 'consistency' | 'generosity' | 'achievement';
+  category: 'positivity' | 'empathy' | 'consistency' | 'generosity' | 'achievement' | 'city' | 'seasonal' | 'gift';
+  meta?: {
+    reason?: string;
+    date?: string;
+    seasonId?: string;
+    cityName?: string;
+    animated?: boolean;
+    soundEffect?: string;
+  };
+  isTradeable?: boolean;
+  isGiftable?: boolean;
 };
 
 export type Mission = {
   id: string;
-  type: 'daily' | 'weekly' | 'special' | 'event';
+  type: 'daily' | 'weekly' | 'special' | 'event' | 'seasonal';
   title: string;
   description: string;
   target: number;
@@ -121,34 +131,51 @@ export type Mission = {
   reward: {
     xp: number;
     coins: number;
+    gems?: number;
     badge?: string;
+    items?: string[];
   };
   expiresAt?: Timestamp;
   completedAt?: Timestamp;
   isCompleted: boolean;
   claimed?: boolean;
   claimedAt?: Timestamp;
+  conditions?: {
+    action: string;
+    minCharLength?: number;
+    requiresVerification?: boolean;
+  };
+  isPremium?: boolean;
 };
 
 export type InventoryItem = {
   id: string;
   itemId: string;
   name: string;
-  type: 'boost' | 'badge' | 'theme' | 'filter' | 'skip_token';
+  type: 'boost' | 'badge' | 'theme' | 'filter' | 'skip_token' | 'profile_frame' | 'cosmetic' | 'consumable';
   quantity: number;
   acquiredAt: Timestamp;
   expiresAt?: Timestamp;
+  rarity?: 'common' | 'rare' | 'epic' | 'legendary';
+  metadata?: Record<string, any>;
 };
 
 export type RewardTransaction = {
   id: string;
   userId: string;
-  type: 'earn' | 'spend';
+  type: 'earn' | 'spend' | 'gift' | 'receive';
   action: string;
   xpChange?: number;
   coinsChange?: number;
+  gemsChange?: number;
   timestamp: Timestamp;
   metadata?: Record<string, any>;
+  idempotencyKey?: string;
+  deviceFingerprint?: string;
+  ipAddress?: string;
+  isFraudulent?: boolean;
+  reviewStatus?: 'pending' | 'approved' | 'flagged' | 'rolled_back';
+  targetUserId?: string;
 };
 
 export type ReactionStreak = {
@@ -186,13 +213,18 @@ export type StoreItem = {
   id: string;
   name: string;
   description: string;
-  type: 'boost' | 'badge' | 'theme' | 'filter' | 'skip_token';
+  type: 'boost' | 'badge' | 'theme' | 'filter' | 'skip_token' | 'profile_frame' | 'cosmetic' | 'gift';
   price: number;
+  gemPrice?: number;
   icon: string;
   isLimitedTime?: boolean;
   expiresAt?: Timestamp;
   stock?: number;
   effectDuration?: number;
+  currency: 'coins' | 'gems' | 'both';
+  rarity?: 'common' | 'rare' | 'epic' | 'legendary';
+  seasonalOnly?: boolean;
+  seasonId?: string;
 };
 
 export type UserProfile = {
@@ -223,11 +255,14 @@ export type UserProfile = {
     xp?: number;
     cityBadges?: string[];
     coins?: number;
+    gems?: number;
     level?: number;
+    tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'legend';
     badges?: Badge[];
     dailyMissions?: Mission[];
     weeklyMissions?: Mission[];
     specialMissions?: Mission[];
+    seasonalMissions?: Mission[];
     inventory?: InventoryItem[];
     postingStreak?: number;
     lastPostDate?: Timestamp;
@@ -242,6 +277,18 @@ export type UserProfile = {
     joinedHubs?: string[];
     isPremium?: boolean;
     premiumExpiresAt?: Timestamp;
+    seasonPassOwned?: string[];
+    currentSeasonPassId?: string;
+    dailyCoinsEarned?: number;
+    dailyXPEarned?: number;
+    dailyReactionXP?: number;
+    lastDailyCapReset?: Timestamp;
+    deviceFingerprint?: string;
+    giverPoints?: number;
+    profileFrame?: string;
+    activeCosmetics?: string[];
+    fraudFlags?: number;
+    accountStatus?: 'active' | 'under_review' | 'suspended' | 'banned';
 };
 
 export type Vibe = {
@@ -376,10 +423,118 @@ export type CityChallenge = {
   current: number;
   reward: {
     xp: number;
+    coins: number;
     badge?: string;
   };
   startDate: Timestamp;
   endDate: Timestamp;
   isActive: boolean;
   participants: string[];
+  contributors: {
+    userId: string;
+    contributionCount: number;
+  }[];
+  completedAt?: Timestamp;
+  rewardsDistributed?: boolean;
+};
+
+export type GiftType = 'rose' | 'star' | 'crown';
+
+export type Gift = {
+  id: string;
+  type: GiftType;
+  fromUserId: string;
+  toUserId: string;
+  cost: number;
+  reward: {
+    xp: number;
+    coins: number;
+    badge?: string;
+  };
+  message?: string;
+  timestamp: Timestamp;
+};
+
+export type SeasonPass = {
+  id: string;
+  name: string;
+  description: string;
+  seasonNumber: number;
+  startDate: Timestamp;
+  endDate: Timestamp;
+  coinCost: number;
+  gemCost?: number;
+  freeTracks: Mission[];
+  premiumTracks: Mission[];
+  isActive: boolean;
+};
+
+export type SurpriseBox = {
+  id: string;
+  name: string;
+  type: 'small' | 'lucky' | 'premium';
+  cost: number;
+  costCurrency: 'coins' | 'gems' | 'free';
+  possibleRewards: {
+    type: 'coins' | 'xp' | 'badge' | 'item';
+    minAmount: number;
+    maxAmount: number;
+    rarity: 'common' | 'rare' | 'epic' | 'legendary';
+    dropRate: number;
+    itemId?: string;
+  }[];
+  dailyLimit?: number;
+};
+
+export type UserTier = {
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'legend';
+  minXP: number;
+  maxXP: number;
+  minLevel: number;
+  maxLevel: number;
+  perks: {
+    dailyCoinCapBonus: number;
+    canCreateChallenges: boolean;
+    leaderboardVisibility: 'public' | 'top' | 'elite';
+    specialBadge?: string;
+    cosmeticUnlocks?: string[];
+  };
+};
+
+export type FraudCheck = {
+  id: string;
+  userId: string;
+  checkType: 'velocity' | 'anomaly' | 'ip_check' | 'device_check' | 'collaboration_ring';
+  timestamp: Timestamp;
+  flagReason: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  autoResolved: boolean;
+  manualReview?: boolean;
+  resolution?: 'approved' | 'warning' | 'rollback' | 'suspension' | 'ban';
+  resolvedAt?: Timestamp;
+  resolvedBy?: string;
+  metadata?: Record<string, any>;
+};
+
+export type DailyStats = {
+  userId: string;
+  date: string;
+  coinsEarned: number;
+  xpEarned: number;
+  vibesPosted: number;
+  reactionsGiven: number;
+  commentsGiven: number;
+  helpfulComments: number;
+  missionsCompleted: number;
+  giftsReceived: number;
+  giftsSent: number;
+};
+
+export type Leaderboard = {
+  id: string;
+  type: 'global' | 'city' | 'weekly' | 'giver';
+  period: 'daily' | 'weekly' | 'monthly' | 'all_time';
+  city?: string;
+  entries: LeaderboardEntry[];
+  lastUpdated: Timestamp;
 };
