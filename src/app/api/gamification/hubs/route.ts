@@ -48,38 +48,67 @@ export async function GET(req: NextRequest) {
 
     const hubsWithStats = await Promise.all(
       COMMUNITY_HUBS.map(async (hub) => {
-        const membersSnapshot = await db
-          .collection('users')
-          .where('joinedHubs', 'array-contains', hub.id)
-          .count()
-          .get();
+        try {
+          const membersSnapshot = await db
+            .collection('users')
+            .where('joinedHubs', 'array-contains', hub.id)
+            .count()
+            .get();
 
-        const topContributorsSnapshot = await db
-          .collection('users')
-          .where('joinedHubs', 'array-contains', hub.id)
-          .orderBy('xp', 'desc')
-          .limit(3)
-          .get();
+          let topContributors: string[] = [];
+          try {
+            const topContributorsSnapshot = await db
+              .collection('users')
+              .where('joinedHubs', 'array-contains', hub.id)
+              .orderBy('xp', 'desc')
+              .limit(3)
+              .get();
+            topContributors = topContributorsSnapshot.docs.map(doc => doc.id);
+          } catch (indexError: any) {
+            if (indexError.code === 9) {
+              console.log(`Composite index needed for hub ${hub.id}. Top contributors will be empty.`);
+            } else {
+              throw indexError;
+            }
+          }
 
-        const now = new Date();
-        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        
-        const recentActivitySnapshot = await db
-          .collection('all-vibes')
-          .where('emotion', '==', hub.theme)
-          .where('timestamp', '>', Timestamp.fromDate(twentyFourHoursAgo))
-          .count()
-          .get();
+          const now = new Date();
+          const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          
+          let recentActivityCount = 0;
+          try {
+            const recentActivitySnapshot = await db
+              .collection('all-vibes')
+              .where('emotion', '==', hub.theme)
+              .where('timestamp', '>', Timestamp.fromDate(twentyFourHoursAgo))
+              .count()
+              .get();
+            recentActivityCount = recentActivitySnapshot.data().count;
+          } catch (indexError: any) {
+            if (indexError.code === 9) {
+              console.log(`Composite index needed for recent activity on hub ${hub.id}. Recent activity count will be 0.`);
+            } else {
+              throw indexError;
+            }
+          }
 
-        const recentActivityCount = recentActivitySnapshot.data().count;
-
-        return {
-          ...hub,
-          memberCount: membersSnapshot.data().count,
-          topContributors: topContributorsSnapshot.docs.map(doc => doc.id),
-          recentActivityCount,
-          trendingScore: recentActivityCount * 1.5
-        };
+          return {
+            ...hub,
+            memberCount: membersSnapshot.data().count,
+            topContributors,
+            recentActivityCount,
+            trendingScore: recentActivityCount * 1.5
+          };
+        } catch (error) {
+          console.error(`Error fetching stats for hub ${hub.id}:`, error);
+          return {
+            ...hub,
+            memberCount: 0,
+            topContributors: [],
+            recentActivityCount: 0,
+            trendingScore: 0
+          };
+        }
       })
     );
 

@@ -108,10 +108,20 @@ export default function CommunityHubsPage() {
   };
 
   useEffect(() => {
+    console.log('[Hubs] useEffect triggered, user:', user?.uid || 'not logged in');
     const loadData = async () => {
+      console.log('[Hubs] Starting to load data');
       setLoading(true);
-      await Promise.all([fetchHubs(), fetchUserHubs(), fetchRecommendations()]);
-      setLoading(false);
+      try {
+        console.log('[Hubs] Fetching hubs data...');
+        await Promise.all([fetchHubs(), fetchUserHubs(), fetchRecommendations()]);
+        console.log('[Hubs] Successfully loaded hubs data');
+      } catch (error) {
+        console.error('[Hubs] Error loading hubs data:', error);
+      } finally {
+        console.log('[Hubs] Setting loading to false');
+        setLoading(false);
+      }
     };
     loadData();
   }, [user]);
