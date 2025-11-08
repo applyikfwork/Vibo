@@ -40,7 +40,7 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
       vibeId,
       userId: user.uid,
       emoji,
-      timestamp: serverTimestamp(),
+      timestamp: serverTimestamp() as any,
       author: {
         name: user.displayName || 'A User',
         avatarUrl: user.photoURL || '',
