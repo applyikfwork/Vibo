@@ -18,7 +18,7 @@ None recorded yet.
 ### Technical Implementations
 - **Framework**: Next.js 15.3.3 with Turbopack.
 - **Frontend**: React 18.3.1 with Radix UI components.
-- **State Management**: Custom React hooks (`useVoiceRecorder`, `useStudentHub`, `useStudyBreakNotifications`, `usePersonalizedFeed`, `useEngagementTracking`).
+- **State Management**: Custom React hooks (`useVoiceRecorder`, `useStudentHub`, `useStudyBreakNotifications`, `usePersonalizedFeed`, `useEngagementTracking`, `useHubNotifications`).
 - **Data Validation**: React Hook Form with Zod validation.
 - **Charting**: Recharts for data visualization.
 - **Voice Notes**: Utilizes Browser MediaRecorder API for audio capture (WebM/Opus, 24kbps, 16kHz sample rate), with real-time waveform visualization using Web Audio API (AnalyserNode, 256 FFT size). Features include live audio levels, compression stats, echo cancellation, noise suppression, and proper cleanup.
@@ -26,6 +26,12 @@ None recorded yet.
 - **SEO**: Advanced SEO implementation using Next.js Metadata API, dynamic XML sitemaps, structured data (JSON-LD Schema), canonical URLs, and PWA manifest.
 - **Vibee Feed Algorithm**: An AI-powered, emotion-based recommendation system that calculates a VibeScore based on Emotion Relevance Score (ERS), reactions, freshness, engagement, diversity, and boosts. Uses Genkit AI (Google Gemini 2.5 Flash) for emotion strength and sentiment intensity scoring. Divides the feed into "My Vibe Zone", "Healing Zone", and "Explore Vibes". Features adaptive learning and a post boost system with cooldown and decay.
 - **Vibee Gamification System**: A comprehensive gamified community system with a reward economy (XP, VibeCoins, badges), missions (daily, weekly, special events), a virtual store, leaderboards (national, city-based, friends-only, weekly mood), and emotion-based community hubs. Automated rewards for posting, reacting, commenting, and voice notes are implemented with smart notifications for progress.
+- **Enhanced Community Hubs System** (November 2025): Advanced hub discovery and engagement features including:
+  - **Smart Hub Recommendations**: AI-powered recommendation engine that analyzes user emotional history, vibe affinity scores, current mood, and vibeMemory patterns to suggest personalized hubs with match scores and explanations
+  - **Real-time Hub Notifications**: Browser notification system for hub activities (new posts, challenges, milestones, trending content) with customizable preferences and quiet hours
+  - **Enhanced Hub Navigation**: Direct linking from hub list to detailed hub pages with interactive cards showing activity levels, member counts, and trending indicators
+  - **Hub Activity Metrics**: Real-time tracking of 24-hour activity counts and trending scores for each hub
+  - **Notification Preferences**: User-configurable notification settings including mute options, quiet hours, and selective notification types (stored in Firestore `hub-notification-preferences` collection)
 - **GeoVibe Engine**: A comprehensive location-based emotional mapping system. Features location capture (Browser Geolocation API with privacy consent), real-time city-level emotion analytics (City Mood Pulse), Geo-hash based nearby vibes feed, and interactive emotion maps (Google Maps integration). Includes gamification elements like XP, local leaderboards, and city challenges. All mutation endpoints require Firebase authentication.
 - **Development Setup**: Configured for Replit compatibility, including port binding (`0.0.0.0:5000`), using TypeScript with build error/ESLint ignoring for faster development.
 

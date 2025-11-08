@@ -3,7 +3,7 @@ import { getFirebaseAdmin } from '@/firebase/admin';
 import { CommunityHub, EmotionCategory } from '@/lib/types';
 import { Timestamp } from 'firebase-admin/firestore';
 
-const COMMUNITY_HUBS: Omit<CommunityHub, 'memberCount' | 'topContributors'>[] = [
+const COMMUNITY_HUBS: Omit<CommunityHub, 'memberCount' | 'topContributors' | 'recentActivityCount' | 'trendingScore'>[] = [
   {
     id: 'motivation-hub',
     name: 'Motivation Station',
@@ -61,10 +61,24 @@ export async function GET(req: NextRequest) {
           .limit(3)
           .get();
 
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        
+        const recentActivitySnapshot = await db
+          .collection('all-vibes')
+          .where('emotion', '==', hub.theme)
+          .where('timestamp', '>', Timestamp.fromDate(twentyFourHoursAgo))
+          .count()
+          .get();
+
+        const recentActivityCount = recentActivitySnapshot.data().count;
+
         return {
           ...hub,
           memberCount: membersSnapshot.data().count,
-          topContributors: topContributorsSnapshot.docs.map(doc => doc.id)
+          topContributors: topContributorsSnapshot.docs.map(doc => doc.id),
+          recentActivityCount,
+          trendingScore: recentActivityCount * 1.5
         };
       })
     );

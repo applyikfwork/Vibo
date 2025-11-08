@@ -194,6 +194,47 @@ export type CommunityHub = {
   memberCount: number;
   activeChallenge?: Mission;
   topContributors: string[];
+  recentActivityCount?: number;
+  trendingScore?: number;
+};
+
+export type HubRecommendation = {
+  hub: CommunityHub;
+  matchScore: number;
+  reasons: string[];
+  emotionMatch: number;
+  activityLevel: 'high' | 'medium' | 'low';
+};
+
+export type HubNotification = {
+  id: string;
+  hubId: string;
+  hubName: string;
+  hubIcon: string;
+  type: 'new_post' | 'challenge_update' | 'milestone' | 'trending_post' | 'new_member';
+  title: string;
+  message: string;
+  timestamp: Timestamp;
+  read: boolean;
+  actionUrl?: string;
+  metadata?: {
+    postId?: string;
+    challengeId?: string;
+    milestoneType?: string;
+    memberCount?: number;
+  };
+};
+
+export type HubNotificationPreferences = {
+  userId: string;
+  enableHubNotifications: boolean;
+  notifyNewPosts: boolean;
+  notifyChallenges: boolean;
+  notifyMilestones: boolean;
+  notifyTrendingPosts: boolean;
+  quietHoursStart?: number;
+  quietHoursEnd?: number;
+  mutedHubs: string[];
 };
 
 export type LeaderboardEntry = {
