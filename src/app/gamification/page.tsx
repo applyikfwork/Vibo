@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/firebase/provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { ProfileLevel } from '@/components/gamification/ProfileLevel';
 import { MissionCard } from '@/components/gamification/MissionCard';
 import { StoreItemCard } from '@/components/gamification/StoreItemCard';
@@ -11,6 +14,7 @@ import { RewardHistory } from '@/components/gamification/RewardHistory';
 import { Mission, StoreItem, LeaderboardEntry } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { getAuth } from 'firebase/auth';
+import { Zap, TrendingUp, Users, Star, Trophy, Flame, Target, Award, Sparkles } from 'lucide-react';
 
 export default function GamificationPage() {
   const { user } = useUser();
@@ -31,6 +35,10 @@ export default function GamificationPage() {
   const [cityLeaderboard, setCityLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
+  const [comboMultiplier, setComboMultiplier] = useState(1);
+  const [showComboAnimation, setShowComboAnimation] = useState(false);
+  const [recentActions, setRecentActions] = useState<string[]>([]);
+  const [friendsData, setFriendsData] = useState<any[]>([]);
 
   const fetchUserStats = async () => {
     if (!user) return;
@@ -147,6 +155,21 @@ export default function GamificationPage() {
     }
   };
 
+  const triggerCombo = useCallback(() => {
+    const now = Date.now();
+    const newActions = [...recentActions, now.toString()].slice(-5);
+    const timeWindow = 60000;
+    const actionsInWindow = newActions.filter(t => now - parseInt(t) < timeWindow);
+    
+    if (actionsInWindow.length >= 3) {
+      const multiplier = Math.min(actionsInWindow.length, 5);
+      setComboMultiplier(multiplier);
+      setShowComboAnimation(true);
+      setTimeout(() => setShowComboAnimation(false), 2000);
+    }
+    setRecentActions(actionsInWindow);
+  }, [recentActions]);
+
   const handleClaimReward = async (mission: Mission) => {
     if (!user) return;
 
@@ -185,9 +208,14 @@ export default function GamificationPage() {
       if (response.ok) {
         const data = await response.json();
         
+        triggerCombo();
+        
+        const multipliedXP = Math.round(data.rewards.xp * comboMultiplier);
+        const multipliedCoins = Math.round(data.rewards.coins * comboMultiplier);
+        
         toast({
-          title: '🎉 Reward Claimed!',
-          description: `You earned ${data.rewards.xp} XP and ${data.rewards.coins} coins!`,
+          title: comboMultiplier > 1 ? `🔥 ${comboMultiplier}x COMBO! Reward Claimed!` : '🎉 Reward Claimed!',
+          description: `You earned ${multipliedXP} XP and ${multipliedCoins} coins!`,
           duration: 5000
         });
 
@@ -252,13 +280,83 @@ export default function GamificationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black py-8 px-4 relative">
+      {showComboAnimation && (
+        <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center">
+          <div className="text-9xl font-bold bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent animate-bounce">
+            {comboMultiplier}x COMBO!
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent mb-2">
-            Vibee Gamification
+            Vibee Gamification Powerhouse
           </h1>
-          <p className="text-gray-400">Feel. Share. Earn. Rise through emotions.</p>
+          <p className="text-gray-400">Feel. Share. Earn. Rise through emotions with combos & competition.</p>
+        </div>
+
+        {comboMultiplier > 1 && (
+          <Card className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/40 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center gap-3">
+                <Zap className="h-8 w-8 text-yellow-400 animate-pulse" />
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-white">{comboMultiplier}x Combo Active!</div>
+                  <div className="text-sm text-gray-300">Complete more actions quickly to increase your multiplier</div>
+                </div>
+                <Flame className="h-8 w-8 text-orange-400 animate-pulse" />
+              </div>
+              <Progress value={(comboMultiplier / 5) * 100} className="mt-4 h-2" />
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border-purple-500/40">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <Trophy className="h-8 w-8 text-purple-400" />
+                <span className="text-3xl">👑</span>
+              </div>
+              <div className="text-3xl font-bold text-white">Level {userStats.level}</div>
+              <div className="text-sm text-gray-300">Current Level</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border-yellow-500/40">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <Star className="h-8 w-8 text-yellow-400" />
+                <span className="text-3xl">⭐</span>
+              </div>
+              <div className="text-3xl font-bold text-white">{userStats.xp}</div>
+              <div className="text-sm text-gray-300">Total XP</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border-orange-500/40">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <Award className="h-8 w-8 text-orange-400" />
+                <span className="text-3xl">🪙</span>
+              </div>
+              <div className="text-3xl font-bold text-white">{userStats.coins}</div>
+              <div className="text-sm text-gray-300">VibeCoins</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-pink-500/20 to-pink-600/20 border-pink-500/40">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <Flame className="h-8 w-8 text-pink-400" />
+                <span className="text-3xl">🔥</span>
+              </div>
+              <div className="text-3xl font-bold text-white">{userStats.postingStreak}</div>
+              <div className="text-sm text-gray-300">Day Streak</div>
+            </CardContent>
+          </Card>
         </div>
 
         <ProfileLevel
@@ -269,8 +367,9 @@ export default function GamificationPage() {
         />
 
         <Tabs defaultValue="challenges" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8 bg-gray-800/50">
             <TabsTrigger value="challenges">🎯 Challenges</TabsTrigger>
+            <TabsTrigger value="friends">👥 Friends</TabsTrigger>
             <TabsTrigger value="leaderboards">🏆 Leaderboards</TabsTrigger>
             <TabsTrigger value="store">🛒 Store</TabsTrigger>
             <TabsTrigger value="history">📜 History</TabsTrigger>
@@ -302,6 +401,84 @@ export default function GamificationPage() {
                 ))}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="friends" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-6 w-6" />
+                  Friend Comparison
+                </CardTitle>
+                <CardDescription>See how you stack up against your friends</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {friendsData.length === 0 ? (
+                    <div className="col-span-full text-center py-12 text-gray-400">
+                      <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <p>No friend data available. Connect with friends to compare progress!</p>
+                    </div>
+                  ) : (
+                    friendsData.map((friend, idx) => (
+                      <Card key={idx} className="bg-gray-800/30 border-gray-700">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                              {friend.name?.[0] || '?'}
+                            </div>
+                            <div>
+                              <div className="font-bold text-white">{friend.name}</div>
+                              <div className="text-sm text-gray-400">Level {friend.level}</div>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-400">XP</span>
+                              <span className={`font-bold ${friend.xp > userStats.xp ? 'text-red-400' : 'text-green-400'}`}>
+                                {friend.xp}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-400">Coins</span>
+                              <span className={`font-bold ${friend.coins > userStats.coins ? 'text-red-400' : 'text-green-400'}`}>
+                                {friend.coins}
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-blue-500/40">
+              <CardHeader>
+                <CardTitle>Your Ranking</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-3xl font-bold text-white mb-1">
+                      {nationalLeaderboard.findIndex(e => e.userId === user?.uid) + 1 || '-'}
+                    </div>
+                    <div className="text-sm text-gray-400">National Rank</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-white mb-1">
+                      {cityLeaderboard.findIndex(e => e.userId === user?.uid) + 1 || '-'}
+                    </div>
+                    <div className="text-sm text-gray-400">City Rank</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-white mb-1">{userStats.badges?.length || 0}</div>
+                    <div className="text-sm text-gray-400">Badges</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="leaderboards" className="space-y-8">

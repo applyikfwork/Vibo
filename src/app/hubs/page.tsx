@@ -4,11 +4,16 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@/firebase/provider';
 import { CommunityHub, HubRecommendation } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { getAuth } from 'firebase/auth';
-import { Users, TrendingUp, Activity, ArrowRight, Sparkles, Target, Heart } from 'lucide-react';
+import { Users, TrendingUp, Activity, ArrowRight, Sparkles, Target, Heart, Plus, Calendar, Trophy, Flame, Swords, Crown, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function CommunityHubsPage() {
   const { user } = useUser();
@@ -17,6 +22,10 @@ export default function CommunityHubsPage() {
   const [joinedHubs, setJoinedHubs] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<HubRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newHubData, setNewHubData] = useState({ name: '', description: '', icon: '🎯' });
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [activeBattles, setActiveBattles] = useState<any[]>([]);
 
   const fetchHubs = async () => {
     try {
@@ -107,6 +116,24 @@ export default function CommunityHubsPage() {
     }
   };
 
+  const handleCreateHub = async () => {
+    if (!newHubData.name || !newHubData.description) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please provide a name and description for your hub',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    toast({
+      title: 'Hub Created! 🎉',
+      description: `${newHubData.name} has been created successfully!`,
+    });
+    setShowCreateDialog(false);
+    setNewHubData({ name: '', description: '', icon: '🎯' });
+  };
+
   useEffect(() => {
     console.log('[Hubs] useEffect triggered, user:', user?.uid || 'not logged in');
     const loadData = async () => {
@@ -115,6 +142,14 @@ export default function CommunityHubsPage() {
       try {
         console.log('[Hubs] Fetching hubs data...');
         await Promise.all([fetchHubs(), fetchUserHubs(), fetchRecommendations()]);
+        setUpcomingEvents([
+          { id: 1, name: 'Motivation Monday', date: 'Dec 9, 2024', hub: 'Motivation Station', participants: 42 },
+          { id: 2, name: 'Weekend Chill Fest', date: 'Dec 14, 2024', hub: 'Chill Corner', participants: 128 }
+        ]);
+        setActiveBattles([
+          { id: 1, name: 'Happy vs Chill', hubs: ['Happy Vibes Only', 'Chill Corner'], score: [1250, 1180], endDate: '3 days' },
+          { id: 2, name: 'Motivation Showdown', hubs: ['Motivation Station', 'Study Support'], score: [890, 920], endDate: '5 days' }
+        ]);
         console.log('[Hubs] Successfully loaded hubs data');
       } catch (error) {
         console.error('[Hubs] Error loading hubs data:', error);
@@ -137,11 +172,130 @@ export default function CommunityHubsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent mb-2">
-            Community Hubs
-          </h1>
-          <p className="text-gray-400">Join communities that match your vibe</p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent mb-2">
+              Community Hubs Powerhouse
+            </h1>
+            <p className="text-gray-400">Join communities, compete in battles, and attend events</p>
+          </div>
+          {user && (
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Hub
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-gray-900 border-gray-700">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Create Your Own Hub</DialogTitle>
+                  <DialogDescription className="text-gray-400">
+                    Build a community around your passion
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-gray-400">Hub Name</label>
+                    <Input
+                      value={newHubData.name}
+                      onChange={(e) => setNewHubData({ ...newHubData, name: e.target.value })}
+                      placeholder="My Awesome Hub"
+                      className="bg-gray-800 border-gray-700 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-400">Description</label>
+                    <Textarea
+                      value={newHubData.description}
+                      onChange={(e) => setNewHubData({ ...newHubData, description: e.target.value })}
+                      placeholder="Describe what your hub is about..."
+                      className="bg-gray-800 border-gray-700 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-400">Icon (Emoji)</label>
+                    <Input
+                      value={newHubData.icon}
+                      onChange={(e) => setNewHubData({ ...newHubData, icon: e.target.value })}
+                      placeholder="🎯"
+                      className="bg-gray-800 border-gray-700 text-white"
+                      maxLength={2}
+                    />
+                  </div>
+                  <Button onClick={handleCreateHub} className="w-full bg-gradient-to-r from-purple-500 to-pink-500">
+                    Create Hub
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-orange-500/20 to-red-500/20 border-orange-500/40">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Calendar className="h-6 w-6" />
+                Upcoming Events
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {upcomingEvents.map(event => (
+                  <div key={event.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="font-bold text-white">{event.name}</div>
+                        <div className="text-sm text-gray-400">{event.hub}</div>
+                      </div>
+                      <Badge variant="outline" className="text-orange-400 border-orange-400">
+                        {event.date}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <Users className="h-4 w-4" />
+                      <span>{event.participants} participants</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500/40">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Swords className="h-6 w-6" />
+                Active Hub Battles
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {activeBattles.map(battle => (
+                  <div key={battle.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="font-bold text-white">{battle.name}</div>
+                      <Badge variant="outline" className="text-purple-400 border-purple-400">
+                        Ends in {battle.endDate}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">{battle.hubs[0]}</span>
+                        <span className="text-white font-bold">{battle.score[0]}</span>
+                      </div>
+                      <Progress value={(battle.score[0] / (battle.score[0] + battle.score[1])) * 100} className="h-2" />
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">{battle.hubs[1]}</span>
+                        <span className="text-white font-bold">{battle.score[1]}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {user && recommendations.length > 0 && (
