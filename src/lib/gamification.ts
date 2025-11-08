@@ -261,7 +261,8 @@ export const STORE_ITEMS: StoreItem[] = [
     type: 'boost',
     price: 200,
     icon: '🚀',
-    effectDuration: 7200
+    effectDuration: 7200,
+    currency: 'coins'
   },
   {
     id: 'premium-badge',
@@ -269,7 +270,8 @@ export const STORE_ITEMS: StoreItem[] = [
     description: 'Special rainbow frame for your profile',
     type: 'badge',
     price: 150,
-    icon: '💖'
+    icon: '💖',
+    currency: 'coins'
   },
   {
     id: 'custom-mood-theme-sunset',
@@ -277,7 +279,8 @@ export const STORE_ITEMS: StoreItem[] = [
     description: 'Beautiful orange-pink gradient for your profile',
     type: 'theme',
     price: 300,
-    icon: '🌅'
+    icon: '🌅',
+    currency: 'coins'
   },
   {
     id: 'custom-mood-theme-ocean',
@@ -285,7 +288,8 @@ export const STORE_ITEMS: StoreItem[] = [
     description: 'Calm blue wave gradient for your profile',
     type: 'theme',
     price: 300,
-    icon: '🌊'
+    icon: '🌊',
+    currency: 'coins'
   },
   {
     id: 'custom-mood-theme-forest',
@@ -293,7 +297,8 @@ export const STORE_ITEMS: StoreItem[] = [
     description: 'Fresh green nature gradient for your profile',
     type: 'theme',
     price: 300,
-    icon: '🌲'
+    icon: '🌲',
+    currency: 'coins'
   },
   {
     id: 'ai-mood-filter',
@@ -301,7 +306,8 @@ export const STORE_ITEMS: StoreItem[] = [
     description: 'Use premium AI filters on your posts',
     type: 'filter',
     price: 500,
-    icon: '🎬'
+    icon: '🎬',
+    currency: 'coins'
   },
   {
     id: 'challenge-skip-token',
@@ -309,7 +315,8 @@ export const STORE_ITEMS: StoreItem[] = [
     description: 'Skip one daily task and still get the reward',
     type: 'skip_token',
     price: 100,
-    icon: '🎯'
+    icon: '🎯',
+    currency: 'coins'
   },
   {
     id: 'mega-boost',
@@ -318,7 +325,8 @@ export const STORE_ITEMS: StoreItem[] = [
     type: 'boost',
     price: 800,
     icon: '⚡',
-    effectDuration: 86400
+    effectDuration: 86400,
+    currency: 'coins'
   },
   {
     id: 'golden-badge',
@@ -326,7 +334,8 @@ export const STORE_ITEMS: StoreItem[] = [
     description: 'Exclusive golden star frame',
     type: 'badge',
     price: 500,
-    icon: '⭐'
+    icon: '⭐',
+    currency: 'coins'
   },
   {
     id: 'festival-special-badge',
@@ -335,7 +344,8 @@ export const STORE_ITEMS: StoreItem[] = [
     type: 'badge',
     price: 1000,
     icon: '🪔',
-    isLimitedTime: true
+    isLimitedTime: true,
+    currency: 'coins'
   }
 ];
 
