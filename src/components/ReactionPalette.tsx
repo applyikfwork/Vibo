@@ -14,6 +14,7 @@ import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { Reaction } from "@/lib/types";
+import { useGamification } from "@/hooks/useGamification";
 
 const reactionEmojis = ['🤗', '🙏', '❤️', '✨', '🔥'];
 
@@ -22,6 +23,7 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
   const { user } = useUser();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const { awardReactionReward } = useGamification();
 
   const handleReaction = (emoji: string) => {
     if (!user || !firestore) {
@@ -52,6 +54,7 @@ export function ReactionPalette({ vibeId }: { vibeId: string }) {
       description: `You reacted with ${emoji}`,
     });
     setIsOpen(false);
+    awardReactionReward();
   };
 
   return (

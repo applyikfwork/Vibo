@@ -116,17 +116,17 @@ export async function POST(req: NextRequest) {
     }
 
     const newXP = currentXP + xpGain;
-    const newCoins = currentCoins + coinGain;
+    let newCoins = currentCoins + coinGain;
     const newLevel = calculateLevel(newXP);
 
     if (newLevel > currentLevel) {
       leveledUp = true;
-      coinGain += COIN_REWARDS.LEVEL_UP;
+      newCoins += COIN_REWARDS.LEVEL_UP * (newLevel - currentLevel);
     }
 
     await userRef.update({
       xp: FieldValue.increment(xpGain),
-      coins: FieldValue.increment(coinGain),
+      coins: FieldValue.increment(newCoins - currentCoins),
       level: newLevel
     });
 

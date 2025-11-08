@@ -381,4 +381,3 @@ export type CityChallenge = {
   isActive: boolean;
   participants: string[];
 };
-

@@ -17,7 +17,7 @@ import { Skeleton } from './ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from '@/lib/utils';
-
+import { useGamification } from '@/hooks/useGamification';
 
 function CommentCard({ comment }: { comment: Comment }) {
     const authorName = comment.isAnonymous ? 'Anonymous' : comment.author.name;
@@ -96,7 +96,7 @@ export function InteractionSection({ vibeId }: { vibeId: string }) {
     const [isAnonymous, setIsAnonymous] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState('comments');
-
+    const { awardCommentReward } = useGamification();
 
     const commentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -141,6 +141,7 @@ export function InteractionSection({ vibeId }: { vibeId: string }) {
         setCommentText('');
         setIsSubmitting(false);
         toast({ title: 'Comment posted!' });
+        awardCommentReward();
     };
 
 
