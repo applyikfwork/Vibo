@@ -340,6 +340,7 @@ export type Vibe = {
   emotion: EmotionCategory;
   backgroundColor: string;
   timestamp: Timestamp;
+  createdAt?: Timestamp;
   tagIds?: string[];
   author: Author;
   isAnonymous: boolean;
@@ -358,6 +359,7 @@ export type Vibe = {
   lastDecayUpdate?: Timestamp;
   location?: Location;
   distance?: number;
+  isDemo?: boolean;
 };
 
 export type Comment = {

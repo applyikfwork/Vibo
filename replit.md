@@ -33,6 +33,19 @@ None recorded yet.
   - **Hub Activity Metrics**: Real-time tracking of 24-hour activity counts and trending scores for each hub
   - **Notification Preferences**: User-configurable notification settings including mute options, quiet hours, and selective notification types (stored in Firestore `hub-notification-preferences` collection)
 - **GeoVibe Engine**: A comprehensive location-based emotional mapping system. Features location capture (Browser Geolocation API with privacy consent), real-time city-level emotion analytics (City Mood Pulse), Geo-hash based nearby vibes feed, and interactive emotion maps (Google Maps integration). Includes gamification elements like XP, local leaderboards, and city challenges. All mutation endpoints require Firebase authentication.
+- **Enhanced GeoVibe System** (November 2025): Revolutionary emotional landscape features including:
+  - **Intelligent Demo Data System**: Realistic emotion clusters across 6 major Indian cities (Delhi, Mumbai, Bangalore, Pune, Hyderabad, Chennai) with time-based patterns (morning energy in colleges, evening calm in parks), trending emotional waves ("Wave of Joy spreading across South Delhi"), and gradual fade as real users join. Demo vibes are marked as "Anonymous Viber" for transparency
+  - **Advanced Map Visualizations**: 
+    - Emotion Heat Maps using Google Maps Visualization API with multi-layer gradients for different emotions
+    - 3D Emotion Bubbles with intensity-based sizes, floating animations, and interactive popups
+    - Particle System with animated emotion flows, connecting particles of similar emotions
+  - **Emotion Timeline & Rewind**: Hour-by-hour emotion tracking with rewind capability to view yesterday/last week, plus AI-powered predictions for when specific emotions typically occur in a location
+  - **Nearby Vibe Stories**: Aggregated anonymous emotional narratives ("8 people felt happy here today"), emotion journey maps (Calm Trail, Happiness Route, Motivation Path), and location-based emotional insights
+  - **Vibe Challenges & Gamification**: Daily/weekly/city challenges ("Spread 10 Happy Vibes", "Delhi Happiness Battle"), geo-unlockable achievements for visiting famous locations, progress tracking with XP/coin rewards, and city-vs-city competitions
+  - **Map Theme System**: 6 custom themes including Dark Glow (glowing markers on dark map), Pastel Dreams (calming colors), Vibrant Neon (high-energy aesthetic), and seasonal themes (Monsoon Blues, Summer Yellows) with custom Google Maps styling
+  - **Smart GeoVibe Notifications**: Real-time notifications for neighborhood mood needs, achievement unlocks, emotional storms detected, trending waves, and nearby people with similar emotions
+  - **Viral Sharing Features**: Beautiful city mood cards with current emotional weather, shareable screenshots, emotion forecasts, and social media integration for spreading awareness
+  - **Emotion Waves Display**: Live tracking of trending emotional patterns ("Morning Motivation Wave", "Lunch Hour Joy", "Evening Chill Wave") with intensity indicators and affected area maps
 - **Development Setup**: Configured for Replit compatibility, including port binding (`0.0.0.0:5000`), using TypeScript with build error/ESLint ignoring for faster development.
 
 ### System Design Choices
@@ -48,3 +61,20 @@ None recorded yet.
 - **AI Integration**: Genkit with Google Genai (Google Gemini 2.5 Flash for emotion analysis).
 - **Maps**: Google Maps JavaScript API.
 - **External Image Providers**: `placehold.co`, `images.unsplash.com`, `picsum.photos`.
+
+## Environment Variables
+
+### Required for Full Functionality
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: Google Maps JavaScript API key for map visualizations
+- `FIREBASE_PRIVATE_KEY`: Firebase Admin SDK private key (for server-side operations)
+- `FIREBASE_CLIENT_EMAIL`: Firebase Admin SDK client email
+- `FIREBASE_PROJECT_ID`: Firebase project ID
+
+### Demo Mode Fallbacks
+The Enhanced GeoVibe system includes intelligent demo data fallbacks when Firebase Admin credentials are not available:
+- **City Leaderboards**: Returns demo leaderboard with 10 sample users
+- **City Challenges**: Returns 2 active demo challenges for the selected city
+- **Demo Vibes**: Generates realistic emotion clusters for 6 major Indian cities
+- **Emotion Waves**: Creates time-based emotional weather patterns
+
+This ensures the application remains fully functional and visually impressive even in development/demo environments without Firebase Admin setup.

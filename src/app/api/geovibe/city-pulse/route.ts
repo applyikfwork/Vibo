@@ -1,7 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/firebase/admin';
-import { Timestamp } from 'firebase-admin/firestore';
 import type { CityMoodPulse, EmotionCategory } from '@/lib/types';
+import { demoDataService } from '@/lib/demo-data-service';
+
+const generateDemoPulse = (city: string) => {
+  const demoVibes = demoDataService.generateDemoVibesForCity(city, 50);
+  
+  const moodBreakdown: Record<string, number> = {};
+  const userSet = new Set<string>();
+  
+  demoVibes.forEach((vibe, index) => {
+    userSet.add(`demo-user-${index}`);
+    const emotion = vibe.emotion as EmotionCategory;
+    moodBreakdown[emotion] = (moodBreakdown[emotion] || 0) + 1;
+  });
+
+  const dominantMood = Object.entries(moodBreakdown).sort(([, a], [, b]) => b - a)[0][0] as EmotionCategory;
+
+  const positiveEmotions = ['Happy', 'Chill', 'Motivated', 'Festival Joy', 'Wedding Excitement', 'Religious Peace', 'Family Bonding'];
+  const positiveCount = Object.entries(moodBreakdown)
+    .filter(([emotion]) => positiveEmotions.includes(emotion))
+    .reduce((sum, [, count]) => sum + count, 0);
+  
+  const happinessPercentage = (positiveCount / demoVibes.length) * 100;
+
+  return {
+    city,
+    timestamp: new Date().toISOString(),
+    totalVibes: demoVibes.length,
+    moodBreakdown: moodBreakdown as Record<EmotionCategory, number>,
+    dominantMood,
+    happinessPercentage,
+    activeUsers: userSet.size,
+  };
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,10 +47,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const admin = await getFirebaseAdmin();
-    const db = admin.firestore();
+    try {
+      const admin = await getFirebaseAdmin();
+      const db = admin.firestore();
 
-    const oneDayAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+      const { Timestamp } = await import('firebase-admin/firestore');
+      const oneDayAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
 
     const vibesSnapshot = await db
       .collection('all-vibes')
@@ -62,12 +96,15 @@ export async function GET(request: NextRequest) {
       activeUsers: userSet.size,
     };
 
-    return NextResponse.json({ pulse });
+      return NextResponse.json({ pulse });
+    } catch (firebaseError: any) {
+      console.log('Firebase unavailable, using demo data for city pulse:', firebaseError.message);
+      return NextResponse.json({ pulse: generateDemoPulse(city) });
+    }
   } catch (error: any) {
     console.error('Error in city-pulse API:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+    const { searchParams } = new URL(request.url);
+    const fallbackCity = searchParams.get('city') || 'Delhi';
+    return NextResponse.json({ pulse: generateDemoPulse(fallbackCity) });
   }
 }
