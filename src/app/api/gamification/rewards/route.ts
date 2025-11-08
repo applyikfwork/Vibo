@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
+      console.error('[Rewards API] Unauthorized: Missing or invalid Authorization header');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -78,7 +79,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action, metadata = {} } = body as { action: string; metadata?: RewardMetadata };
 
+    console.log(`[Rewards API] Processing reward for user ${userId}, action: ${action}, metadata:`, metadata);
+
     if (!action || !VALID_ACTIONS.includes(action as RewardAction)) {
+      console.error(`[Rewards API] Invalid action: ${action}`);
       return NextResponse.json(
         { error: 'Invalid or missing action' },
         { status: 400 }
@@ -89,6 +93,7 @@ export async function POST(req: NextRequest) {
 
     const withinRateLimit = await checkRateLimit(db, userId, action);
     if (!withinRateLimit) {
+      console.warn(`[Rewards API] Rate limit exceeded for user ${userId}, action: ${action}`);
       return NextResponse.json(
         { 
           error: 'Rate limit exceeded',
@@ -315,6 +320,8 @@ export async function POST(req: NextRequest) {
         isDuplicate: false
       };
     });
+
+    console.log(`[Rewards API] Success! User ${userId} earned ${result.xpGain} XP, ${result.coinGain} coins for action ${action}`);
 
     return NextResponse.json({
       success: true,
