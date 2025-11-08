@@ -37,8 +37,9 @@ export default function GamificationPage() {
   const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
   const [comboMultiplier, setComboMultiplier] = useState(1);
   const [showComboAnimation, setShowComboAnimation] = useState(false);
-  const [recentActions, setRecentActions] = useState<string[]>([]);
   const [friendsData, setFriendsData] = useState<any[]>([]);
+  const [lastActionTime, setLastActionTime] = useState(0);
+  const [comboResetTimeout, setComboResetTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const fetchUserStats = async () => {
     if (!user) return;
@@ -155,20 +156,6 @@ export default function GamificationPage() {
     }
   };
 
-  const triggerCombo = useCallback(() => {
-    const now = Date.now();
-    const newActions = [...recentActions, now.toString()].slice(-5);
-    const timeWindow = 60000;
-    const actionsInWindow = newActions.filter(t => now - parseInt(t) < timeWindow);
-    
-    if (actionsInWindow.length >= 3) {
-      const multiplier = Math.min(actionsInWindow.length, 5);
-      setComboMultiplier(multiplier);
-      setShowComboAnimation(true);
-      setTimeout(() => setShowComboAnimation(false), 2000);
-    }
-    setRecentActions(actionsInWindow);
-  }, [recentActions]);
 
   const handleClaimReward = async (mission: Mission) => {
     if (!user) return;
@@ -208,13 +195,29 @@ export default function GamificationPage() {
       if (response.ok) {
         const data = await response.json();
         
-        triggerCombo();
+        const now = Date.now();
+        const timeSinceLastAction = now - lastActionTime;
+        const newMultiplier = timeSinceLastAction < 10000 ? Math.min(comboMultiplier + 0.5, 5) : 1;
         
-        const multipliedXP = Math.round(data.rewards.xp * comboMultiplier);
-        const multipliedCoins = Math.round(data.rewards.coins * comboMultiplier);
+        setComboMultiplier(newMultiplier);
+        setLastActionTime(now);
+        
+        if (comboResetTimeout) clearTimeout(comboResetTimeout);
+        const timeout = setTimeout(() => {
+          setComboMultiplier(1);
+        }, 30000);
+        setComboResetTimeout(timeout);
+        
+        if (newMultiplier > 1.5) {
+          setShowComboAnimation(true);
+          setTimeout(() => setShowComboAnimation(false), 2000);
+        }
+        
+        const multipliedXP = Math.round(data.rewards.xp * newMultiplier);
+        const multipliedCoins = Math.round(data.rewards.coins * newMultiplier);
         
         toast({
-          title: comboMultiplier > 1 ? `🔥 ${comboMultiplier}x COMBO! Reward Claimed!` : '🎉 Reward Claimed!',
+          title: newMultiplier > 1 ? `🔥 ${newMultiplier}x COMBO! Reward Claimed!` : '🎉 Reward Claimed!',
           description: `You earned ${multipliedXP} XP and ${multipliedCoins} coins!`,
           duration: 5000
         });
@@ -262,6 +265,14 @@ export default function GamificationPage() {
       loadData();
     }
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (comboResetTimeout) {
+        clearTimeout(comboResetTimeout);
+      }
+    };
+  }, [comboResetTimeout]);
 
   if (!user) {
     return (

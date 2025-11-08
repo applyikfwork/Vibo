@@ -46,8 +46,19 @@ export async function GET(req: NextRequest) {
     const admin = await getFirebaseAdmin();
     const db = admin.firestore();
 
+    const userCreatedHubsSnapshot = await db
+      .collection('community-hubs')
+      .get();
+
+    const userCreatedHubs = userCreatedHubsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Omit<CommunityHub, 'memberCount' | 'topContributors' | 'recentActivityCount' | 'trendingScore'>[];
+
+    const allHubs = [...COMMUNITY_HUBS, ...userCreatedHubs];
+
     const hubsWithStats = await Promise.all(
-      COMMUNITY_HUBS.map(async (hub) => {
+      allHubs.map(async (hub) => {
         try {
           const membersSnapshot = await db
             .collection('users')

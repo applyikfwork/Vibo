@@ -126,12 +126,89 @@ export default function CommunityHubsPage() {
       return;
     }
 
-    toast({
-      title: 'Hub Created! 🎉',
-      description: `${newHubData.name} has been created successfully!`,
-    });
-    setShowCreateDialog(false);
-    setNewHubData({ name: '', description: '', icon: '🎯' });
+    try {
+      const token = await getAuth().currentUser?.getIdToken();
+      const response = await fetch('/api/gamification/hubs/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newHubData.name,
+          description: newHubData.description,
+          icon: newHubData.icon,
+          creatorId: user?.uid
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: 'Hub Created! 🎉',
+          description: `${newHubData.name} has been created successfully!`,
+        });
+        setShowCreateDialog(false);
+        setNewHubData({ name: '', description: '', icon: '🎯' });
+        await fetchHubs();
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Creation Failed',
+          description: error.message || 'Failed to create hub. Please try again.',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error creating hub:', error);
+      toast({
+        title: 'Error',
+        description: 'An error occurred while creating the hub',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch('/api/gamification/hubs/events');
+      if (response.ok) {
+        const data = await response.json();
+        setUpcomingEvents(data.events || []);
+      } else {
+        setUpcomingEvents([
+          { id: 1, name: 'Motivation Monday', date: 'Dec 9, 2024', hub: 'Motivation Station', participants: 42 },
+          { id: 2, name: 'Weekend Chill Fest', date: 'Dec 14, 2024', hub: 'Chill Corner', participants: 128 }
+        ]);
+      }
+    } catch (error) {
+      console.log('[Hubs] Using demo events data');
+      setUpcomingEvents([
+        { id: 1, name: 'Motivation Monday', date: 'Dec 9, 2024', hub: 'Motivation Station', participants: 42 },
+        { id: 2, name: 'Weekend Chill Fest', date: 'Dec 14, 2024', hub: 'Chill Corner', participants: 128 }
+      ]);
+    }
+  };
+
+  const fetchBattles = async () => {
+    try {
+      const response = await fetch('/api/gamification/hubs/battles');
+      if (response.ok) {
+        const data = await response.json();
+        setActiveBattles(data.battles || []);
+      } else {
+        setActiveBattles([
+          { id: 1, name: 'Happy vs Chill', hubs: ['Happy Vibes Only', 'Chill Corner'], score: [1250, 1180], endDate: '3 days' },
+          { id: 2, name: 'Motivation Showdown', hubs: ['Motivation Station', 'Study Support'], score: [890, 920], endDate: '5 days' }
+        ]);
+      }
+    } catch (error) {
+      console.log('[Hubs] Using demo battles data');
+      setActiveBattles([
+        { id: 1, name: 'Happy vs Chill', hubs: ['Happy Vibes Only', 'Chill Corner'], score: [1250, 1180], endDate: '3 days' },
+        { id: 2, name: 'Motivation Showdown', hubs: ['Motivation Station', 'Study Support'], score: [890, 920], endDate: '5 days' }
+      ]);
+    }
   };
 
   useEffect(() => {
@@ -141,14 +218,12 @@ export default function CommunityHubsPage() {
       setLoading(true);
       try {
         console.log('[Hubs] Fetching hubs data...');
-        await Promise.all([fetchHubs(), fetchUserHubs(), fetchRecommendations()]);
-        setUpcomingEvents([
-          { id: 1, name: 'Motivation Monday', date: 'Dec 9, 2024', hub: 'Motivation Station', participants: 42 },
-          { id: 2, name: 'Weekend Chill Fest', date: 'Dec 14, 2024', hub: 'Chill Corner', participants: 128 }
-        ]);
-        setActiveBattles([
-          { id: 1, name: 'Happy vs Chill', hubs: ['Happy Vibes Only', 'Chill Corner'], score: [1250, 1180], endDate: '3 days' },
-          { id: 2, name: 'Motivation Showdown', hubs: ['Motivation Station', 'Study Support'], score: [890, 920], endDate: '5 days' }
+        await Promise.all([
+          fetchHubs(), 
+          fetchUserHubs(), 
+          fetchRecommendations(),
+          fetchEvents(),
+          fetchBattles()
         ]);
         console.log('[Hubs] Successfully loaded hubs data');
       } catch (error) {
