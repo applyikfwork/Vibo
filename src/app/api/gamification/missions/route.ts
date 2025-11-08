@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getFirebaseAdmin } from '@/firebase/admin';
@@ -122,39 +123,42 @@ export async function POST(req: NextRequest) {
     }
 
     const userData = userDoc.data();
-    const missionField = `${missionType}Missions`;
-    const missions = userData?.[missionField] || [];
+    const missionField = `${missionType}Missions`; // e.g., 'dailyMissions'
+    const missions: Mission[] = userData?.[missionField] || [];
+    
+    let missionUpdated = false;
+    const updatedMissions = missions.map((mission: Mission) => {
+      if (mission.id === missionId && !mission.isCompleted) {
+        missionUpdated = true;
+        const newCurrent = Math.min(mission.current + incrementBy, mission.target);
 
-    const missionIndex = missions.findIndex((m: Mission) => m.id === missionId);
-    if (missionIndex === -1) {
-      return NextResponse.json({ error: 'Mission not found' }, { status: 404 });
+        if (newCurrent >= mission.target) {
+          return {
+            ...mission,
+            current: newCurrent,
+            isCompleted: true,
+            completedAt: Timestamp.now(),
+          };
+        }
+        return { ...mission, current: newCurrent };
+      }
+      return mission;
+    });
+
+    if (!missionUpdated) {
+       return NextResponse.json({ success: true, message: 'Mission not found or already completed' });
     }
-
-    const mission = missions[missionIndex];
-    if (mission.isCompleted) {
-      return NextResponse.json(
-        { error: 'Mission already completed' },
-        { status: 400 }
-      );
-    }
-
-    mission.current = Math.min(mission.current + incrementBy, mission.target);
-
-    if (mission.current >= mission.target && !mission.isCompleted) {
-      mission.isCompleted = true;
-      mission.completedAt = Timestamp.now();
-    }
-
-    missions[missionIndex] = mission;
 
     await userRef.update({
-      [missionField]: missions
+      [missionField]: updatedMissions
     });
+    
+    const finalMissionState = updatedMissions.find(m => m.id === missionId);
 
     return NextResponse.json({
       success: true,
-      mission,
-      completed: mission.isCompleted
+      mission: finalMissionState,
+      completed: finalMissionState?.isCompleted || false
     });
 
   } catch (error: any) {
