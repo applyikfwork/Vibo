@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
 import { useToast } from './use-toast';
 
 interface RewardResponse {
   success: boolean;
+  duplicate?: boolean;
   rewards: {
     xp: number;
     coins: number;
@@ -22,68 +23,164 @@ interface RewardResponse {
   };
 }
 
+interface ErrorResponse {
+  error: string;
+  message?: string;
+}
+
+function generateIdempotencyKey(action: string, metadata?: Record<string, any>): string {
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 15);
+  const metadataStr = metadata ? JSON.stringify(metadata) : '';
+  return `${action}_${timestamp}_${randomStr}_${metadataStr}`.substring(0, 100);
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export function useGamification() {
   const { toast } = useToast();
   const [isAwarding, setIsAwarding] = useState(false);
+  const pendingRequests = useRef(new Set<string>());
 
   const awardReward = useCallback(
-    async (action: string, metadata?: Record<string, any>): Promise<RewardResponse | null> => {
+    async (
+      action: string, 
+      metadata?: Record<string, any>,
+      options?: { skipToast?: boolean; retries?: number }
+    ): Promise<RewardResponse | null> => {
+      const maxRetries = options?.retries ?? 3;
+      const skipToast = options?.skipToast ?? false;
+      
+      const idempotencyKey = generateIdempotencyKey(action, metadata);
+      
+      if (pendingRequests.current.has(idempotencyKey)) {
+        console.log('Duplicate request detected, skipping...');
+        return null;
+      }
+
+      pendingRequests.current.add(idempotencyKey);
       setIsAwarding(true);
+
       try {
         const token = await getAuth().currentUser?.getIdToken();
-        if (!token) return null;
-
-        const response = await fetch('/api/gamification/rewards', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ action, metadata })
-        });
-
-        if (!response.ok) {
-          console.error('Failed to award reward');
-          return null;
+        if (!token) {
+          throw new Error('User not authenticated');
         }
 
-        const data: RewardResponse = await response.json();
-
-        if (data.rewards.xp > 0 || data.rewards.coins > 0) {
-          const rewardMessage = [];
-          if (data.rewards.xp > 0) rewardMessage.push(`+${data.rewards.xp} XP`);
-          if (data.rewards.coins > 0) rewardMessage.push(`+${data.rewards.coins} Coins`);
-
-          toast({
-            title: '🎉 Reward Earned!',
-            description: rewardMessage.join(', '),
-            duration: 3000
-          });
-        }
-
-        if (data.rewards.leveledUp) {
-          toast({
-            title: '🎊 Level Up!',
-            description: `You reached Level ${data.rewards.level}! 🚀`,
-            duration: 5000
-          });
-        }
-
-        if (data.rewards.newBadges.length > 0) {
-          for (const badge of data.rewards.newBadges) {
-            toast({
-              title: `${badge.icon} Badge Unlocked!`,
-              description: `You earned: ${badge.name}`,
-              duration: 5000
+        let lastError: Error | null = null;
+        
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+          try {
+            const response = await fetch('/api/gamification/rewards', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ 
+                action, 
+                metadata: {
+                  ...metadata,
+                  idempotencyKey
+                }
+              })
             });
+
+            if (response.status === 429) {
+              const errorData: ErrorResponse = await response.json();
+              if (!skipToast) {
+                toast({
+                  variant: 'destructive',
+                  title: 'Slow Down',
+                  description: errorData.message || 'You are performing this action too frequently.',
+                  duration: 5000
+                });
+              }
+              return null;
+            }
+
+            if (response.status === 401) {
+              throw new Error('Authentication failed');
+            }
+
+            if (!response.ok) {
+              const errorData: ErrorResponse = await response.json();
+              throw new Error(errorData.error || 'Failed to award reward');
+            }
+
+            const data: RewardResponse = await response.json();
+
+            if (data.duplicate) {
+              console.log('Duplicate reward detected by server');
+              return data;
+            }
+
+            if (!skipToast && (data.rewards.xp > 0 || data.rewards.coins > 0)) {
+              const rewardMessage = [];
+              if (data.rewards.xp > 0) rewardMessage.push(`+${data.rewards.xp} XP`);
+              if (data.rewards.coins > 0) rewardMessage.push(`+${data.rewards.coins} Coins`);
+
+              toast({
+                title: '🎉 Reward Earned!',
+                description: rewardMessage.join(', '),
+                duration: 3000
+              });
+            }
+
+            if (!skipToast && data.rewards.leveledUp) {
+              toast({
+                title: '🎊 Level Up!',
+                description: `You reached Level ${data.rewards.level}! 🚀`,
+                duration: 5000
+              });
+            }
+
+            if (!skipToast && data.rewards.newBadges.length > 0) {
+              for (const badge of data.rewards.newBadges) {
+                toast({
+                  title: `${badge.icon} Badge Unlocked!`,
+                  description: `You earned: ${badge.name}`,
+                  duration: 5000
+                });
+              }
+            }
+
+            return data;
+
+          } catch (error: any) {
+            lastError = error;
+            
+            if (error.message === 'Authentication failed') {
+              throw error;
+            }
+
+            if (attempt < maxRetries) {
+              const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000);
+              console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${backoffMs}ms`);
+              await sleep(backoffMs);
+            }
           }
         }
 
-        return data;
-      } catch (error) {
+        throw lastError || new Error('Failed to award reward after retries');
+
+      } catch (error: any) {
         console.error('Error awarding reward:', error);
+        
+        if (!skipToast && error.message !== 'User not authenticated') {
+          toast({
+            variant: 'destructive',
+            title: 'Reward Error',
+            description: 'Could not award reward at this time. Your progress is safe.',
+            duration: 4000
+          });
+        }
+        
         return null;
       } finally {
+        pendingRequests.current.delete(idempotencyKey);
         setIsAwarding(false);
       }
     },
