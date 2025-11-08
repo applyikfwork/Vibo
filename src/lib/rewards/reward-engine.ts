@@ -201,7 +201,9 @@ export function shouldResetDailyCaps(lastReset: Timestamp | undefined): boolean 
   if (!lastReset) return true;
 
   const now = new Date();
-  const lastResetDate = (lastReset as any).toDate ? (lastReset as any).toDate() : new Date(lastReset);
+  const lastResetDate = (lastReset as any).toDate ? (lastReset as any).toDate() : 
+                        typeof lastReset === 'object' && 'seconds' in lastReset ? new Date((lastReset as any).seconds * 1000) :
+                        new Date();
 
   return now.getDate() !== lastResetDate.getDate() || 
          now.getMonth() !== lastResetDate.getMonth() || 

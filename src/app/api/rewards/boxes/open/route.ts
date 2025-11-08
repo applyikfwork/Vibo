@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/firebase/admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { SURPRISE_BOXES } from '@/lib/rewards/constants';
 
 function selectRandomReward(possibleRewards: any[]) {
@@ -110,11 +110,11 @@ export async function POST(req: NextRequest) {
         updates.xp = newXP;
         rewardDescription = `${amount} XP`;
       } else if (selectedReward.type === 'badge') {
-        updates.badges = admin.firestore.FieldValue.arrayUnion({
+        updates.badges = FieldValue.arrayUnion({
           id: selectedReward.itemId,
           earnedAt: Timestamp.now(),
-          category: 'achievement',
-          rarity: selectedReward.rarity,
+          category: 'achievement' as const,
+          rarity: selectedReward.rarity as any,
           meta: {
             reason: `Opened ${boxConfig.name}`,
             date: new Date().toISOString(),
@@ -122,14 +122,14 @@ export async function POST(req: NextRequest) {
         });
         rewardDescription = `Badge: ${selectedReward.itemId}`;
       } else if (selectedReward.type === 'item') {
-        updates.inventory = admin.firestore.FieldValue.arrayUnion({
+        updates.inventory = FieldValue.arrayUnion({
           id: `${selectedReward.itemId}_${Date.now()}`,
           itemId: selectedReward.itemId,
           name: selectedReward.itemId,
-          type: 'cosmetic',
+          type: 'cosmetic' as const,
           quantity: amount,
           acquiredAt: Timestamp.now(),
-          rarity: selectedReward.rarity,
+          rarity: selectedReward.rarity as any,
         });
         rewardDescription = `${amount}x ${selectedReward.itemId}`;
       }

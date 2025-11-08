@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/firebase/admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { claimMissionReward } from '@/lib/rewards/missions-service';
 import { calculateLevel, calculateTier } from '@/lib/rewards/reward-engine';
+import type { Mission } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -84,11 +85,11 @@ export async function POST(req: NextRequest) {
       };
 
       if (mission.reward.badge) {
-        updates.badges = admin.firestore.FieldValue.arrayUnion({
+        updates.badges = FieldValue.arrayUnion({
           id: mission.reward.badge,
           earnedAt: Timestamp.now(),
-          category: 'achievement',
-          rarity: 'rare',
+          category: 'achievement' as const,
+          rarity: 'rare' as const,
           meta: {
             reason: `Completed mission: ${mission.title}`,
             date: new Date().toISOString(),
@@ -97,15 +98,15 @@ export async function POST(req: NextRequest) {
       }
 
       if (mission.reward.items && mission.reward.items.length > 0) {
-        const newItems = mission.reward.items.map(itemId => ({
+        const newItems = mission.reward.items.map((itemId: string) => ({
           id: `${itemId}_${Date.now()}`,
           itemId,
           name: itemId,
-          type: 'reward',
+          type: 'reward' as const,
           quantity: 1,
           acquiredAt: Timestamp.now(),
         }));
-        updates.inventory = admin.firestore.FieldValue.arrayUnion(...newItems);
+        updates.inventory = FieldValue.arrayUnion(...newItems);
       }
 
       transaction.update(userRef, updates);

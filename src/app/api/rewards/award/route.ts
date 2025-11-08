@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/firebase/admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import {
   RewardAction,
   calculateReward,
@@ -8,8 +8,12 @@ import {
   calculateTier,
   shouldResetDailyCaps,
   checkVelocityLimit,
+  detectAnomalousEarning,
+  FRAUD_THRESHOLDS,
 } from '@/lib/rewards/reward-engine';
 import { incrementMissionProgress, shouldResetDailyMissions, shouldResetWeeklyMissions, generateDailyMissions, generateWeeklyMissions } from '@/lib/rewards/missions-service';
+import { detectCollaborationRing, shouldTriggerManualReview, calculateSanction } from '@/lib/rewards/fraud-detection';
+import type { Mission } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,6 +43,9 @@ export async function POST(req: NextRequest) {
     }
 
     const db = admin.firestore();
+
+    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const deviceFingerprint = metadata.deviceFingerprint || 'unknown';
 
     if (idempotencyKey) {
       const idempotencyDoc = await db
@@ -89,11 +96,17 @@ export async function POST(req: NextRequest) {
       }
 
       const userData = userDoc.data()!;
+
+      if (userData.accountStatus === 'suspended' || userData.accountStatus === 'banned') {
+        throw new Error('Account is suspended or banned');
+      }
+
       const currentXP = userData.xp || 0;
       const currentCoins = userData.coins || 0;
       const currentGems = userData.gems || 0;
       const currentLevel = userData.level || 1;
       const currentTier = userData.tier || 'bronze';
+      const fraudFlags = userData.fraudFlags || 0;
 
       let dailyCoinsEarned = userData.dailyCoinsEarned || 0;
       let dailyXPEarned = userData.dailyXPEarned || 0;
@@ -154,6 +167,87 @@ export async function POST(req: NextRequest) {
       dailyMissions = incrementMissionProgress(dailyMissions, action, metadata.incrementBy || 1);
       weeklyMissions = incrementMissionProgress(weeklyMissions, action, metadata.incrementBy || 1);
 
+      const today = new Date().toISOString().split('T')[0];
+      const dailyStatsRef = db.collection('daily-stats').doc(`${userId}_${today}`);
+      const dailyStatsDoc = await transaction.get(dailyStatsRef);
+
+      if (dailyStatsDoc.exists) {
+        transaction.update(dailyStatsRef, {
+          coinsEarned: FieldValue.increment(reward.coins),
+          xpEarned: FieldValue.increment(reward.xp),
+        });
+      } else {
+        transaction.set(dailyStatsRef, {
+          userId,
+          date: today,
+          coinsEarned: reward.coins,
+          xpEarned: reward.xp,
+          vibesPosted: action === 'post_vibe' ? 1 : 0,
+          reactionsGiven: action === 'react_vibe' ? 1 : 0,
+          commentsGiven: action === 'helpful_comment' ? 1 : 0,
+        });
+      }
+
+      const cohortMediansSnapshot = await db
+        .collection('daily-stats')
+        .where('date', '==', today)
+        .limit(100)
+        .get();
+
+      let medianDailyCoins = 0;
+      let medianDailyXP = 0;
+
+      if (!cohortMediansSnapshot.empty) {
+        const coins = cohortMediansSnapshot.docs.map(d => d.data().coinsEarned || 0);
+        const xp = cohortMediansSnapshot.docs.map(d => d.data().xpEarned || 0);
+        medianDailyCoins = median(coins);
+        medianDailyXP = median(xp);
+      }
+
+      const anomalyCheck = detectAnomalousEarning(
+        dailyCoinsEarned + reward.coins,
+        dailyXPEarned + reward.xp,
+        medianDailyCoins,
+        medianDailyXP
+      );
+
+      let reviewStatus: 'pending' | 'approved' | 'flagged' | 'rolled_back' = 'approved';
+      let newFraudFlags = fraudFlags;
+
+      if (anomalyCheck.isFraudulent) {
+        newFraudFlags += 1;
+        reviewStatus = 'flagged';
+
+        transaction.set(db.collection('fraud-checks').doc(), {
+          userId,
+          checkType: 'anomaly',
+          timestamp: Timestamp.now(),
+          flagReason: anomalyCheck.reason || 'Anomalous earning detected',
+          severity: anomalyCheck.severity,
+          autoResolved: false,
+          manualReview: anomalyCheck.severity === 'critical' || anomalyCheck.severity === 'high',
+          metadata: {
+            dailyCoins: dailyCoinsEarned + reward.coins,
+            dailyXP: dailyXPEarned + reward.xp,
+            medianCoins: medianDailyCoins,
+            medianXP: medianDailyXP,
+          },
+        });
+
+        if (shouldTriggerManualReview(newFraudFlags, anomalyCheck.severity)) {
+          const sanction = calculateSanction(newFraudFlags, anomalyCheck.severity, fraudFlags > 5);
+          transaction.update(userRef, {
+            accountStatus: sanction.action === 'ban' ? 'banned' : 
+                          sanction.action === 'suspension' ? 'suspended' : 
+                          'under_review',
+          });
+
+          if (sanction.action === 'rollback' || sanction.action === 'suspension' || sanction.action === 'ban') {
+            throw new Error(sanction.message);
+          }
+        }
+      }
+
       const newBadges: string[] = [];
       if (tierChanged) {
         const tierBadges: Record<string, string> = {
@@ -181,9 +275,12 @@ export async function POST(req: NextRequest) {
         weeklyMissions,
         lastDailyMissionReset,
         lastWeeklyMissionReset,
+        deviceFingerprint,
+        lastIpAddress: clientIp,
+        fraudFlags: newFraudFlags,
         ...(action === 'post_vibe' && { lastPostDate: Timestamp.now() }),
         ...(newBadges.length > 0 && {
-          badges: admin.firestore.FieldValue.arrayUnion(
+          badges: FieldValue.arrayUnion(
             ...newBadges.map(id => ({
               id,
               earnedAt: Timestamp.now(),
@@ -196,7 +293,7 @@ export async function POST(req: NextRequest) {
 
       const transactionDoc = {
         userId,
-        type: 'earn',
+        type: 'earn' as const,
         action,
         xpChange: reward.xp,
         coinsChange: reward.coins,
@@ -204,8 +301,10 @@ export async function POST(req: NextRequest) {
         timestamp: Timestamp.now(),
         metadata,
         ...(idempotencyKey && { idempotencyKey }),
-        deviceFingerprint: metadata.deviceFingerprint,
-        reviewStatus: 'approved',
+        deviceFingerprint,
+        ipAddress: clientIp,
+        reviewStatus,
+        isFraudulent: anomalyCheck.isFraudulent,
       };
 
       transaction.set(db.collection('reward-transactions').doc(), transactionDoc);
@@ -223,8 +322,8 @@ export async function POST(req: NextRequest) {
         tierChanged,
         newBadges,
         missionsCompleted: [
-          ...dailyMissions.filter(m => m.isCompleted && !m.claimed),
-          ...weeklyMissions.filter(m => m.isCompleted && !m.claimed),
+          ...dailyMissions.filter((m: Mission) => m.isCompleted && !m.claimed),
+          ...weeklyMissions.filter((m: Mission) => m.isCompleted && !m.claimed),
         ],
       };
     });
@@ -240,4 +339,11 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function median(arr: number[]): number {
+  if (arr.length === 0) return 0;
+  const sorted = arr.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 }

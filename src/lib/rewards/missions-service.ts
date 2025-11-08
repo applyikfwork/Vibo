@@ -114,7 +114,9 @@ export function shouldResetDailyMissions(lastReset: Timestamp | undefined): bool
   if (!lastReset) return true;
 
   const now = new Date();
-  const lastResetDate = (lastReset as any).toDate ? (lastReset as any).toDate() : new Date(lastReset);
+  const lastResetDate = (lastReset as any).toDate ? (lastReset as any).toDate() : 
+                        typeof lastReset === 'object' && 'seconds' in lastReset ? new Date((lastReset as any).seconds * 1000) :
+                        new Date();
 
   return now.getDate() !== lastResetDate.getDate() || 
          now.getMonth() !== lastResetDate.getMonth() || 
@@ -125,7 +127,9 @@ export function shouldResetWeeklyMissions(lastReset: Timestamp | undefined): boo
   if (!lastReset) return true;
 
   const now = new Date();
-  const lastResetDate = (lastReset as any).toDate ? (lastReset as any).toDate() : new Date(lastReset);
+  const lastResetDate = (lastReset as any).toDate ? (lastReset as any).toDate() : 
+                        typeof lastReset === 'object' && 'seconds' in lastReset ? new Date((lastReset as any).seconds * 1000) :
+                        new Date();
 
   return getWeekNumber(now) !== getWeekNumber(lastResetDate);
 }

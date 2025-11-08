@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/firebase/admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { STORE_ITEMS_CATALOG } from '@/lib/rewards/constants';
 
 export async function POST(req: NextRequest) {
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       } else if (storeItem.type === 'profile_frame') {
         updates.profileFrame = storeItem.id;
       } else if (storeItem.type === 'cosmetic') {
-        updates.activeCosmetics = admin.firestore.FieldValue.arrayUnion(storeItem.id);
+        updates.activeCosmetics = FieldValue.arrayUnion(storeItem.id);
       } else {
         const inventory = userData.inventory || [];
         const existingItem = inventory.find((i: any) => i.itemId === itemId);
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
           existingItem.quantity += 1;
           updates.inventory = inventory;
         } else {
-          updates.inventory = admin.firestore.FieldValue.arrayUnion({
+          updates.inventory = FieldValue.arrayUnion({
             id: `${itemId}_${Date.now()}`,
             itemId: storeItem.id,
             name: storeItem.name,
