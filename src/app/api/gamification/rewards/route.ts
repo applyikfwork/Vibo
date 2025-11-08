@@ -10,6 +10,70 @@ import {
   BADGE_DEFINITIONS 
 } from '@/lib/gamification';
 
+interface RewardMetadata extends Record<string, any> {
+  vibeId?: string;
+  targetUserId?: string;
+  commentId?: string;
+  idempotencyKey?: string;
+}
+
+const VALID_ACTIONS = [
+  'POST_VIBE',
+  'REACT_TO_VIBE',
+  'HELPFUL_COMMENT',
+  'VOICE_NOTE',
+  'RECEIVE_HELPFUL_VOTE',
+  'COMPLETE_DAILY_CHALLENGE',
+  'COMPLETE_WEEKLY_CHALLENGE',
+  'JOIN_COMMUNITY_HUB',
+  'PARTICIPATE_IN_EVENT'
+] as const;
+
+type RewardAction = typeof VALID_ACTIONS[number];
+
+const RATE_LIMITS: Record<string, { count: number; windowMs: number }> = {
+  POST_VIBE: { count: 50, windowMs: 3600000 },
+  REACT_TO_VIBE: { count: 100, windowMs: 3600000 },
+  HELPFUL_COMMENT: { count: 60, windowMs: 3600000 },
+  VOICE_NOTE: { count: 30, windowMs: 3600000 },
+};
+
+async function checkRateLimit(
+  db: FirebaseFirestore.Firestore,
+  userId: string,
+  action: string
+): Promise<boolean> {
+  const limit = RATE_LIMITS[action];
+  if (!limit) return true;
+
+  const now = Date.now();
+  const windowStart = now - limit.windowMs;
+
+  const recentTransactions = await db
+    .collection('reward-transactions')
+    .where('userId', '==', userId)
+    .where('action', '==', action)
+    .where('timestamp', '>', Timestamp.fromMillis(windowStart))
+    .get();
+
+  return recentTransactions.size < limit.count;
+}
+
+async function checkIdempotency(
+  db: FirebaseFirestore.Firestore,
+  userId: string,
+  idempotencyKey: string
+): Promise<boolean> {
+  const existingTransaction = await db
+    .collection('reward-transactions')
+    .where('userId', '==', userId)
+    .where('metadata.idempotencyKey', '==', idempotencyKey)
+    .limit(1)
+    .get();
+
+  return existingTransaction.empty;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -22,160 +86,234 @@ export async function POST(req: NextRequest) {
     const decodedToken = await admin.auth().verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    const { action, metadata } = await req.json();
+    const body = await req.json();
+    const { action, metadata = {} } = body as { action: string; metadata?: RewardMetadata };
 
-    if (!action) {
-      return NextResponse.json({ error: 'Action is required' }, { status: 400 });
+    if (!action || !VALID_ACTIONS.includes(action as RewardAction)) {
+      return NextResponse.json(
+        { error: 'Invalid or missing action' },
+        { status: 400 }
+      );
     }
 
     const db = admin.firestore();
-    const userRef = db.collection('users').doc(userId);
-    const userDoc = await userRef.get();
 
-    if (!userDoc.exists) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    const withinRateLimit = await checkRateLimit(db, userId, action);
+    if (!withinRateLimit) {
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded',
+          message: 'You are performing this action too frequently. Please try again later.'
+        },
+        { status: 429 }
+      );
     }
 
-    const userData = userDoc.data();
-    const currentXP = userData?.xp || 0;
-    const currentCoins = userData?.coins || 0;
-    const currentLevel = calculateLevel(currentXP);
+    if (metadata.idempotencyKey) {
+      const isUnique = await checkIdempotency(db, userId, metadata.idempotencyKey);
+      if (!isUnique) {
+        const existingReward = await db
+          .collection('reward-transactions')
+          .where('userId', '==', userId)
+          .where('metadata.idempotencyKey', '==', metadata.idempotencyKey)
+          .limit(1)
+          .get();
 
-    let xpGain = 0;
-    let coinGain = 0;
-    let newBadges: any[] = [];
-    let leveledUp = false;
-
-    switch (action) {
-      case 'POST_VIBE':
-        xpGain = XP_REWARDS.POST_VIBE;
-        coinGain = COIN_REWARDS.POST_VIBE;
-        
-        const lastPostDate = userData?.lastPostDate;
-        const isFirstPostToday = !lastPostDate || 
-          new Date(lastPostDate.toDate()).toDateString() !== new Date().toDateString();
-        
-        if (isFirstPostToday) {
-          xpGain += XP_REWARDS.FIRST_POST_OF_DAY;
+        if (!existingReward.empty) {
+          const rewardData = existingReward.docs[0].data();
+          return NextResponse.json({
+            success: true,
+            duplicate: true,
+            rewards: {
+              xp: rewardData.xpChange || 0,
+              coins: rewardData.coinsChange || 0,
+              totalXP: 0,
+              totalCoins: 0,
+              level: 0,
+              leveledUp: false,
+              newBadges: []
+            }
+          });
         }
-
-        const postingStreak = userData?.postingStreak || 0;
-        if (postingStreak >= 7) {
-          xpGain += XP_REWARDS.POSTING_STREAK_BONUS;
-        }
-
-        await userRef.update({
-          totalVibesPosted: FieldValue.increment(1),
-          lastPostDate: Timestamp.now()
-        });
-        break;
-
-      case 'REACT_TO_VIBE':
-        xpGain = XP_REWARDS.REACT_TO_VIBE;
-        await userRef.update({
-          totalReactionsGiven: FieldValue.increment(1)
-        });
-        break;
-
-      case 'HELPFUL_COMMENT':
-        xpGain = XP_REWARDS.HELPFUL_COMMENT;
-        await userRef.update({
-          totalCommentsGiven: FieldValue.increment(1)
-        });
-        break;
-
-      case 'VOICE_NOTE':
-        xpGain = XP_REWARDS.VOICE_NOTE;
-        coinGain = COIN_REWARDS.POST_VIBE;
-        break;
-
-      case 'RECEIVE_HELPFUL_VOTE':
-        xpGain = XP_REWARDS.RECEIVE_HELPFUL_VOTE;
-        coinGain = COIN_REWARDS.RECEIVE_HELPFUL_VOTE;
-        await userRef.update({
-          helpfulCommentsReceived: FieldValue.increment(1)
-        });
-        break;
-
-      case 'COMPLETE_DAILY_CHALLENGE':
-        xpGain = XP_REWARDS.COMPLETE_DAILY_CHALLENGE;
-        coinGain = COIN_REWARDS.COMPLETE_DAILY_CHALLENGE;
-        break;
-
-      case 'COMPLETE_WEEKLY_CHALLENGE':
-        xpGain = XP_REWARDS.COMPLETE_WEEKLY_CHALLENGE;
-        coinGain = COIN_REWARDS.COMPLETE_WEEKLY_CHALLENGE;
-        break;
-
-      case 'JOIN_COMMUNITY_HUB':
-        xpGain = XP_REWARDS.JOIN_COMMUNITY_HUB;
-        break;
-
-      default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+      }
     }
 
-    const newXP = currentXP + xpGain;
-    let newCoins = currentCoins + coinGain;
-    const newLevel = calculateLevel(newXP);
+    const result = await db.runTransaction(async (transaction) => {
+      const userRef = db.collection('users').doc(userId);
+      const userDoc = await transaction.get(userRef);
 
-    if (newLevel > currentLevel) {
-      leveledUp = true;
-      newCoins += COIN_REWARDS.LEVEL_UP * (newLevel - currentLevel);
-    }
+      if (!userDoc.exists) {
+        throw new Error('User not found');
+      }
 
-    await userRef.update({
-      xp: FieldValue.increment(xpGain),
-      coins: FieldValue.increment(newCoins - currentCoins),
-      level: newLevel
-    });
+      const userData = userDoc.data();
+      const currentXP = userData?.xp || 0;
+      const currentCoins = userData?.coins || 0;
+      const currentLevel = calculateLevel(currentXP);
 
-    const updatedUserDoc = await userRef.get();
-    const updatedUserData = updatedUserDoc.data();
+      let xpGain = 0;
+      let coinGain = 0;
+      let additionalUpdates: Record<string, any> = {};
 
-    const earnedBadges = getNewlyEarnedBadges({
-      totalVibesPosted: updatedUserData?.totalVibesPosted,
-      totalCommentsGiven: updatedUserData?.totalCommentsGiven,
-      postingStreak: updatedUserData?.postingStreak,
-      helpfulCommentsGiven: updatedUserData?.helpfulCommentsGiven,
-      joinedHubs: updatedUserData?.joinedHubs,
-      badges: updatedUserData?.badges,
-      level: newLevel,
-      xp: newXP
-    });
+      switch (action) {
+        case 'POST_VIBE':
+          xpGain = XP_REWARDS.POST_VIBE;
+          coinGain = COIN_REWARDS.POST_VIBE;
+          
+          const lastPostDate = userData?.lastPostDate;
+          const isFirstPostToday = !lastPostDate || 
+            new Date(lastPostDate.toDate()).toDateString() !== new Date().toDateString();
+          
+          if (isFirstPostToday) {
+            xpGain += XP_REWARDS.FIRST_POST_OF_DAY;
+          }
 
-    if (earnedBadges.length > 0) {
-      newBadges = earnedBadges.map(badge => ({
+          const postingStreak = userData?.postingStreak || 0;
+          if (postingStreak >= 7) {
+            xpGain += XP_REWARDS.POSTING_STREAK_BONUS;
+            if (postingStreak === 7) {
+              coinGain += COIN_REWARDS.POSTING_STREAK_7_DAYS;
+            }
+          }
+
+          additionalUpdates.totalVibesPosted = FieldValue.increment(1);
+          additionalUpdates.lastPostDate = Timestamp.now();
+          break;
+
+        case 'REACT_TO_VIBE':
+          xpGain = XP_REWARDS.REACT_TO_VIBE;
+          additionalUpdates.totalReactionsGiven = FieldValue.increment(1);
+          break;
+
+        case 'HELPFUL_COMMENT':
+          xpGain = XP_REWARDS.HELPFUL_COMMENT;
+          additionalUpdates.totalCommentsGiven = FieldValue.increment(1);
+          break;
+
+        case 'VOICE_NOTE':
+          xpGain = XP_REWARDS.VOICE_NOTE;
+          coinGain = COIN_REWARDS.POST_VIBE;
+          additionalUpdates.totalVibesPosted = FieldValue.increment(1);
+          additionalUpdates.lastPostDate = Timestamp.now();
+          break;
+
+        case 'RECEIVE_HELPFUL_VOTE':
+          xpGain = XP_REWARDS.RECEIVE_HELPFUL_VOTE;
+          coinGain = COIN_REWARDS.RECEIVE_HELPFUL_VOTE;
+          additionalUpdates.helpfulCommentsReceived = FieldValue.increment(1);
+          break;
+
+        case 'COMPLETE_DAILY_CHALLENGE':
+          xpGain = XP_REWARDS.COMPLETE_DAILY_CHALLENGE;
+          coinGain = COIN_REWARDS.COMPLETE_DAILY_CHALLENGE;
+          break;
+
+        case 'COMPLETE_WEEKLY_CHALLENGE':
+          xpGain = XP_REWARDS.COMPLETE_WEEKLY_CHALLENGE;
+          coinGain = COIN_REWARDS.COMPLETE_WEEKLY_CHALLENGE;
+          break;
+
+        case 'JOIN_COMMUNITY_HUB':
+          xpGain = XP_REWARDS.JOIN_COMMUNITY_HUB;
+          break;
+
+        case 'PARTICIPATE_IN_EVENT':
+          xpGain = XP_REWARDS.PARTICIPATE_IN_EVENT;
+          break;
+      }
+
+      const newXP = currentXP + xpGain;
+      const newLevel = calculateLevel(newXP);
+      let leveledUp = false;
+      let levelUpBonus = 0;
+
+      if (newLevel > currentLevel) {
+        leveledUp = true;
+        levelUpBonus = COIN_REWARDS.LEVEL_UP * (newLevel - currentLevel);
+      }
+
+      const totalCoinGain = coinGain + levelUpBonus;
+      const newCoins = currentCoins + totalCoinGain;
+
+      const projectedUserData = {
+        ...userData,
+        xp: newXP,
+        level: newLevel,
+        totalVibesPosted: (userData?.totalVibesPosted || 0) + (action === 'POST_VIBE' || action === 'VOICE_NOTE' ? 1 : 0),
+        totalCommentsGiven: (userData?.totalCommentsGiven || 0) + (action === 'HELPFUL_COMMENT' ? 1 : 0),
+        totalReactionsGiven: (userData?.totalReactionsGiven || 0) + (action === 'REACT_TO_VIBE' ? 1 : 0),
+        helpfulCommentsReceived: (userData?.helpfulCommentsReceived || 0) + (action === 'RECEIVE_HELPFUL_VOTE' ? 1 : 0),
+        postingStreak: userData?.postingStreak || 0,
+        helpfulCommentsGiven: userData?.helpfulCommentsGiven || 0,
+        joinedHubs: userData?.joinedHubs || [],
+        badges: userData?.badges || []
+      };
+
+      const earnedBadges = getNewlyEarnedBadges({
+        totalVibesPosted: projectedUserData.totalVibesPosted,
+        totalCommentsGiven: projectedUserData.totalCommentsGiven,
+        postingStreak: projectedUserData.postingStreak,
+        helpfulCommentsGiven: projectedUserData.helpfulCommentsGiven,
+        joinedHubs: projectedUserData.joinedHubs,
+        badges: projectedUserData.badges,
+        level: newLevel,
+        xp: newXP
+      });
+
+      const newBadges = earnedBadges.map(badge => ({
         ...badge,
         earnedAt: Timestamp.now()
       }));
 
-      await userRef.update({
-        badges: FieldValue.arrayUnion(...newBadges)
-      });
-    }
+      const userUpdates: Record<string, any> = {
+        xp: FieldValue.increment(xpGain),
+        coins: FieldValue.increment(totalCoinGain),
+        level: newLevel,
+        ...additionalUpdates
+      };
 
-    const transactionRef = db.collection('reward-transactions').doc();
-    await transactionRef.set({
-      userId,
-      type: 'earn',
-      action,
-      xpChange: xpGain,
-      coinsChange: coinGain,
-      timestamp: Timestamp.now(),
-      metadata: metadata || {}
+      if (newBadges.length > 0) {
+        userUpdates.badges = FieldValue.arrayUnion(...newBadges);
+      }
+
+      transaction.update(userRef, userUpdates);
+
+      const transactionRef = db.collection('reward-transactions').doc();
+      transaction.set(transactionRef, {
+        userId,
+        type: 'earn',
+        action,
+        xpChange: xpGain,
+        coinsChange: totalCoinGain,
+        timestamp: Timestamp.now(),
+        metadata: {
+          ...metadata,
+          levelUpBonus,
+          earnedBadgeIds: newBadges.map(b => b.id)
+        }
+      });
+
+      return {
+        xpGain,
+        coinGain: totalCoinGain,
+        newXP,
+        newCoins,
+        newLevel,
+        leveledUp,
+        newBadges
+      };
     });
 
     return NextResponse.json({
       success: true,
       rewards: {
-        xp: xpGain,
-        coins: coinGain,
-        totalXP: newXP,
-        totalCoins: newCoins,
-        level: newLevel,
-        leveledUp,
-        newBadges: newBadges.map(b => ({
+        xp: result.xpGain,
+        coins: result.coinGain,
+        totalXP: result.newXP,
+        totalCoins: result.newCoins,
+        level: result.newLevel,
+        leveledUp: result.leveledUp,
+        newBadges: result.newBadges.map((b: any) => ({
           id: b.id,
           name: b.name,
           icon: b.icon,
@@ -186,8 +324,16 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error awarding rewards:', error);
+    
+    if (error.message === 'User not found') {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { 
+        error: error.message || 'Failed to award rewards',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
