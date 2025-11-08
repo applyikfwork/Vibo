@@ -126,6 +126,8 @@ export type Mission = {
   expiresAt?: Timestamp;
   completedAt?: Timestamp;
   isCompleted: boolean;
+  claimed?: boolean;
+  claimedAt?: Timestamp;
 };
 
 export type InventoryItem = {

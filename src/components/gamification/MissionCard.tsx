@@ -12,6 +12,8 @@ interface MissionCardProps {
 export function MissionCard({ mission, onComplete }: MissionCardProps) {
   const percentage = (mission.current / mission.target) * 100;
   const isCompleted = mission.isCompleted;
+  const isClaimed = mission.claimed;
+  const canClaim = isCompleted && !isClaimed;
 
   const rarityColors = {
     daily: 'from-blue-500/20 to-cyan-500/20 border-blue-500/30',
@@ -24,13 +26,14 @@ export function MissionCard({ mission, onComplete }: MissionCardProps) {
     <div
       className={`bg-gradient-to-br ${
         rarityColors[mission.type]
-      } rounded-xl p-4 border ${isCompleted ? 'opacity-60' : ''}`}
+      } rounded-xl p-4 border ${isClaimed ? 'opacity-50' : ''} transition-all`}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h4 className="font-bold text-white">{mission.title}</h4>
-            {isCompleted && <span className="text-xl">✅</span>}
+            {isCompleted && !isClaimed && <span className="text-xl">✅</span>}
+            {isClaimed && <span className="text-xl">🎁</span>}
           </div>
           <p className="text-sm text-gray-300 mt-1">{mission.description}</p>
         </div>
@@ -63,11 +66,17 @@ export function MissionCard({ mission, onComplete }: MissionCardProps) {
             )}
           </div>
 
-          {isCompleted && onComplete && (
+          {isClaimed && (
+            <span className="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full">
+              Claimed
+            </span>
+          )}
+
+          {canClaim && onComplete && (
             <Button
               size="sm"
               onClick={onComplete}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 animate-pulse"
             >
               Claim Reward
             </Button>

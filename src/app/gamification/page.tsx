@@ -7,6 +7,7 @@ import { ProfileLevel } from '@/components/gamification/ProfileLevel';
 import { MissionCard } from '@/components/gamification/MissionCard';
 import { StoreItemCard } from '@/components/gamification/StoreItemCard';
 import { LeaderboardTable } from '@/components/gamification/LeaderboardTable';
+import { RewardHistory } from '@/components/gamification/RewardHistory';
 import { Mission, StoreItem, LeaderboardEntry } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { getAuth } from 'firebase/auth';
@@ -149,30 +150,71 @@ export default function GamificationPage() {
   const handleClaimReward = async (mission: Mission) => {
     if (!user) return;
 
+    if (mission.claimed) {
+      toast({
+        title: 'Already Claimed',
+        description: 'You have already claimed this reward',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!mission.isCompleted) {
+      toast({
+        title: 'Not Completed',
+        description: 'Complete the mission first before claiming the reward',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
       const token = await getAuth().currentUser?.getIdToken();
-      const response = await fetch('/api/gamification/rewards', {
+      const response = await fetch('/api/gamification/missions/claim', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          action: mission.type === 'daily' ? 'COMPLETE_DAILY_CHALLENGE' : 'COMPLETE_WEEKLY_CHALLENGE',
-          metadata: { missionId: mission.id }
+          missionId: mission.id,
+          missionType: mission.type
         })
       });
 
       if (response.ok) {
         const data = await response.json();
+        
         toast({
-          title: 'Reward Claimed! 🎉',
-          description: `+${data.rewards.xp} XP, +${data.rewards.coins} Coins`,
+          title: '🎉 Reward Claimed!',
+          description: `You earned ${data.rewards.xp} XP and ${data.rewards.coins} coins!`,
+          duration: 5000
         });
+
+        if (data.rewards.leveledUp) {
+          toast({
+            title: '🎊 Level Up!',
+            description: `You reached Level ${data.rewards.level}! 🚀`,
+            duration: 5000
+          });
+        }
+
         await Promise.all([fetchUserStats(), fetchMissions()]);
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to claim reward',
+          variant: 'destructive'
+        });
       }
     } catch (error) {
       console.error('Error claiming reward:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to claim reward',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -227,10 +269,11 @@ export default function GamificationPage() {
         />
 
         <Tabs defaultValue="challenges" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="challenges">🎯 Challenges</TabsTrigger>
             <TabsTrigger value="leaderboards">🏆 Leaderboards</TabsTrigger>
             <TabsTrigger value="store">🛒 Store</TabsTrigger>
+            <TabsTrigger value="history">📜 History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="challenges" className="space-y-8">
@@ -289,6 +332,10 @@ export default function GamificationPage() {
                 />
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <RewardHistory />
           </TabsContent>
         </Tabs>
       </div>
