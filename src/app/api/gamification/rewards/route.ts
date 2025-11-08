@@ -130,11 +130,31 @@ export async function POST(req: NextRequest) {
       
       const userDoc = await transaction.get(userRef);
 
+      let userData: any;
       if (!userDoc.exists) {
-        throw new Error('User not found');
+        // Initialize new user with default values
+        const defaultUserData = {
+          xp: 0,
+          coins: 0,
+          gems: 0,
+          level: 1,
+          tier: 'bronze',
+          totalVibesPosted: 0,
+          totalReactionsGiven: 0,
+          totalCommentsGiven: 0,
+          helpfulCommentsReceived: 0,
+          postingStreak: 0,
+          helpfulCommentsGiven: 0,
+          joinedHubs: [],
+          badges: [],
+          createdAt: Timestamp.now()
+        };
+        transaction.set(userRef, defaultUserData);
+        userData = defaultUserData;
+      } else {
+        userData = userDoc.data();
       }
 
-      const userData = userDoc.data();
       const currentXP = userData?.xp || 0;
       const currentCoins = userData?.coins || 0;
       const currentLevel = calculateLevel(currentXP);
