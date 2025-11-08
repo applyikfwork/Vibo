@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getFirebaseAdmin } from '@/firebase/admin';
@@ -50,8 +51,9 @@ export async function POST(req: NextRequest) {
         xpGain = XP_REWARDS.POST_VIBE;
         coinGain = COIN_REWARDS.POST_VIBE;
         
-        const isFirstPostToday = !userData?.lastPostDate || 
-          new Date(userData.lastPostDate.toDate()).toDateString() !== new Date().toDateString();
+        const lastPostDate = userData?.lastPostDate;
+        const isFirstPostToday = !lastPostDate || 
+          new Date(lastPostDate.toDate()).toDateString() !== new Date().toDateString();
         
         if (isFirstPostToday) {
           xpGain += XP_REWARDS.FIRST_POST_OF_DAY;
