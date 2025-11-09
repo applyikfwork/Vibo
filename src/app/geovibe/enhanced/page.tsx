@@ -15,6 +15,12 @@ import { CityChallenges } from '@/components/CityChallenges';
 import { LiveActivityIndicator } from '@/components/LiveActivityIndicator';
 import { TrendingEmotions } from '@/components/TrendingEmotions';
 import { IndiaWideStats } from '@/components/IndiaWideStats';
+import { LiveActivityStream } from '@/components/LiveActivityStream';
+import { CityBattleCard } from '@/components/CityBattleCard';
+import { EmotionalWeatherReport } from '@/components/EmotionalWeatherReport';
+import { SocialProofIndicators } from '@/components/SocialProofIndicators';
+import { TypingActivityIndicator } from '@/components/TypingActivityIndicator';
+import { MilestoneCelebration } from '@/components/MilestoneCelebration';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Location, Vibe } from '@/lib/types';
@@ -127,19 +133,25 @@ export default function EnhancedGeoVibePage() {
     if (!userLocation?.city) return;
 
     try {
+      // First fetch real vibes to pass to blending system
       const response = await fetch('/api/geovibe/demo-vibes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           city: userLocation.city,
           count: 100,
+          realVibes: vibes, // Pass real vibes for proper blending
+          realUserCount: vibes.length > 0 ? vibes.filter((v, i, arr) => arr.findIndex(x => x.userId === v.userId) === i).length : 0,
+          totalVibesCount: vibes.length,
+          useEnhanced: true,
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.vibes && Array.isArray(data.vibes)) {
-          setDemoVibes(data.vibes);
+        console.log(`Blending: ${data.realCount} real + ${data.demoCount} demo = ${data.totalCount} total vibes`);
+        if (data.demoVibes && Array.isArray(data.demoVibes)) {
+          setDemoVibes(data.demoVibes);
         }
       }
     } catch (error) {
@@ -188,7 +200,16 @@ export default function EnhancedGeoVibePage() {
             </Button>
           </motion.div>
         )}
+
+        {/* Social Proof & Typing Indicators */}
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+          <SocialProofIndicators vibes={allVibes} city={userLocation?.city} />
+          <TypingActivityIndicator city={userLocation?.city} />
+        </div>
       </motion.header>
+
+      {/* Milestone Celebration */}
+      <MilestoneCelebration vibes={allVibes} city={userLocation?.city || selectedDemoCity} />
 
       <LiveActivityIndicator 
         totalVibes={allVibes.length} 
@@ -200,6 +221,15 @@ export default function EnhancedGeoVibePage() {
       />
 
       <IndiaWideStats vibes={allVibes} />
+
+      {/* City Battle */}
+      <CityBattleCard city={userLocation?.city || selectedDemoCity} />
+
+      {/* Live Activity Stream & Emotional Weather */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <LiveActivityStream vibes={allVibes} city={userLocation?.city || selectedDemoCity} />
+        <EmotionalWeatherReport vibes={allVibes} city={userLocation?.city || selectedDemoCity} />
+      </div>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>

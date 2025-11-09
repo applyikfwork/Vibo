@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { demoDataService } from '@/lib/demo-data-service';
+import { demoBlendingService } from '@/lib/demo-blending-service';
+import { demoPersonaService } from '@/lib/demo-personas';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +14,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { city, count = 20 } = body;
+    const { city, count = 100, realVibes = [], realUserCount = 0, totalVibesCount = 0, useEnhanced = true } = body;
 
     if (!city) {
       return NextResponse.json(
@@ -21,14 +23,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const demoVibes = demoDataService.generateDemoVibesForCity(city, count);
+    // Calculate actual real user metrics from provided real vibes
+    const actualRealUserCount = realUserCount || realVibes.length;
+    const actualTotalVibesCount = totalVibesCount || realVibes.length;
+
+    let demoVibes: any[];
+    let blendedVibes: any[];
+    
+    if (useEnhanced) {
+      // Use new enhanced blending system
+      const blendingRatio = demoBlendingService.calculateBlendingRatio({
+        realUserCount: actualRealUserCount,
+        totalVibesCount: actualTotalVibesCount,
+        city,
+      });
+
+      // Only generate demo vibes if needed based on blending ratio
+      if (blendingRatio.shouldShowDemo) {
+        demoVibes = demoBlendingService.generateEnhancedDemoVibes(
+          city,
+          { realUserCount: actualRealUserCount, totalVibesCount: actualTotalVibesCount, city },
+          realVibes
+        );
+        
+        // Blend real and demo vibes
+        blendedVibes = [...realVibes, ...demoVibes];
+      } else {
+        // No demo data needed, use only real vibes
+        demoVibes = [];
+        blendedVibes = realVibes;
+      }
+    } else {
+      // Fallback to basic demo data
+      demoVibes = demoDataService.generateDemoVibesForCity(city, count);
+      blendedVibes = [...realVibes, ...demoVibes];
+    }
+
     const emotionWaves = demoDataService.generateEmotionWaves(city);
+    const blendingRatio = demoBlendingService.calculateBlendingRatio({
+      realUserCount: actualRealUserCount,
+      totalVibesCount: actualTotalVibesCount,
+      city,
+    });
+
+    const activityMetrics = demoBlendingService.calculateActivityMetrics(blendedVibes as any, city);
+    const personaStats = demoPersonaService.getPersonaStats(city);
 
     return NextResponse.json({
-      vibes: demoVibes,
+      vibes: blendedVibes,
+      demoVibes,
+      realVibes,
       waves: emotionWaves,
-      isDemoData: true,
-      message: `Demo data for ${city}`,
+      blendingRatio,
+      activityMetrics,
+      personaStats,
+      realCount: realVibes.length,
+      demoCount: demoVibes.length,
+      totalCount: blendedVibes.length,
+      message: `Blended data: ${realVibes.length} real + ${demoVibes.length} demo = ${blendedVibes.length} total`,
     });
   } catch (error) {
     console.error('Error generating demo vibes:', error);
