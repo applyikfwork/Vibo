@@ -4,14 +4,10 @@ import { useState, useEffect } from 'react';
 import { LocationCapture } from '@/components/LocationCapture';
 import { CityMoodPulse } from '@/components/CityMoodPulse';
 import { NearbyVibesFeed } from '@/components/NearbyVibesFeed';
-import { GeoVibesMap } from '@/components/GeoVibesMap';
-import { EmotionHeatMap } from '@/components/EmotionHeatMap';
-import { Emotion3DBubbles } from '@/components/Emotion3DBubbles';
-import { EmotionParticleMap } from '@/components/EmotionParticleMap';
+import { IndiaMapEnhanced } from '@/components/IndiaMapEnhanced';
 import { EmotionTimeline } from '@/components/EmotionTimeline';
 import { NearbyVibeStories } from '@/components/NearbyVibeStories';
 import { VibeChallengesPanel } from '@/components/VibeChallengesPanel';
-import { MapThemeSelector, MapThemeType, MAP_THEMES } from '@/components/MapThemeSelector';
 import { EmotionWavesDisplay } from '@/components/EmotionWavesDisplay';
 import { CityMoodShareCard } from '@/components/CityMoodShareCard';
 import { CityLeaderboard } from '@/components/CityLeaderboard';
@@ -30,11 +26,12 @@ import { useGeoVibeNotifications } from '@/hooks/useGeoVibeNotifications';
 export default function EnhancedGeoVibePage() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const [userLocation, setUserLocation] = useState<Location | undefined>();
+  const [userLocation, setUserLocation] = useState<Location>(
+    { lat: 28.6139, lng: 77.2090, city: 'Delhi', state: 'Delhi', country: 'India' }
+  );
   const [selectedDemoCity, setSelectedDemoCity] = useState<string>('Delhi');
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [demoVibes, setDemoVibes] = useState<Vibe[]>([]);
-  const [mapTheme, setMapTheme] = useState<MapThemeType>('default');
   const [viewMode, setViewMode] = useState<'standard' | 'heatmap' | 'bubbles' | 'particles'>('standard');
   const [useFirebaseLocation, setUseFirebaseLocation] = useState(false);
   
@@ -138,26 +135,21 @@ export default function EnhancedGeoVibePage() {
 
       if (response.ok) {
         const data = await response.json();
-        setDemoVibes(data.vibes || []);
+        if (data.vibes && Array.isArray(data.vibes)) {
+          setDemoVibes(data.vibes);
+        }
       }
     } catch (error) {
       console.error('Error fetching demo vibes:', error);
+      setDemoVibes([]);
     }
   };
 
   const allVibes = [...vibes, ...demoVibes];
 
-  const renderMapView = () => {
-    switch (viewMode) {
-      case 'heatmap':
-        return <EmotionHeatMap center={userLocation} vibes={allVibes} />;
-      case 'bubbles':
-        return <Emotion3DBubbles center={userLocation} vibes={allVibes} />;
-      case 'particles':
-        return <EmotionParticleMap center={userLocation} vibes={allVibes} />;
-      default:
-        return <GeoVibesMap center={userLocation} vibes={allVibes} />;
-    }
+  const handleCitySelect = (city: string) => {
+    setSelectedDemoCity(city);
+    setDemoLocationFromCity(city);
   };
 
   return (
@@ -238,38 +230,29 @@ export default function EnhancedGeoVibePage() {
       <EmotionWavesDisplay city={userLocation?.city} />
 
       <section>
-        <Card className="mb-4">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <Map className="h-6 w-6" />
-                <CardTitle>Interactive Emotion Map</CardTitle>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Tabs value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
-                  <TabsList>
-                    <TabsTrigger value="standard">Standard</TabsTrigger>
-                    <TabsTrigger value="heatmap">Heat Map</TabsTrigger>
-                    <TabsTrigger value="bubbles">3D Bubbles</TabsTrigger>
-                    <TabsTrigger value="particles">Particles</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-            </div>
-            <CardDescription>
-              {allVibes.length} active vibes • {demoVibes.length} demo vibes creating vibrant atmosphere
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Map className="h-6 w-6" />
+            <h2 className="text-2xl font-bold">Enhanced India Emotion Map</h2>
+          </div>
+          
+          <Tabs value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
+            <TabsList>
+              <TabsTrigger value="standard">Standard</TabsTrigger>
+              <TabsTrigger value="heatmap">Heat Map</TabsTrigger>
+              <TabsTrigger value="bubbles">3D Bubbles</TabsTrigger>
+              <TabsTrigger value="particles">Particles</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-        {renderMapView()}
+        <IndiaMapEnhanced
+          vibes={allVibes}
+          selectedCity={selectedDemoCity}
+          onCityClick={handleCitySelect}
+          viewMode={viewMode}
+        />
       </section>
-
-      <MapThemeSelector
-        selectedTheme={mapTheme}
-        onThemeChange={setMapTheme}
-      />
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <EmotionTimeline
