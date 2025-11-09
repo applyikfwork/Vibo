@@ -44,13 +44,36 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     // Helper to handle both Timestamp object and serialized object
     const getSafeDate = (timestamp: any): Date | null => {
         if (!timestamp) return null;
-        if (timestamp.toDate) return timestamp.toDate(); // Firestore Timestamp
-        if (timestamp._seconds) return new Timestamp(timestamp._seconds, timestamp._nanoseconds).toDate(); // Serialized object
-        return new Date(timestamp); // Fallback for ISO string
+        
+        try {
+            if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+                return timestamp.toDate();
+            }
+            
+            if (timestamp._seconds !== undefined) {
+                return new Timestamp(timestamp._seconds, timestamp._nanoseconds || 0).toDate();
+            }
+            
+            if (timestamp.seconds !== undefined) {
+                return new Timestamp(timestamp.seconds, timestamp.nanoseconds || 0).toDate();
+            }
+            
+            const dateAttempt = new Date(timestamp);
+            if (!isNaN(dateAttempt.getTime())) {
+                return dateAttempt;
+            }
+            
+            return null;
+        } catch (e) {
+            console.error('Error converting timestamp:', e, timestamp);
+            return null;
+        }
     };
 
     const safeDate = getSafeDate(vibe.timestamp);
-    const timeAgo = safeDate ? formatDistanceToNow(safeDate, { addSuffix: true }) : 'just now';
+    const timeAgo = safeDate && !isNaN(safeDate.getTime()) 
+        ? formatDistanceToNow(safeDate, { addSuffix: true }) 
+        : 'just now';
 
     const reactionsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
