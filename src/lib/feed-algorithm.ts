@@ -9,6 +9,16 @@ import type {
 } from './types';
 import { Timestamp } from 'firebase/firestore';
 
+// Helper function to safely get timestamp in milliseconds
+function getTimestampInMillis(timestamp: any): number {
+  if (!timestamp) return Date.now();
+  if (typeof timestamp === 'number') return timestamp;
+  if (timestamp instanceof Date) return timestamp.getTime();
+  if (timestamp.toMillis && typeof timestamp.toMillis === 'function') return timestamp.toMillis();
+  if (timestamp.seconds) return timestamp.seconds * 1000;
+  return Date.now();
+}
+
 // Emotion matching configurations
 const EMOTION_MATCH_CONFIGS: Record<EmotionCategory, EmotionMatchConfig> = {
   'Sad': {
@@ -104,7 +114,7 @@ export function calculateVibeScore(
   userProfile?: UserProfile
 ): number {
   const now = Date.now();
-  const postTime = vibe.timestamp?.toMillis() || now;
+  const postTime = vibe.timestamp ? getTimestampInMillis(vibe.timestamp) : now;
   const ageInHours = (now - postTime) / (1000 * 60 * 60);
   
   // Freshness score (1.0 for new posts, decaying over 24 hours)
@@ -175,7 +185,7 @@ export function calculateBoostScore(
   let totalBoost = 0;
   
   const now = Date.now();
-  const postTime = vibe.timestamp?.toMillis() || now;
+  const postTime = vibe.timestamp ? getTimestampInMillis(vibe.timestamp) : now;
   const ageInMinutes = (now - postTime) / (1000 * 60);
   
   // Support Boost: 5+ positive comments
@@ -231,7 +241,7 @@ export function applyDecayToScore(
   currentScore: number
 ): number {
   const now = Date.now();
-  const postTime = vibe.timestamp?.toMillis() || now;
+  const postTime = vibe.timestamp ? getTimestampInMillis(vibe.timestamp) : now;
   const ageInHours = (now - postTime) / (1000 * 60 * 60);
   
   // No decay for posts less than 1 hour old

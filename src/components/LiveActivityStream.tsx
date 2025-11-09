@@ -54,9 +54,18 @@ export function LiveActivityStream({ vibes, city }: { vibes: Vibe[]; city: strin
     setActivities(recent);
   };
 
+  const getTimestampInMillis = (timestamp: any): number => {
+    if (!timestamp) return Date.now();
+    if (typeof timestamp === 'number') return timestamp;
+    if (timestamp instanceof Date) return timestamp.getTime();
+    if (timestamp.toMillis && typeof timestamp.toMillis === 'function') return timestamp.toMillis();
+    if (timestamp.seconds) return timestamp.seconds * 1000;
+    return Date.now();
+  };
+
   const generateActivityFromVibe = (vibe: Vibe, index: number): ActivityEvent => {
     const timestamp = vibe.createdAt || vibe.timestamp;
-    const timeDate = timestamp ? new Date(timestamp.toMillis()) : new Date();
+    const timeDate = new Date(getTimestampInMillis(timestamp));
     
     return {
       id: `${vibe.id}-${index}`,
