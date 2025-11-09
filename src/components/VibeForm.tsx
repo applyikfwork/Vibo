@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
   const [isFocused, setIsFocused] = useState(false);
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
   const [userLocation, setUserLocation] = useState<Location | undefined>();
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -63,6 +64,14 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
     
     loadLocation();
   }, [user, firestore]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(err => {
+        console.log('Auto-play prevented:', err);
+      });
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -247,7 +256,27 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
           <TabsContent value="text">
             <form onSubmit={handleSubmit}>
               <div className="flex items-start space-x-4 mb-4">
-                <div className="text-5xl sm:text-6xl pt-2 transition-transform duration-300 ease-out hover:scale-110 cursor-pointer animate-pulse-glow">{emoji}</div>
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 overflow-hidden rounded-2xl">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                    src="/assets/vibe-animation.mp4"
+                    className="absolute inset-0 w-full h-full object-cover shadow-lg transition-all duration-500 ease-out hover:scale-110 hover:shadow-2xl hover:shadow-purple-500/50 cursor-pointer"
+                    style={{
+                      filter: 'brightness(1.1) contrast(1.1) saturate(1.2)',
+                      display: 'block',
+                    }}
+                    onError={(e: any) => console.error('Video error:', e.target.error)}
+                    onLoadStart={() => console.log('Video loading started')}
+                    onLoadedData={() => console.log('Video loaded successfully')}
+                    onCanPlay={() => console.log('Video can play')}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-pink-500/20 pointer-events-none animate-pulse"></div>
+                </div>
                 <Textarea
                   name="vibeText"
                   placeholder="What's your vibe right now?"
