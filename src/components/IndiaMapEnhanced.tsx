@@ -63,24 +63,31 @@ export function IndiaMapEnhanced({
   };
 
   return (
-    <Card className="overflow-hidden border-2 border-primary/20">
-      <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+    <Card className="overflow-hidden border-2 border-primary/20 shadow-2xl">
+      <CardHeader className="bg-gradient-to-r from-purple-50 via-pink-50 to-orange-50 dark:from-purple-950/30 dark:via-pink-950/30 dark:to-orange-950/30 border-b-2 border-primary/10">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              🗺️ Enhanced India Emotion Map
+            <CardTitle className="flex items-center gap-2 text-2xl md:text-3xl">
+              <span className="text-4xl">🗺️</span>
+              <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent">
+                Enhanced India Emotion Map
+              </span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base mt-2">
               Real-time emotional landscape • {vibes.length} vibes across {Object.keys(cityData).filter(c => cityData[c].vibes.length > 0).length} cities
             </CardDescription>
           </div>
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-xs px-3 py-1 animate-pulse">
+            <span className="relative flex h-2 w-2 mr-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+            </span>
             {viewMode.toUpperCase()}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="relative w-full bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/10 dark:via-purple-950/10 dark:to-pink-950/10 rounded-2xl p-8 border-2 border-primary/10">
+        <div className="relative w-full bg-gradient-to-br from-indigo-50 via-purple-50 via-pink-50 to-orange-50 dark:from-indigo-950/20 dark:via-purple-950/20 dark:via-pink-950/20 dark:to-orange-950/20 rounded-3xl p-8 border-4 border-primary/20 shadow-inner">
           <svg
             viewBox="0 0 100 100"
             className="w-full h-auto drop-shadow-2xl"
@@ -124,15 +131,26 @@ export function IndiaMapEnhanced({
               </filter>
             </defs>
 
-            {/* India Map Base - Enhanced */}
+            {/* India Map Base - Enhanced with animated gradient */}
             <g filter="url(#softGlow)">
-              <path
+              <motion.path
                 d="M 35,15 L 45,10 L 55,12 L 60,20 L 58,30 L 55,35 L 50,38 L 48,45 L 50,52 L 48,58 L 45,65 L 48,70 L 45,75 L 42,80 L 38,82 L 35,78 L 32,72 L 28,68 L 25,75 L 22,72 L 20,65 L 18,58 L 20,50 L 22,45 L 18,38 L 20,32 L 25,28 L 28,22 L 32,18 Z"
                 fill="url(#indiaGlow)"
                 stroke="#8b5cf6"
-                strokeWidth="0.8"
-                strokeDasharray="2,1"
+                strokeWidth="1.2"
+                strokeDasharray="3,2"
                 className="transition-all duration-500"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  strokeDashoffset: [0, -20, 0]
+                }}
+                transition={{
+                  opacity: { duration: 1 },
+                  scale: { duration: 1 },
+                  strokeDashoffset: { duration: 20, repeat: Infinity, ease: "linear" }
+                }}
               />
             </g>
 
@@ -175,7 +193,7 @@ export function IndiaMapEnhanced({
                   
                   const emotion = getDominantEmotion(city);
                   const color = getMoodColor(emotion);
-                  const bubbleSize = 3 + Math.min(count / 3, 8);
+                  const bubbleSize = Math.max(3, 3 + Math.min(count / 3, 8));
                   
                   return (
                     <g key={`bubble-${city}`}>
@@ -202,7 +220,7 @@ export function IndiaMapEnhanced({
                       <circle
                         cx={coords.x - bubbleSize * 0.3}
                         cy={coords.y - bubbleSize * 0.3}
-                        r={bubbleSize * 0.3}
+                        r={Math.max(0.5, bubbleSize * 0.3)}
                         fill="white"
                         opacity="0.6"
                       />
@@ -226,7 +244,7 @@ export function IndiaMapEnhanced({
                       key={`particle-${city}-${i}`}
                       cx={coords.x}
                       cy={coords.y}
-                      r="0.5"
+                      r={0.5}
                       fill={color}
                       animate={{
                         x: [0, (Math.random() - 0.5) * 20],
@@ -251,7 +269,7 @@ export function IndiaMapEnhanced({
               const emotionColor = getMoodColor(dominantEmotion);
               const isSelected = selectedCity === city;
               const isHovered = hoveredCity === city;
-              const markerSize = vibeCount === 0 ? 2.5 : (isSelected || isHovered ? 5 : 4);
+              const markerSize = Math.max(2.5, vibeCount === 0 ? 2.5 : (isSelected || isHovered ? 5 : 4));
 
               return (
                 <g key={`marker-${city}`}>

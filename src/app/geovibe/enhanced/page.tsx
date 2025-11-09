@@ -12,6 +12,9 @@ import { EmotionWavesDisplay } from '@/components/EmotionWavesDisplay';
 import { CityMoodShareCard } from '@/components/CityMoodShareCard';
 import { CityLeaderboard } from '@/components/CityLeaderboard';
 import { CityChallenges } from '@/components/CityChallenges';
+import { LiveActivityIndicator } from '@/components/LiveActivityIndicator';
+import { TrendingEmotions } from '@/components/TrendingEmotions';
+import { IndiaWideStats } from '@/components/IndiaWideStats';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Location, Vibe } from '@/lib/types';
@@ -129,7 +132,7 @@ export default function EnhancedGeoVibePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           city: userLocation.city,
-          count: 30,
+          count: 100,
         }),
       });
 
@@ -187,12 +190,23 @@ export default function EnhancedGeoVibePage() {
         )}
       </motion.header>
 
+      <LiveActivityIndicator 
+        totalVibes={allVibes.length} 
+        recentVibes={allVibes.filter(v => {
+          const createdAt = v.createdAt as any;
+          const hourAgo = Date.now() - 3600000;
+          return createdAt?.toMillis?.() > hourAgo || createdAt > hourAgo;
+        }).length}
+      />
+
+      <IndiaWideStats vibes={allVibes} />
+
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Demo City Selector</CardTitle>
+            <CardTitle>City Selector</CardTitle>
             <CardDescription>
-              Select a city to explore the emotional landscape
+              Select a city to explore its emotional landscape
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -227,7 +241,10 @@ export default function EnhancedGeoVibePage() {
         <CityMoodPulse city={userLocation?.city} />
       </section>
 
-      <EmotionWavesDisplay city={userLocation?.city} />
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <EmotionWavesDisplay city={userLocation?.city} />
+        <TrendingEmotions vibes={allVibes} cityName={userLocation?.city} />
+      </section>
 
       <section>
         <div className="mb-4 flex items-center justify-between">

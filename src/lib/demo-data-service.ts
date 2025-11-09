@@ -421,21 +421,51 @@ const DEMO_TEXTS: Record<EmotionCategory, string[]> = {
     'Just got some amazing news! Life is good ✨',
     'Coffee tastes better when you\'re surrounded by good vibes ☕',
     'Loving the energy here today!',
-    'Finally finished that project! Time to celebrate 🎉'
+    'Finally finished that project! Time to celebrate 🎉',
+    'Today is absolutely amazing! Can\'t stop smiling 😊',
+    'Just had the best conversation with a stranger ❤️',
+    'This city never fails to surprise me with kindness',
+    'Found my favorite spot to just be happy',
+    'Sunshine and good vibes all around! ☀️',
+    'Sometimes life just hits different in the best way',
+    'Grateful for this moment right now 🙏',
+    'The little things are making me so happy today',
+    'Energy here is unmatched! Feeling blessed',
+    'This place always lifts my spirits up'
   ],
   'Chill': [
     'Just taking it easy, watching the world go by 🌿',
     'Perfect weather for a peaceful moment',
     'Found my zen spot for the day 🧘',
     'No rush, just vibes',
-    'Needed this calm after a busy week'
+    'Needed this calm after a busy week',
+    'Peaceful evening with nature sounds 🍃',
+    'Just me, my thoughts, and this beautiful view',
+    'Taking a break from the chaos, feeling good',
+    'Slow days are the best days honestly',
+    'Found inner peace at this spot today',
+    'Sometimes you just need to pause and breathe',
+    'Loving this relaxed atmosphere here',
+    'No stress, just existing in the moment',
+    'This is my meditation space now',
+    'Calm before the storm, but enjoying it'
   ],
   'Motivated': [
     'Ready to crush today\'s goals! 💪',
     'Feeling unstoppable right now',
     'New week, new opportunities!',
     'This is going to be my best week yet',
-    'Let\'s get it done! 🚀'
+    'Let\'s get it done! 🚀',
+    'Momentum is building, can feel it!',
+    'Today is the day I make things happen',
+    'Energy levels through the roof right now',
+    'Nothing can stop me when I\'m in this zone',
+    'Laser focused on my dreams today',
+    'This is MY time to shine ✨',
+    'Turning my vision into reality, one step at a time',
+    'Hustling hard but loving every minute',
+    'Inspiration just hit me like a wave',
+    'Watch me work magic today! 🔥'
   ],
   'Exam Stress': [
     'Finals week is killing me but we got this 📚',
@@ -568,24 +598,28 @@ export class DemoDataService {
     return emotions[0].emotion;
   }
 
-  generateDemoVibesForCity(city: string, count: number = 20): Partial<Vibe>[] {
+  generateDemoVibesForCity(city: string, count: number = 80): Partial<Vibe>[] {
     const cityConfig = INDIAN_CITIES_DEMO_CONFIG.find(c => c.city === city);
     if (!cityConfig) return [];
 
     const currentHour = new Date().getHours();
     const vibes: Partial<Vibe>[] = [];
+    const now = Date.now();
 
     for (let i = 0; i < count; i++) {
       const location = this.getRandomElement(cityConfig.locations);
       
       const relevantPattern = location.timePatterns.find(p => 
-        Math.abs(p.hour - currentHour) <= 2
+        Math.abs(p.hour - currentHour) <= 3
       ) || this.getRandomElement(location.timePatterns);
 
       const emotion = this.selectEmotionByWeight(relevantPattern.emotions);
       const text = this.getRandomElement(DEMO_TEXTS[emotion]);
 
-      const randomOffset = () => (Math.random() - 0.5) * 0.01;
+      const randomOffset = () => (Math.random() - 0.5) * 0.015;
+
+      const ageHours = this.getRealisticAge(i, count, currentHour);
+      const createdAt = new Date(now - ageHours * 3600000);
 
       vibes.push({
         text,
@@ -603,13 +637,29 @@ export class DemoDataService {
           country: 'India'
         },
         isDemo: true,
-        createdAt: Timestamp.fromDate(
-          new Date(Date.now() - Math.random() * 3600000 * 6)
-        )
+        createdAt: Timestamp.fromDate(createdAt)
       });
     }
 
-    return vibes;
+    return vibes.sort((a, b) => {
+      const aTime = a.createdAt as Timestamp;
+      const bTime = b.createdAt as Timestamp;
+      return bTime.toMillis() - aTime.toMillis();
+    });
+  }
+
+  private getRealisticAge(index: number, total: number, currentHour: number): number {
+    const recencyBias = Math.random();
+    
+    if (recencyBias < 0.4) {
+      return Math.random() * 2;
+    } else if (recencyBias < 0.7) {
+      return 2 + Math.random() * 4;
+    } else if (recencyBias < 0.9) {
+      return 6 + Math.random() * 12;
+    } else {
+      return 18 + Math.random() * 30;
+    }
   }
 
   generateEmotionWaves(city: string): EmotionWave[] {

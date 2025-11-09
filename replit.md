@@ -34,11 +34,35 @@ None recorded yet.
   - **Notification Preferences**: User-configurable notification settings including mute options, quiet hours, and selective notification types (stored in Firestore `hub-notification-preferences` collection)
 - **GeoVibe Engine**: A comprehensive location-based emotional mapping system. Features location capture (Browser Geolocation API with privacy consent), real-time city-level emotion analytics (City Mood Pulse), Geo-hash based nearby vibes feed, and interactive emotion maps (Google Maps integration). Includes gamification elements like XP, local leaderboards, and city challenges. All mutation endpoints require Firebase authentication.
 - **Enhanced GeoVibe System** (November 2025): Revolutionary emotional landscape features including:
-  - **Intelligent Demo Data System**: Realistic emotion clusters across 6 major Indian cities (Delhi, Mumbai, Bangalore, Pune, Hyderabad, Chennai) with time-based patterns (morning energy in colleges, evening calm in parks), trending emotional waves ("Wave of Joy spreading across South Delhi"), and gradual fade as real users join. Demo vibes are marked as "Anonymous Viber" for transparency
+  - **Automatic Redirect**: /geovibe now automatically redirects to /geovibe/enhanced for the best experience
+  - **Intelligent Demo Data System**: Enhanced to generate 80-100 realistic vibes per city (up from 20) with:
+    - Realistic timestamp distribution (40% within 2 hours, 70% within 6 hours, 90% within 18 hours, 10% up to 48 hours old)
+    - 15+ diverse text variations per emotion for authentic feel
+    - Time-based emotion patterns across 6 major Indian cities (Delhi, Mumbai, Bangalore, Pune, Hyderabad, Chennai)
+    - Trending emotional waves ("Wave of Joy spreading across South Delhi")
+    - Demo vibes sorted by recency and marked as "Anonymous Viber" for transparency
+  - **Live Activity Indicator**: Real-time dashboard showing:
+    - Vibes in last hour with live incrementing animation
+    - Active users estimate (30% of total + realistic variance)
+    - Vibes per minute calculation
+    - Total vibes today with animated pulse on new vibes
+  - **India-Wide Emotional Pulse**: National-level statistics dashboard featuring:
+    - Total vibes count across India
+    - Number of active cities and states
+    - Estimated active users
+    - Trending emotion for the entire nation with percentage
+    - Top 5 most active cities leaderboard
+  - **Trending Emotions Panel**: Real-time emotion breakdown showing:
+    - Top 6 emotions with percentage and count
+    - Progress bars with emotion-specific colors
+    - Trending indicator for #1 emotion
+    - Live updates as data changes
   - **Advanced Map Visualizations**: 
+    - Enhanced SVG India map with animated gradient borders and pulsing effects
     - Emotion Heat Maps using Google Maps Visualization API with multi-layer gradients for different emotions
     - 3D Emotion Bubbles with intensity-based sizes, floating animations, and interactive popups
     - Particle System with animated emotion flows, connecting particles of similar emotions
+    - Improved visual design with shadow effects, gradient backgrounds, and smooth transitions
   - **Emotion Timeline & Rewind**: Hour-by-hour emotion tracking with rewind capability to view yesterday/last week, plus AI-powered predictions for when specific emotions typically occur in a location
   - **Nearby Vibe Stories**: Aggregated anonymous emotional narratives ("8 people felt happy here today"), emotion journey maps (Calm Trail, Happiness Route, Motivation Path), and location-based emotional insights
   - **Vibe Challenges & Gamification**: Daily/weekly/city challenges ("Spread 10 Happy Vibes", "Delhi Happiness Battle"), geo-unlockable achievements for visiting famous locations, progress tracking with XP/coin rewards, and city-vs-city competitions
