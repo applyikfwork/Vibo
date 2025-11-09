@@ -513,6 +513,15 @@ export class DemoBlendingService {
     return colorMap[emotion] || '#F3F4F6';
   }
 
+  private getTimestampInMillis(timestamp: any): number {
+    if (!timestamp) return 0;
+    if (typeof timestamp === 'number') return timestamp;
+    if (timestamp instanceof Date) return timestamp.getTime();
+    if (timestamp.toMillis) return timestamp.toMillis();
+    if (timestamp.seconds) return timestamp.seconds * 1000;
+    return 0;
+  }
+
   calculateActivityMetrics(vibes: Vibe[], city: string): ActivityMetrics {
     const now = Date.now();
     const oneHourAgo = now - 3600000;
@@ -520,13 +529,13 @@ export class DemoBlendingService {
 
     const vibesInLastHour = vibes.filter(v => {
       const timestamp = v.createdAt || v.timestamp;
-      const time = timestamp.toMillis();
+      const time = this.getTimestampInMillis(timestamp);
       return time >= oneHourAgo;
     }).length;
 
     const vibesToday = vibes.filter(v => {
       const timestamp = v.createdAt || v.timestamp;
-      const time = timestamp.toMillis();
+      const time = this.getTimestampInMillis(timestamp);
       return time >= oneDayAgo;
     }).length;
 
@@ -540,7 +549,7 @@ export class DemoBlendingService {
     const hourCounts: Record<number, number> = {};
     vibes.forEach(v => {
       const timestamp = v.createdAt || v.timestamp;
-      const hour = new Date(timestamp.toMillis()).getHours();
+      const hour = new Date(this.getTimestampInMillis(timestamp)).getHours();
       hourCounts[hour] = (hourCounts[hour] || 0) + 1;
     });
     const peakHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 12;

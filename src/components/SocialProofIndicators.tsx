@@ -35,6 +35,15 @@ export function SocialProofIndicators({ vibes, emotion, city }: {
     return () => clearInterval(interval);
   }, [messages.length]);
 
+  const getTimestampInMillis = (timestamp: any): number => {
+    if (!timestamp) return 0;
+    if (typeof timestamp === 'number') return timestamp;
+    if (timestamp instanceof Date) return timestamp.getTime();
+    if (timestamp.toMillis) return timestamp.toMillis();
+    if (timestamp.seconds) return timestamp.seconds * 1000;
+    return 0;
+  };
+
   const generateProofMessages = () => {
     const proofMessages: SocialProofMessage[] = [];
     const now = Date.now();
@@ -43,7 +52,7 @@ export function SocialProofIndicators({ vibes, emotion, city }: {
     // Count vibes in last hour
     const recentVibes = vibes.filter(v => {
       const timestamp = v.createdAt || v.timestamp;
-      return timestamp && timestamp.toMillis() >= oneHourAgo;
+      return timestamp && getTimestampInMillis(timestamp) >= oneHourAgo;
     });
 
     if (recentVibes.length > 0) {
