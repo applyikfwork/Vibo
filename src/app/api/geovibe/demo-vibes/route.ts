@@ -3,7 +3,16 @@ import { demoDataService } from '@/lib/demo-data-service';
 
 export async function POST(request: NextRequest) {
   try {
-    const { city, count = 20 } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+    const { city, count = 20 } = body;
 
     if (!city) {
       return NextResponse.json(

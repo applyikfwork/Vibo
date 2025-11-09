@@ -6,7 +6,15 @@ import { demoDataService } from '@/lib/demo-data-service';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
     const { location, radiusKm = 10, sortBy = 'recent' } = body;
 
     if (!location || !location.lat || !location.lng) {
