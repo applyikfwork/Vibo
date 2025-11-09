@@ -69,7 +69,20 @@ export class DemoBlendingService {
     }
 
     const shouldShowDemo = demoPercentage > 0;
-    const demoVibeCount = Math.floor((demoPercentage / 100) * 100); // Base count of 100
+    
+    // Calculate demo vibes needed to achieve target percentage
+    // Formula: D / (R + D) = X/100 → D = R * X / (100 - X)
+    // If we have 5 real vibes and want 70% demo:
+    // D = 5 * 70 / 30 = 11.67 ≈ 12 demo vibes → 12/(5+12) = 70.6% ✓
+    let demoVibeCount: number;
+    if (demoPercentage >= 100) {
+      // 100% demo means show demo regardless of real count
+      demoVibeCount = 100;
+    } else if (demoPercentage === 0 || realUserCount === 0) {
+      demoVibeCount = 0;
+    } else {
+      demoVibeCount = Math.round(realUserCount * demoPercentage / (100 - demoPercentage));
+    }
 
     return {
       demoPercentage,

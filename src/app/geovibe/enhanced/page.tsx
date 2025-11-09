@@ -100,11 +100,21 @@ export default function EnhancedGeoVibePage() {
   useEffect(() => {
     if (!userLocation) return;
 
-    Promise.all([
-      fetchRealVibes(),
-      fetchDemoVibes(),
-    ]);
+    // Fetch real vibes first, then demo vibes (which needs real vibes for blending)
+    const fetchData = async () => {
+      await fetchRealVibes();
+      // fetchDemoVibes will be called after vibes state updates
+    };
+    
+    fetchData();
   }, [userLocation]);
+
+  // Fetch demo vibes whenever real vibes change
+  useEffect(() => {
+    if (userLocation?.city) {
+      fetchDemoVibes();
+    }
+  }, [vibes, userLocation?.city]);
 
   const fetchRealVibes = async () => {
     if (!userLocation) return;
