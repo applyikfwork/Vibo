@@ -36,6 +36,45 @@ None recorded yet.
   - **Smart Emotion Notifications**: Intelligent notification system that sends alerts when 3+ matching vibes are found for user's preferred emotions, with 1-hour cooldown to prevent spam
   - **Emotion Intelligence Dashboard**: Dedicated `/emotion-intelligence` route with visual mood graph cards, streak displays, explorer progress tracking, and interest profile analytics
 - **Vibee Gamification System**: A comprehensive gamified community system with a reward economy (XP, VibeCoins, badges), missions (daily, weekly, special events), a virtual store, leaderboards (national, city-based, friends-only, weekly mood), and emotion-based community hubs. Automated rewards for posting, reacting, commenting, and voice notes are implemented with smart notifications for progress.
+- **AI-Powered Challenge System** (November 2025): Revolutionary engagement system featuring:
+  - **Challenge Dock**: Hero UI component displaying 3-5 rotating challenge cards with progress rings, urgency timers, and reward previews at the top of homepage
+  - **7 Challenge Archetypes**: 
+    - Emotion Exploration 🎭: Discover emotions user hasn't tried, earn 50+ XP per completion
+    - Social Connector 🤝: React to vibes from people with different emotions/cities, build community
+    - Discovery Quests 🔍: Find vibes from specific locations, emotions, or contexts
+    - Streak Builder 🔥: Post for consecutive days (3-7 day challenges), includes grace periods
+    - Location Explorer 📍: Share vibes from different neighborhoods (2-5 locations)
+    - Festival Specials 🎊: Celebrate cultural festivals with joyful vibes, auto-generated for upcoming festivals
+    - Flash Challenges ⚡: Limited time (2 hours), limited slots (100 participants), high rewards (200 XP, 100 coins, 10 gems)
+  - **AI Generation with Gemini**: Uses Google Gemini 2.5 Flash to personalize challenges based on:
+    - User's emotion history and unused emotions
+    - Current location and visited cities
+    - Engagement patterns (reaction count, posting frequency)
+    - User level, tier, and completion rate
+    - Time of day, day of week, and festival context
+    - Recent challenge completions (cooldown system)
+  - **Smart Scheduling**: Challenges refresh on multiple cadences:
+    - Hourly: Flash challenges (2-hour expiry)
+    - Daily: Main challenges (expire at midnight local time)
+    - Weekly: Mega challenges (7-day duration)
+    - Festival: Auto-generated during cultural events (3-day duration)
+  - **Personalization Engine**: 
+    - Difficulty adapts based on completion rate (easy → medium → hard → expert)
+    - Challenge selection uses relevance scoring (emotion gaps, engagement level, location data)
+    - Cooldown system prevents duplicate archetype assignments
+    - Target calculation adjusts for user's skill level
+  - **Reward System**: Multi-tier rewards including XP (50-200+), VibeCoins (25-100+), Gems (5-10), Badges ('emotion_explorer', 'vibe_detective', 'streak_champion', etc.), and Profile Unlocks (frames, themes)
+  - **Celebration System**: Confetti animations on completion using canvas-confetti library, reward claim flows with visual feedback
+  - **Data Architecture**: 
+    - `challenge_templates`: Static archetype definitions with AI prompt templates
+    - `user.activeChallenges`: Array of UserChallengeSummary for fast reads (max 5 active)
+    - `challenge-history`: Completion records with timestamps and rewards
+    - `reward-transactions`: Unified logging of challenge rewards with fraud detection
+  - **API Routes**: 
+    - GET `/api/gamification/challenges/active`: Fetch and auto-generate challenges for user
+    - POST `/api/gamification/challenges/progress`: Update challenge progress with idempotency
+    - POST `/api/gamification/challenges/claim`: Claim rewards with transaction logging
+  - **Integration**: Reuses existing reward engine (`/api/rewards/award`), mission system patterns, and fraud detection infrastructure
 - **Enhanced Community Hubs System** (November 2025): Advanced hub discovery and engagement features including:
   - **Smart Hub Recommendations**: AI-powered recommendation engine that analyzes user emotional history, vibe affinity scores, current mood, and vibeMemory patterns to suggest personalized hubs with match scores and explanations
   - **Real-time Hub Notifications**: Browser notification system for hub activities (new posts, challenges, milestones, trending content) with customizable preferences and quiet hours
