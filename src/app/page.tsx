@@ -7,6 +7,7 @@ import { VibeCard } from '@/components/VibeCard';
 import { SmartVibeFeed } from '@/components/SmartVibeFeed';
 import { WeeklyReflection } from '@/components/WeeklyReflection';
 import { IndianFeatures } from '@/components/IndianFeatures';
+import { ChallengeDock } from '@/components/ChallengeDock';
 import { emotions } from '@/lib/data';
 import { useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
@@ -69,6 +70,9 @@ export default function Home() {
               ✨ How do you feel right now? ✨
             </p>
           </motion.header>
+
+          {/* AI-Powered Challenge Dock */}
+          <ChallengeDock />
 
           <motion.section 
             initial={{ opacity: 0, scale: 0.95 }}
