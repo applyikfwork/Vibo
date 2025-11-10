@@ -325,6 +325,8 @@ export type UserProfile = {
     displayName?: string;
     anonymous?: boolean;
     currentMood?: EmotionCategory;
+    preferredMoods?: EmotionCategory[];
+    onboardingCompleted?: boolean;
     moodHistory?: MoodHistoryEntry[];
     interactionStyle?: InteractionStyle;
     averageSessionTime?: number;

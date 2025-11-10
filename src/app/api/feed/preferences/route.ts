@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { userId, selectedEmotions, contentPreferences } = body;
 
-    if (!userId || !selectedEmotions) {
+    if (!userId || !selectedEmotions || !Array.isArray(selectedEmotions) || selectedEmotions.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -73,6 +73,13 @@ export async function POST(request: NextRequest) {
       onboardingCompleted: true,
       lastUpdated: new Date(),
     });
+
+    await db.collection('users').doc(userId).set({
+      currentMood: selectedEmotions[0],
+      preferredMoods: selectedEmotions,
+      onboardingCompleted: true,
+      lastUpdated: new Date(),
+    }, { merge: true });
 
     return NextResponse.json({ success: true });
   } catch (error) {

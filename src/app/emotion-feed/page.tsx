@@ -36,6 +36,14 @@ export default function EmotionFeedPage() {
           return;
         }
 
+        const hasMood = profile?.currentMood || profile?.preferredMoods?.[0];
+        const hasCompletedOnboarding = profile?.onboardingCompleted;
+
+        if (!hasMood && !hasCompletedOnboarding) {
+          setIsLoading(false);
+          return;
+        }
+
         await loadFeed();
       } catch (err) {
         console.error('Error checking onboarding:', err);
@@ -45,10 +53,17 @@ export default function EmotionFeedPage() {
     };
 
     checkOnboarding();
-  }, [user, authLoading, profileLoading, router]);
+  }, [user, authLoading, profileLoading, router, profile]);
 
   const loadFeed = async (append = false) => {
-    if (!user || !profile?.currentMood) {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    const userMood = profile?.currentMood || profile?.preferredMoods?.[0] || (profile?.onboardingCompleted ? 'Happy' : null);
+    
+    if (!userMood) {
       setIsLoading(false);
       return;
     }
@@ -68,7 +83,7 @@ export default function EmotionFeedPage() {
         },
         body: JSON.stringify({
           userId: user.uid,
-          userMood: profile.currentMood,
+          userMood: userMood,
           limit: 30,
           afterTimestamp: append ? lastTimestamp : null,
         }),
@@ -167,7 +182,10 @@ export default function EmotionFeedPage() {
     );
   }
 
-  if (!profile?.currentMood) {
+  const hasMood = profile?.currentMood || profile?.preferredMoods?.[0];
+  const hasCompletedOnboarding = profile?.onboardingCompleted;
+
+  if (!hasMood && !hasCompletedOnboarding) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-6">
         <div className="text-center max-w-md">
@@ -206,11 +224,13 @@ export default function EmotionFeedPage() {
     );
   }
 
+  const userMood = profile?.currentMood || profile?.preferredMoods?.[0] || 'Happy';
+
   return (
     <div className="relative">
       <SwipeableVibeDeck
         vibes={vibes}
-        userMood={profile.currentMood}
+        userMood={userMood}
         onNeedMore={loadMoreVibes}
       />
     </div>
