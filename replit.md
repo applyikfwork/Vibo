@@ -35,7 +35,59 @@ None recorded yet.
   - **UserInterestProfile**: Comprehensive user profiling with emotion weights, location clustering, time pattern preferences (Morning/Night viber), and format preferences (voice vs text)
   - **Smart Emotion Notifications**: Intelligent notification system that sends alerts when 3+ matching vibes are found for user's preferred emotions, with 1-hour cooldown to prevent spam
   - **Emotion Intelligence Dashboard**: Dedicated `/emotion-intelligence` route with visual mood graph cards, streak displays, explorer progress tracking, and interest profile analytics
-- **Vibee Gamification System**: A comprehensive gamified community system with a reward economy (XP, VibeCoins, badges), missions (daily, weekly, special events), a virtual store, leaderboards (national, city-based, friends-only, weekly mood), and emotion-based community hubs. Automated rewards for posting, reacting, commenting, and voice notes are implemented with smart notifications for progress.
+- **Vibee Gamification System**: A comprehensive gamified community system with a multi-currency reward economy (XP, VibeCoins, Gems, Karma Score), missions (daily, weekly, special events), a virtual store, leaderboards (national, city-based, friends-only, weekly mood), and emotion-based community hubs. Automated rewards for posting, reacting, commenting, and voice notes are implemented with smart notifications for progress.
+- **Multi-Currency Rewards Economy** (November 2025): Professional, balanced reward system featuring:
+  - **Three Core Currencies**:
+    - **XP (Experience Points)**: Permanent progression marker for leveling up (cannot be spent)
+    - **Vibee Coins**: Virtual currency for profile customizations, boosts, themes, and features
+    - **Karma Score**: Quality rating system affecting content visibility and feed priority (100 default, ranges 0-∞)
+  - **Balanced XP Earning Structure**: Daily action caps prevent grinding while encouraging variety:
+    - Post vibe: 10 XP (max 3/day = 30 XP)
+    - React to others: 2 XP (max 10/day = 20 XP)
+    - Comment: 5 XP (max 5/day = 25 XP)
+    - Share: 3 XP (max 3/day = 9 XP)
+    - Daily login: 5 XP
+    - Daily maximum: ~89 XP from regular actions
+  - **Quality Bonuses**: Rewards for authentic engagement and viral content:
+    - Viral vibe (10+ reactions): +25 XP, +10 coins
+    - Trending in city: +50 XP, +25 coins
+    - Helpful comment (5+ likes): +10 XP, +5 coins
+    - Content shared: +15 XP, +10 coins
+  - **Progressive Level System (1-50)**: Takes months to max out with meaningful milestones:
+    - Level 1-5 (0-1000 XP): Newbie → Active Member
+    - Level 6-15 (1500-15000 XP): Regular → Vibe Master
+    - Level 16-25 (18000-65000 XP): Influencer → City Legend
+    - Level 26-50 (71000-500000 XP): Regional Star → Vibee Legend
+    - Each level unlocks profile customizations, badges, features, and coin rewards
+  - **Comprehensive Badge System**: 100+ badges across 7 categories with 4 rarity levels:
+    - **Emotion Badges** (common to legendary): Happy Explorer, Emotion Collector, Emotion Master
+    - **Location Badges**: Neighborhood Hero, City Champion, National Traveler
+    - **Streak Badges**: Consistent (7 days), Dedicated (30 days), Unstoppable (100 days)
+    - **Festival Badges** (limited edition): Diwali 2024, Holi Celebration, Dussehra Warrior
+    - **Challenge Badges**: Challenge Starter, Challenge Hunter, Challenge Legend
+    - **Social Badges**: Supportive, Community Builder, Inspiration, Viral Sensation
+    - **Exclusive Badges**: Founding Member, Beta Tester, Top 100, Staff Favorite
+    - Badge rarity: Common (✓), Rare (⭐), Epic (💎), Legendary (🔥)
+  - **Karma Score System**: Quality-based visibility and recommendation system:
+    - Karma Tiers: Limited (0-50), New User (51-100), Trusted (101-500), Respected (501-1000), Community Leader (1000+)
+    - Earning Karma: Quality vibes (+5), helpful comments (+3), content shared (+10), challenges (+2), streaks (+1)
+    - Losing Karma: Spam (-20), reported content (-50), no engagement (-5), inactivity (-10)
+    - Impact: Feed boost multiplier (0.5x to 2.0x), visibility status, recommendation priority
+  - **Streak Milestones**: Major XP rewards for consistency:
+    - 7 days: +1000 XP, +100 coins, "Consistent" badge
+    - 30 days: +2000 XP, +500 coins, "Dedicated" badge
+    - 100 days: +5000 XP, +2000 coins, "Unstoppable" badge
+    - 365 days: +10000 XP, +5000 coins, crown and rainbow effect
+  - **Special Achievements**: One-time bonuses for milestones:
+    - First vibe in new emotion: +100 XP, +50 coins
+    - Explore all 8 emotions: +500 XP, +250 coins
+    - 100 reactions received: +200 XP, +100 coins
+    - City Ambassador (top 10): +1500 XP, +750 coins
+  - **Vibee Coins Earning & Spending**:
+    - Earning: Level ups (50 coins/level), challenges (25-100), weekly bonus (200), monthly streak (500), referrals (300)
+    - Spending: Profile themes (500), animated badges (300), vibe boost (1000), profile frames (750), stickers (250), username color (400)
+  - **Badge Display System**: Visual showcase with rarity effects, progress tracking, in-feed icons, and tooltips
+  - **Rewards Dashboard**: Comprehensive `/rewards` page showing all currencies, level progress, streak tracking, badge collection, karma tier, and detailed statistics
 - **AI-Powered Challenge System** (November 2025): Revolutionary engagement system featuring:
   - **Challenge Dock**: Hero UI component displaying 3-5 rotating challenge cards with progress rings, urgency timers, and reward previews at the top of homepage
   - **7 Challenge Archetypes**: 

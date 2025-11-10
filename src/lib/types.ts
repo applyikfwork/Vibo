@@ -347,6 +347,7 @@ export type UserProfile = {
     cityBadges?: string[];
     coins?: number;
     gems?: number;
+    karma?: number;
     level?: number;
     tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'legend';
     badges?: Badge[];

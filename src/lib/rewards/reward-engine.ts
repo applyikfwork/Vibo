@@ -25,51 +25,51 @@ export type RewardConfig = {
 
 export const REWARD_CONFIGS: Record<RewardAction, RewardConfig> = {
   post_vibe: {
-    xp: 12,
-    coins: 5,
-    dailyLimit: 100,
+    xp: 10,
+    coins: 0,
+    dailyLimit: 3,
   },
   first_post_today: {
-    xp: 0,
-    coins: 20,
+    xp: 5,
+    coins: 0,
     dailyLimit: 1,
   },
   react_vibe: {
     xp: 2,
     coins: 0,
-    dailyLimit: 100,
+    dailyLimit: 10,
   },
   helpful_comment: {
-    xp: 8,
-    coins: 3,
-    dailyLimit: 50,
+    xp: 5,
+    coins: 0,
+    dailyLimit: 5,
   },
   helpful_comment_bonus: {
-    xp: 0,
-    coins: 10,
-    dailyLimit: 20,
+    xp: 10,
+    coins: 0,
+    dailyLimit: 5,
     requiresVerification: true,
   },
   receive_heart: {
-    xp: 1,
+    xp: 2,
     coins: 0,
-    dailyLimit: 500,
+    dailyLimit: 100,
   },
   complete_daily_mission: {
-    xp: 30,
-    coins: 10,
+    xp: 50,
+    coins: 25,
   },
   complete_weekly_challenge: {
-    xp: 200,
+    xp: 150,
     coins: 100,
   },
   city_challenge_contribution: {
     xp: 50,
-    coins: 0,
+    coins: 25,
   },
   invite_friend: {
-    xp: 100,
-    coins: 50,
+    xp: 300,
+    coins: 300,
     requiresVerification: true,
   },
   watch_ad: {
@@ -88,9 +88,12 @@ export const REWARD_CONFIGS: Record<RewardAction, RewardConfig> = {
 };
 
 export const DAILY_CAPS = {
-  MAX_COINS_EARNED: 2000,
-  MAX_XP_FROM_REACTIONS: 200,
-  MAX_XP_EARNED: 5000,
+  MAX_COINS_EARNED: 500,
+  MAX_XP_FROM_REACTIONS: 20,
+  MAX_XP_EARNED: 89,
+  MAX_XP_FROM_POSTS: 30,
+  MAX_XP_FROM_COMMENTS: 25,
+  MAX_XP_FROM_SHARES: 9,
 };
 
 export const GIFT_CONFIGS = {
@@ -122,10 +125,10 @@ export const FRAUD_THRESHOLDS = {
   },
 };
 
-export const XP_PER_LEVEL = 500;
+import { calculateLevel as calcLevel } from './level-system';
 
 export function calculateLevel(xp: number): number {
-  return Math.floor(xp / XP_PER_LEVEL) + 1;
+  return calcLevel(xp);
 }
 
 export function calculateTier(xp: number, level: number): 'bronze' | 'silver' | 'gold' | 'platinum' | 'legend' {
