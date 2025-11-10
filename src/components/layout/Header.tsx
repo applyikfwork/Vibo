@@ -117,6 +117,15 @@ export default function Header() {
               🌍 GeoVibe
             </Link>
             <Link
+              href="/emotion-feed"
+              className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-pink-600 hover:to-purple-600 hover:bg-clip-text font-semibold flex items-center gap-1 group"
+            >
+              🎧 Emotion Reels
+              <span className="ml-1 text-[10px] bg-gradient-to-r from-pink-500 to-purple-500 text-white px-1.5 py-0.5 rounded-full font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                NEW
+              </span>
+            </Link>
+            <Link
               href="/gamification"
               className="text-foreground/70 transition-all duration-300 hover:text-transparent hover:bg-gradient-to-r hover:from-yellow-600 hover:to-orange-600 hover:bg-clip-text font-semibold flex items-center gap-1"
             >
