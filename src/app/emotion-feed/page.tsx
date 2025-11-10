@@ -157,7 +157,7 @@ export default function EmotionFeedPage() {
           <p className="text-white text-xl font-medium mb-4">Oops! Something went wrong</p>
           <p className="text-white/80 mb-6">{error}</p>
           <button
-            onClick={loadFeed}
+            onClick={() => loadFeed()}
             className="px-6 py-3 bg-white text-red-600 rounded-full font-semibold hover:bg-white/90 transition-colors"
           >
             Try Again
