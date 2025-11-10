@@ -1,0 +1,196 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useUser } from '@/firebase';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useRouter } from 'next/navigation';
+import { SwipeableVibeDeck } from '@/components/feed/SwipeableVibeDeck';
+import type { Vibe } from '@/lib/types';
+
+export default function EmotionFeedPage() {
+  const { user, isUserLoading: authLoading } = useUser();
+  const { profile, isLoading: profileLoading } = useUserProfile();
+  const [vibes, setVibes] = useState<Vibe[]>([]);
+  const [vibeCache, setVibeCache] = useState<Vibe[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastTimestamp, setLastTimestamp] = useState<number | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (authLoading || profileLoading) return;
+
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    const checkOnboarding = async () => {
+      try {
+        const response = await fetch(`/api/feed/preferences?userId=${user.uid}`);
+        const data = await response.json();
+
+        if (data.success && data.isNewUser) {
+          router.push('/onboarding/emotions');
+          return;
+        }
+
+        await loadFeed();
+      } catch (err) {
+        console.error('Error checking onboarding:', err);
+        setError('Failed to load feed');
+        setIsLoading(false);
+      }
+    };
+
+    checkOnboarding();
+  }, [user, authLoading, profileLoading, router]);
+
+  const loadFeed = async (append = false) => {
+    if (!user || !profile?.currentMood) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
+    setError(null);
+
+    try {
+      const response = await fetch('/api/feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.uid,
+          userMood: profile.currentMood,
+          limit: 30,
+          afterTimestamp: append ? lastTimestamp : null,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to fetch feed');
+      }
+
+      const newVibes = result.feed || [];
+      
+      if (append) {
+        setVibes(prev => [...prev, ...newVibes]);
+      } else {
+        setVibes(newVibes);
+      }
+
+      if (newVibes.length > 0) {
+        const lastVibe = newVibes[newVibes.length - 1];
+        const timestamp = lastVibe.timestamp?.seconds 
+          ? lastVibe.timestamp.seconds * 1000
+          : lastVibe.timestamp?.toMillis?.()
+          || Date.now();
+        setLastTimestamp(timestamp);
+      }
+      
+      const updatedCache = append ? [...vibeCache, ...newVibes] : newVibes;
+      const last10 = updatedCache.slice(-10);
+      setVibeCache(last10);
+      
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('vibe-cache', JSON.stringify(last10));
+        } catch (e) {
+          console.error('Failed to cache vibes:', e);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading feed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load feed');
+    } finally {
+      if (append) {
+        setIsLoadingMore(false);
+      } else {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('vibe-cache');
+        if (cached) {
+          setVibeCache(JSON.parse(cached));
+        }
+      } catch (e) {
+        console.error('Failed to load cached vibes:', e);
+      }
+    }
+  }, []);
+
+  const loadMoreVibes = async () => {
+    if (isLoadingMore) return;
+    console.log('Loading more vibes...');
+    await loadFeed(true);
+  };
+
+  if (authLoading || profileLoading || isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-xl font-medium">Loading your vibe feed...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-red-600 to-pink-600 p-6">
+        <div className="text-center max-w-md">
+          <p className="text-white text-xl font-medium mb-4">Oops! Something went wrong</p>
+          <p className="text-white/80 mb-6">{error}</p>
+          <button
+            onClick={loadFeed}
+            className="px-6 py-3 bg-white text-red-600 rounded-full font-semibold hover:bg-white/90 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile?.currentMood) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600 p-6">
+        <div className="text-center max-w-md">
+          <p className="text-white text-xl font-medium mb-4">Set your mood first</p>
+          <p className="text-white/80 mb-6">To see personalized vibes, please set your current mood</p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-6 py-3 bg-white text-purple-600 rounded-full font-semibold hover:bg-white/90 transition-colors"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <SwipeableVibeDeck
+        vibes={vibes}
+        userMood={profile.currentMood}
+        onNeedMore={loadMoreVibes}
+      />
+    </div>
+  );
+}

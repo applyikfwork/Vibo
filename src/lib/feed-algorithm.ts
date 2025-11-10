@@ -61,18 +61,66 @@ const EMOTION_MATCH_CONFIGS: Record<EmotionCategory, EmotionMatchConfig> = {
     complementaryEmotions: ['Happy', 'Chill', 'Motivated'],
     oppositeEmotions: ['Sad', 'Angry', 'Lonely'],
   },
+  'Festival Joy': {
+    primaryEmotion: 'Festival Joy',
+    complementaryEmotions: ['Happy', 'Motivated', 'Funny'],
+    oppositeEmotions: ['Sad', 'Lonely', 'Angry'],
+  },
+  'Missing Home': {
+    primaryEmotion: 'Missing Home',
+    complementaryEmotions: ['Chill', 'Happy', 'Family Bonding'],
+    oppositeEmotions: ['Angry', 'Neutral'],
+  },
+  'Exam Stress': {
+    primaryEmotion: 'Exam Stress',
+    complementaryEmotions: ['Motivated', 'Chill', 'Funny'],
+    oppositeEmotions: ['Happy', 'Festival Joy'],
+  },
+  'Wedding Excitement': {
+    primaryEmotion: 'Wedding Excitement',
+    complementaryEmotions: ['Happy', 'Festival Joy', 'Family Bonding'],
+    oppositeEmotions: ['Sad', 'Lonely', 'Angry'],
+  },
+  'Religious Peace': {
+    primaryEmotion: 'Religious Peace',
+    complementaryEmotions: ['Chill', 'Happy', 'Neutral'],
+    oppositeEmotions: ['Angry', 'Exam Stress'],
+  },
+  'Family Bonding': {
+    primaryEmotion: 'Family Bonding',
+    complementaryEmotions: ['Happy', 'Chill', 'Festival Joy'],
+    oppositeEmotions: ['Lonely', 'Sad', 'Angry'],
+  },
+  'Career Anxiety': {
+    primaryEmotion: 'Career Anxiety',
+    complementaryEmotions: ['Motivated', 'Chill', 'Happy'],
+    oppositeEmotions: ['Neutral', 'Festival Joy'],
+  },
+  'Festive Nostalgia': {
+    primaryEmotion: 'Festive Nostalgia',
+    complementaryEmotions: ['Happy', 'Chill', 'Family Bonding'],
+    oppositeEmotions: ['Angry', 'Neutral'],
+  },
 };
 
 // Emotion-specific decay rates
 const DECAY_RATES: Record<EmotionCategory, number> = {
-  'Sad': 0.92,        // Slower decay for emotional posts
-  'Lonely': 0.93,     // Slower decay to allow empathy spread
-  'Angry': 0.88,      // Moderate decay
-  'Happy': 0.9,       // Standard decay
-  'Motivated': 0.85,  // Faster decay (short energy bursts)
-  'Chill': 0.91,      // Slower decay
-  'Neutral': 0.9,     // Standard decay
-  'Funny': 0.87,      // Faster decay for humor
+  'Sad': 0.92,
+  'Lonely': 0.93,
+  'Angry': 0.88,
+  'Happy': 0.9,
+  'Motivated': 0.85,
+  'Chill': 0.91,
+  'Neutral': 0.9,
+  'Funny': 0.87,
+  'Festival Joy': 0.88,
+  'Missing Home': 0.92,
+  'Exam Stress': 0.89,
+  'Wedding Excitement': 0.86,
+  'Religious Peace': 0.93,
+  'Family Bonding': 0.91,
+  'Career Anxiety': 0.90,
+  'Festive Nostalgia': 0.91,
 };
 
 /**

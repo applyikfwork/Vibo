@@ -6,6 +6,7 @@ import {
   generateSmartVibeFeed,
   calculateBoostScore 
 } from '@/lib/feed-algorithm';
+import { rankVibesWithEngagement, type UserInterests } from '@/lib/feed/enhanced-algorithm';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
     const db = admin.firestore();
 
     const body = await request.json();
-    const { userId, userMood, limit: requestLimit = 30 } = body;
+    const { userId, userMood, limit: requestLimit = 30, afterTimestamp } = body;
 
     if (!userId || !userMood) {
       return NextResponse.json(
@@ -22,8 +23,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch user profile
+    // Fetch user profile and interests
     let userProfile: UserProfile | undefined;
+    let userInterests: UserInterests | undefined;
     let userPreviousMood: EmotionCategory | undefined;
     try {
       const userDoc = await db.collection('users').doc(userId).get();
@@ -39,15 +41,27 @@ export async function POST(request: NextRequest) {
           userPreviousMood = sortedHistory[1]?.emotion;
         }
       }
+
+      const interestsDoc = await db.collection('user-interests').doc(userId).get();
+      if (interestsDoc.exists) {
+        userInterests = interestsDoc.data() as UserInterests;
+      }
     } catch (error) {
       console.log('Could not fetch user profile, continuing without it');
     }
 
     // Fetch vibes from all-vibes collection
-    const vibesSnapshot = await db
+    let vibesQuery = db
       .collection('all-vibes')
-      .orderBy('timestamp', 'desc')
-      .limit(requestLimit * 2) // Fetch more to have enough for ranking
+      .orderBy('timestamp', 'desc');
+
+    if (afterTimestamp) {
+      const afterDate = new Date(afterTimestamp);
+      vibesQuery = vibesQuery.where('timestamp', '<', afterDate);
+    }
+
+    const vibesSnapshot = await vibesQuery
+      .limit(requestLimit * 2)
       .get();
 
     const vibes: Vibe[] = [];
@@ -100,8 +114,10 @@ export async function POST(request: NextRequest) {
       } as Vibe);
     }
 
-    // Rank vibes using the algorithm
-    const rankedVibes = rankVibesForUser(vibes, userMood as EmotionCategory, userProfile);
+    // Rank vibes using enhanced algorithm if user has interests, otherwise use base algorithm
+    const rankedVibes = userInterests 
+      ? rankVibesWithEngagement(vibes, userMood as EmotionCategory, userInterests, userProfile)
+      : rankVibesForUser(vibes, userMood as EmotionCategory, userProfile);
 
     // Generate Smart Vibe Zones
     const { myVibeZone, healingZone, exploreZone } = generateSmartVibeFeed(rankedVibes);
@@ -125,7 +141,8 @@ export async function POST(request: NextRequest) {
         totalVibes: vibes.length,
         rankedVibes: rankedVibes.length,
         userMood,
-        algorithm: 'Vibee Feed Algorithm v1.0',
+        algorithm: userInterests ? 'Enhanced Engagement Algorithm v2.0' : 'Vibee Feed Algorithm v1.0',
+        hasUserInterests: !!userInterests,
       },
     });
 
