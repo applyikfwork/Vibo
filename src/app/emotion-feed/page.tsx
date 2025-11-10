@@ -169,15 +169,37 @@ export default function EmotionFeedPage() {
 
   if (!profile?.currentMood) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600 p-6">
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-6">
         <div className="text-center max-w-md">
-          <p className="text-white text-xl font-medium mb-4">Set your mood first</p>
-          <p className="text-white/80 mb-6">To see personalized vibes, please set your current mood</p>
+          <div className="mb-6">
+            <div className="text-6xl mb-4 animate-bounce">✨</div>
+            <h1 className="text-white text-3xl font-bold mb-2">Welcome to Emotion Feed!</h1>
+            <p className="text-white/90 text-lg mb-4">
+              Discover vibes that match your feelings
+            </p>
+          </div>
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20">
+            <p className="text-white/80 mb-4">
+              To get personalized vibes, let's first understand what emotions resonate with you.
+            </p>
+            <p className="text-white text-sm">
+              Select 3-5 emotions in the next step to get started! 🎯
+            </p>
+          </div>
+
+          <button
+            onClick={() => router.push('/onboarding/emotions')}
+            className="w-full px-8 py-4 bg-white text-purple-600 rounded-full font-bold text-lg hover:bg-white/90 transition-all transform hover:scale-105 shadow-lg mb-3"
+          >
+            Get Started 🚀
+          </button>
+          
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-white text-purple-600 rounded-full font-semibold hover:bg-white/90 transition-colors"
+            className="text-white/80 hover:text-white text-sm underline"
           >
-            Go to Home
+            Go to Home instead
           </button>
         </div>
       </div>
