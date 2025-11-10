@@ -268,6 +268,56 @@ export type StoreItem = {
   seasonId?: string;
 };
 
+export type TimeSlot = 'Morning' | 'Afternoon' | 'Evening' | 'Night';
+
+export type EmotionInsights = {
+  moodGraph: Record<EmotionCategory, number>;
+  reactionPattern: {
+    mostReactedEmotion: EmotionCategory;
+    reactionFrequency: Record<EmotionCategory, number>;
+  };
+  timeBasedMoods: Record<TimeSlot, EmotionCategory[]>;
+  emotionDiversity: number;
+  lastUpdated?: Timestamp;
+};
+
+export type UserInterestProfile = {
+  emotionWeights: Record<EmotionCategory, number>;
+  locationCluster: string;
+  timePattern: TimeSlot[];
+  formatPref: ('text' | 'voice')[];
+  lastUpdated?: Timestamp;
+};
+
+export type VibeStreak = {
+  currentStreak: number;
+  longestStreak: number;
+  lastVibeDate: Timestamp;
+};
+
+export type EmotionExplorerProgress = {
+  emotionsExplored: EmotionCategory[];
+  totalUniqueEmotions: number;
+  explorerLevel: number;
+  lastExploredEmotion?: EmotionCategory;
+  lastExploredDate?: Timestamp;
+};
+
+export type DailyEmotionChallenge = {
+  id: string;
+  date: string;
+  targetEmotion: EmotionCategory;
+  targetCount: number;
+  currentProgress: number;
+  isCompleted: boolean;
+  reward: {
+    xp: number;
+    coins: number;
+    badge?: string;
+  };
+  expiresAt: Timestamp;
+};
+
 export type UserProfile = {
     id: string;
     username: string;
@@ -330,6 +380,24 @@ export type UserProfile = {
     activeCosmetics?: string[];
     fraudFlags?: number;
     accountStatus?: 'active' | 'under_review' | 'suspended' | 'banned';
+    emotionInsights?: EmotionInsights;
+    interestProfile?: UserInterestProfile;
+    vibeStreak?: VibeStreak;
+    emotionExplorer?: EmotionExplorerProgress;
+    dailyEmotionChallenge?: DailyEmotionChallenge;
+    emotionNotificationsEnabled?: boolean;
+    lastEmotionNotification?: Timestamp;
+};
+
+export type VibeMetadata = {
+  engagementVelocity: number;
+  recentFeelCount: number;
+  feelCountLast24h: number;
+  cityTrendScore: number;
+  locationProximityScore?: number;
+  qualityScore: number;
+  coldStartBoost: number;
+  lastMetadataUpdate?: Timestamp;
 };
 
 export type Vibe = {
@@ -360,6 +428,8 @@ export type Vibe = {
   location?: Location;
   distance?: number;
   isDemo?: boolean;
+  metadata?: VibeMetadata;
+  geo?: string;
 };
 
 export type Comment = {
