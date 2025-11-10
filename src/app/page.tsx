@@ -8,6 +8,7 @@ import { SmartVibeFeed } from '@/components/SmartVibeFeed';
 import { WeeklyReflection } from '@/components/WeeklyReflection';
 import { IndianFeatures } from '@/components/IndianFeatures';
 import { ChallengeDock } from '@/components/ChallengeDock';
+import { EmotionFeedCTA } from '@/components/EmotionFeedCTA';
 import { emotions } from '@/lib/data';
 import { useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
@@ -92,6 +93,10 @@ export default function Home() {
           >
             <IndianFeatures />
           </motion.section>
+
+          <div className="mb-8">
+            <EmotionFeedCTA />
+          </div>
 
           <div className="mb-8 flex justify-center gap-4">
             <button
