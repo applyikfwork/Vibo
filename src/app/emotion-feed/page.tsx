@@ -1,21 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/firebase';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRouter } from 'next/navigation';
 import { SwipeableVibeDeck } from '@/components/feed/SwipeableVibeDeck';
-import type { Vibe } from '@/lib/types';
+import { MoodSelector } from '@/components/feed/MoodSelector';
+import type { Vibe, EmotionCategory } from '@/lib/types';
 
 export default function EmotionFeedPage() {
   const { user, isUserLoading: authLoading } = useUser();
-  const { profile, isLoading: profileLoading } = useUserProfile();
+  const { profile, isLoading: profileLoading, refetch: refetchProfile } = useUserProfile();
   const [vibes, setVibes] = useState<Vibe[]>([]);
   const [vibeCache, setVibeCache] = useState<Vibe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastTimestamp, setLastTimestamp] = useState<number | null>(null);
+  const [currentMood, setCurrentMood] = useState<EmotionCategory | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -154,6 +156,15 @@ export default function EmotionFeedPage() {
     await loadFeed(true);
   };
 
+  const handleMoodChange = useCallback(async (newMood: EmotionCategory) => {
+    setCurrentMood(newMood);
+    refetchProfile();
+    setLastTimestamp(null);
+    setTimeout(() => {
+      loadFeed(false);
+    }, 500);
+  }, [refetchProfile, loadFeed]);
+
   if (authLoading || profileLoading || isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600">
@@ -198,11 +209,25 @@ export default function EmotionFeedPage() {
           </div>
           
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20">
+            {user && (
+              <div className="mb-6">
+                <p className="text-white/80 mb-4">
+                  Select your current vibe to get started:
+                </p>
+                <div className="flex justify-center">
+                  <MoodSelector
+                    userId={user.uid}
+                    currentMood={null}
+                    onMoodChange={handleMoodChange}
+                  />
+                </div>
+              </div>
+            )}
             <p className="text-white/80 mb-4">
-              To get personalized vibes, let's first understand what emotions resonate with you.
+              Or complete the full onboarding to select multiple emotions
             </p>
             <p className="text-white text-sm">
-              Select 3-5 emotions in the next step to get started! 🎯
+              Select 3-5 emotions in the next step! 🎯
             </p>
           </div>
 
@@ -210,7 +235,7 @@ export default function EmotionFeedPage() {
             onClick={() => router.push('/onboarding/emotions')}
             className="w-full px-8 py-4 bg-white text-purple-600 rounded-full font-bold text-lg hover:bg-white/90 transition-all transform hover:scale-105 shadow-lg mb-3"
           >
-            Get Started 🚀
+            Complete Full Onboarding 🚀
           </button>
           
           <button
@@ -224,10 +249,18 @@ export default function EmotionFeedPage() {
     );
   }
 
-  const userMood = profile?.currentMood || profile?.preferredMoods?.[0] || 'Happy';
+  const userMood = currentMood || profile?.currentMood || profile?.preferredMoods?.[0] || 'Happy';
 
   return (
     <div className="relative">
+      <div className="absolute top-6 left-6 z-50">
+        <MoodSelector
+          userId={user!.uid}
+          currentMood={userMood}
+          onMoodChange={handleMoodChange}
+        />
+      </div>
+      
       <SwipeableVibeDeck
         vibes={vibes}
         userMood={userMood}
