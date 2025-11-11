@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { UserCircle, BarChart3, LogOut, Settings, User, Shield, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
+import { RewardsWidget } from '@/components/RewardsWidget';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -158,7 +159,8 @@ export default function Header() {
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
-          <nav className="flex items-center">
+          <nav className="flex items-center gap-3">
+            <RewardsWidget />
             <Link href="/history" className="md:hidden">
               <Button variant="ghost" size="icon" className="hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 transition-all duration-300">
                 <BarChart3 className="h-5 w-5 text-purple-600" />

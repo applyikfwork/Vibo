@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import { FirebaseClientProvider } from '@/firebase';
 import AuthManager from '@/components/AuthManager';
 import { StructuredData } from '@/components/seo/StructuredData';
+import { RewardsStatsProvider } from '@/contexts/RewardsStatsContext';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -105,11 +106,13 @@ export default function RootLayout({
       <body className={cn('min-h-screen bg-background antialiased', inter.className)}>
         <FirebaseClientProvider>
           <AuthManager>
-            <div className="relative flex min-h-dvh flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-            </div>
-            <Toaster />
+            <RewardsStatsProvider>
+              <div className="relative flex min-h-dvh flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+              </div>
+              <Toaster />
+            </RewardsStatsProvider>
           </AuthManager>
         </FirebaseClientProvider>
       </body>
