@@ -73,10 +73,11 @@ export function RewardsStatsProvider({ children }: { children: React.ReactNode }
       }
 
       const response = await fetch('/api/gamification/rewards', {
+        method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`
         },
-        next: { revalidate: 30 }
+        cache: 'no-store'
       });
 
       if (!response.ok) {
