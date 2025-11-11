@@ -220,11 +220,25 @@ export function calculateChallengeReward(
   difficulty: ChallengeDifficulty
 ) {
   const multiplier = DIFFICULTY_MULTIPLIERS[difficulty];
-  return {
+  const reward: any = {
     xp: Math.floor(baseReward.xp * multiplier),
     coins: Math.floor(baseReward.coins * multiplier),
-    gems: baseReward.gems ? Math.floor(baseReward.gems * multiplier) : undefined,
-    badges: baseReward.badges,
-    unlocks: baseReward.unlocks,
   };
+  
+  // Only add gems if defined (Firestore doesn't allow undefined)
+  if (baseReward.gems) {
+    reward.gems = Math.floor(baseReward.gems * multiplier);
+  }
+  
+  // Only add badges if defined
+  if (baseReward.badges) {
+    reward.badges = baseReward.badges;
+  }
+  
+  // Only add unlocks if defined
+  if (baseReward.unlocks) {
+    reward.unlocks = baseReward.unlocks;
+  }
+  
+  return reward;
 }
