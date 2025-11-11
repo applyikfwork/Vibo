@@ -21,6 +21,15 @@ export default function EmotionFeedPage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (!authLoading && !profileLoading && profile) {
+      const profileMood = profile?.currentMood || profile?.preferredMoods?.[0];
+      if (profileMood && !currentMood) {
+        setCurrentMood(profileMood as EmotionCategory);
+      }
+    }
+  }, [profile, authLoading, profileLoading, currentMood]);
+
+  useEffect(() => {
     if (authLoading || profileLoading) return;
 
     if (!user) {
@@ -38,7 +47,7 @@ export default function EmotionFeedPage() {
           return;
         }
 
-        const hasMood = profile?.currentMood || profile?.preferredMoods?.[0];
+        const hasMood = currentMood || profile?.currentMood || profile?.preferredMoods?.[0];
         const hasCompletedOnboarding = profile?.onboardingCompleted;
 
         if (!hasMood && !hasCompletedOnboarding) {
@@ -55,15 +64,15 @@ export default function EmotionFeedPage() {
     };
 
     checkOnboarding();
-  }, [user, authLoading, profileLoading, router, profile]);
+  }, [user, authLoading, profileLoading, router, profile, currentMood]);
 
-  const loadFeed = async (append = false) => {
+  const loadFeed = async (append = false, forcedMood?: EmotionCategory | null) => {
     if (!user) {
       setIsLoading(false);
       return;
     }
 
-    const userMood = profile?.currentMood || profile?.preferredMoods?.[0] || (profile?.onboardingCompleted ? 'Happy' : null);
+    const userMood = forcedMood || currentMood || profile?.currentMood || profile?.preferredMoods?.[0] || (profile?.onboardingCompleted ? 'Happy' : null);
     
     if (!userMood) {
       setIsLoading(false);
@@ -161,7 +170,7 @@ export default function EmotionFeedPage() {
     refetchProfile();
     setLastTimestamp(null);
     setTimeout(() => {
-      loadFeed(false);
+      loadFeed(false, newMood);
     }, 500);
   }, [refetchProfile, loadFeed]);
 
