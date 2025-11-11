@@ -19,7 +19,7 @@ type RewardsStatsContextType = {
   stats: RewardsStats;
   loading: boolean;
   error: string | null;
-  refreshStats: () => Promise<void>;
+  refreshStats: (force?: boolean) => Promise<void>;
 };
 
 const defaultStats: RewardsStats = {
@@ -114,8 +114,8 @@ export function RewardsStatsProvider({ children }: { children: React.ReactNode }
     }
   }, [user]);
 
-  const refreshStats = useCallback(async () => {
-    await fetchStats(true);
+  const refreshStats = useCallback(async (force = true) => {
+    await fetchStats(force);
   }, [fetchStats]);
 
   return (

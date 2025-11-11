@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { getAuth } from 'firebase/auth';
 import { useToast } from './use-toast';
+import { useRewardsStats } from '@/contexts/RewardsStatsContext';
 
 interface RewardResponse {
   success: boolean;
@@ -59,6 +60,7 @@ async function sleep(ms: number): Promise<void> {
 
 export function useGamification() {
   const { toast } = useToast();
+  const { refreshStats } = useRewardsStats();
   const [isAwarding, setIsAwarding] = useState(false);
   const pendingRequests = useRef(new Set<string>());
 
@@ -165,6 +167,8 @@ export function useGamification() {
               }
             }
 
+            refreshStats(true);
+
             return data;
 
           } catch (error: any) {
@@ -202,7 +206,7 @@ export function useGamification() {
         setIsAwarding(false);
       }
     },
-    [toast]
+    [toast, refreshStats]
   );
 
   const updateMissionProgress = useCallback(
