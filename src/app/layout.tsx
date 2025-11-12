@@ -8,6 +8,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import AuthManager from '@/components/AuthManager';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { RewardsStatsProvider } from '@/contexts/RewardsStatsContext';
+import { Analytics } from '@vercel/analytics/react';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -115,6 +116,7 @@ export default function RootLayout({
             </RewardsStatsProvider>
           </AuthManager>
         </FirebaseClientProvider>
+        <Analytics />
       </body>
     </html>
   );
