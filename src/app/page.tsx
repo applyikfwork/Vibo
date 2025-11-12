@@ -52,9 +52,9 @@ export default function Home() {
       <div className="relative min-h-screen">
         <div className="fixed inset-0 -z-10 bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 animate-gradient-shift" />
         
-        <div className="fixed top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" />
-        <div className="fixed top-40 right-10 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float delay-1000" style={{animationDelay: '2s'}} />
-        <div className="fixed bottom-20 left-1/2 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float delay-500" style={{animationDelay: '4s'}} />
+        <div className="fixed top-20 left-4 sm:left-10 w-48 h-48 sm:w-72 sm:h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" />
+        <div className="fixed top-40 right-4 sm:right-10 w-48 h-48 sm:w-72 sm:h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float delay-1000" style={{animationDelay: '2s'}} />
+        <div className="fixed bottom-20 left-1/2 w-48 h-48 sm:w-72 sm:h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float delay-500" style={{animationDelay: '4s'}} />
         
         <div className="container mx-auto max-w-5xl py-8 px-4 relative z-10">
           <motion.header 
@@ -98,28 +98,28 @@ export default function Home() {
             <EmotionFeedCTA />
           </div>
 
-          <div className="mb-8 flex justify-center gap-4">
+          <div className="mb-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
             <button
               onClick={() => setFeedMode('smart')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
+              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
                 feedMode === 'smart'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
                   : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
               }`}
             >
               <Sparkles className="w-4 h-4" />
-              Smart Feed
+              <span className="text-sm sm:text-base">Smart Feed</span>
             </button>
             <button
               onClick={() => setFeedMode('classic')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
+              className={`flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold transition-all ${
                 feedMode === 'classic'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
                   : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
               }`}
             >
               <List className="w-4 h-4" />
-              Classic Feed
+              <span className="text-sm sm:text-base">Classic Feed</span>
             </button>
           </div>
 

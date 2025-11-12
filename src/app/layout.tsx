@@ -9,6 +9,7 @@ import AuthManager from '@/components/AuthManager';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { RewardsStatsProvider } from '@/contexts/RewardsStatsContext';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -117,6 +118,7 @@ export default function RootLayout({
           </AuthManager>
         </FirebaseClientProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
