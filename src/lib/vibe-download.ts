@@ -1,4 +1,6 @@
 import { toPng, toJpeg } from 'html-to-image';
+import type { Vibe } from './types';
+import type { AspectRatio } from '@/components/DownloadDialog';
 
 export interface DownloadOptions {
   fileName?: string;
@@ -173,6 +175,71 @@ export async function downloadVibeCardWithCustomWatermark(
 
   } catch (error) {
     console.error('Error downloading vibe card:', error);
+    throw error;
+  } finally {
+    if (tempContainer && document.body.contains(tempContainer)) {
+      document.body.removeChild(tempContainer);
+    }
+  }
+}
+
+export async function downloadVibeCardWithRatio(
+  vibe: Vibe,
+  ratio: AspectRatio,
+  options: Omit<DownloadOptions, 'fileName'> = {}
+): Promise<void> {
+  const {
+    quality = 'high',
+    format = 'png',
+  } = options;
+
+  let tempContainer: HTMLElement | null = null;
+
+  try {
+    const { createRoot } = await import('react-dom/client');
+    const { VibeDownloadTemplate } = await import('@/components/VibeDownloadTemplate');
+
+    tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '-9999px';
+    document.body.appendChild(tempContainer);
+
+    const root = createRoot(tempContainer);
+    
+    await new Promise<void>((resolve) => {
+      const { default: React } = require('react');
+      root.render(
+        React.createElement(VibeDownloadTemplate, { vibe, ratio })
+      );
+      setTimeout(resolve, 300);
+    });
+
+    const templateElement = document.getElementById(`vibe-download-template-${vibe.id}`);
+    if (!templateElement) {
+      throw new Error('Download template not found');
+    }
+
+    const { scale, jpegQuality } = QUALITY_SETTINGS[quality];
+    const downloadFunction = format === 'png' ? toPng : toJpeg;
+    const fileExtension = format === 'png' ? 'png' : 'jpg';
+    
+    const dataUrl = await downloadFunction(templateElement, {
+      quality: jpegQuality,
+      pixelRatio: scale,
+      cacheBust: true,
+    });
+
+    const link = document.createElement('a');
+    const fileName = `vibee-${ratio}-${vibe.emotion.toLowerCase()}-${Date.now()}`;
+    link.download = `${fileName}.${fileExtension}`;
+    link.href = dataUrl;
+    link.click();
+
+    root.unmount();
+
+  } catch (error) {
+    console.error('Error downloading vibe card with ratio:', error);
     throw error;
   } finally {
     if (tempContainer && document.body.contains(tempContainer)) {

@@ -27,7 +27,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { downloadVibeCard } from '@/lib/vibe-download';
+import { DownloadDialog } from './DownloadDialog';
 
 interface VibeCardProps {
     vibe: Vibe;
@@ -40,7 +40,6 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
     const firestore = useFirestore();
     const router = useRouter();
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isDownloading, setIsDownloading] = useState(false);
     const emotion = getEmotionByName(vibe.emotion);
     const authorName = vibe.isAnonymous ? 'Anonymous User' : vibe.author.name;
     
@@ -126,32 +125,6 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
         }
     };
 
-    const handleDownload = async () => {
-        setIsDownloading(true);
-        
-        try {
-            await downloadVibeCard(`vibe-card-${vibe.id}`, {
-                fileName: `vibee-${vibe.emotion.toLowerCase()}-${vibe.id}`,
-                quality: 'high',
-                format: 'png',
-            });
-            
-            toast({
-                title: '✨ Download Successful!',
-                description: 'Your vibe card has been downloaded with the "Made with Vibee" watermark.',
-            });
-        } catch (error) {
-            console.error('Error downloading vibe card:', error);
-            toast({
-                variant: 'destructive',
-                title: 'Download Failed',
-                description: 'Unable to download the vibe card. Please try again.',
-            });
-        } finally {
-            setIsDownloading(false);
-        }
-    };
-
     const emotionGlowEffect: Record<string, string> = {
         'Happy': 'drop-shadow-[0_0_40px_rgba(255,184,77,1)] drop-shadow-[0_0_25px_rgba(255,167,38,0.9)] drop-shadow-[0_0_15px_rgba(255,149,0,0.8)]',
         'Sad': 'drop-shadow-[0_0_40px_rgba(100,181,246,1)] drop-shadow-[0_0_25px_rgba(66,165,245,0.9)] drop-shadow-[0_0_15px_rgba(33,150,243,0.8)]',
@@ -189,8 +162,22 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
             )}>
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-black/10 opacity-50" />
                 
-                {isOwner && (
-                    <div className="absolute top-4 right-4 z-20">
+                <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+                    <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                        <DownloadDialog 
+                            vibe={vibe}
+                            trigger={
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-white/90 hover:from-purple-500/60 hover:to-pink-500/60 hover:text-white border border-white/30 hover:border-white/50 transition-all duration-300 hover:scale-110 shadow-lg"
+                                >
+                                    <Download className="h-4 w-4" />
+                                </Button>
+                            }
+                        />
+                    </div>
+                    {isOwner && (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-black/20 text-white/70 hover:bg-black/40 hover:text-white" onClick={(e) => e.stopPropagation()}>
@@ -212,8 +199,8 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
-                    </div>
-                )}
+                    )}
+                </div>
                 
                 <div className="absolute bottom-8 left-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
                     <Sparkles className="w-4 h-4 text-white/30 group-hover:animate-pulse" />
@@ -283,34 +270,6 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                         <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                             <ReactionPalette vibeId={vibe.id} />
                         </div>
-                        <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleDownload();
-                            }}
-                            disabled={isDownloading}
-                            className={cn(
-                                "text-white bg-gradient-to-r from-purple-500/30 to-pink-500/30 hover:from-purple-500/50 hover:to-pink-500/50 backdrop-blur-md",
-                                "border-2 border-purple-400/60 hover:border-pink-400/80",
-                                "rounded-full font-bold",
-                                "px-3 h-8 sm:px-4 sm:h-9",
-                                "text-xs sm:text-sm",
-                                "transition-all duration-300 hover:scale-110",
-                                "shadow-[0_4px_20px_rgba(168,85,247,0.4)] hover:shadow-[0_6px_30px_rgba(236,72,153,0.6)]",
-                                "drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]",
-                                isDownloading && "opacity-70 cursor-not-allowed"
-                            )}
-                        >
-                            <div className="flex items-center">
-                                <Download className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                                <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
-                                    {isDownloading ? 'Downloading...' : 'Download'}
-                                </span>
-                            </div>
-                        </Button>
                         <Button 
                             variant="ghost" 
                             size="sm" 

@@ -5,8 +5,7 @@ import { motion } from 'framer-motion';
 import { Heart, Share2, MessageCircle, SkipForward, Sparkles, MapPin, Volume2, Download } from 'lucide-react';
 import type { Vibe } from '@/lib/types';
 import { VoiceWavePlayer } from './VoiceWavePlayer';
-import { downloadVibeCard } from '@/lib/vibe-download';
-import { useToast } from '@/hooks/use-toast';
+import { DownloadDialog } from '@/components/DownloadDialog';
 
 interface VibeCardFullScreenProps {
   vibe: Vibe;
@@ -57,8 +56,6 @@ const REACTION_EMOJIS = ['❤️', '🙏', '💪', '😢', '😂', '🔥', '✨'
 export function VibeCardFullScreen({ vibe, onInteraction, onListenProgress }: VibeCardFullScreenProps) {
   const [showReactions, setShowReactions] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const { toast } = useToast();
 
   const gradient = EMOTION_GRADIENTS[vibe.emotion] || 'from-purple-600 to-pink-600';
   const emotionEmoji = EMOTION_EMOJIS[vibe.emotion] || '💭';
@@ -72,32 +69,6 @@ export function VibeCardFullScreen({ vibe, onInteraction, onListenProgress }: Vi
   const handleInterest = () => {
     onInteraction('interest');
     setHasInteracted(true);
-  };
-
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    
-    try {
-      await downloadVibeCard(`vibe-fullscreen-${vibe.id}`, {
-        fileName: `vibee-${vibe.emotion.toLowerCase()}-${vibe.id}`,
-        quality: 'high',
-        format: 'png',
-      });
-      
-      toast({
-        title: '✨ Download Successful!',
-        description: 'Your vibe card has been downloaded with the "Made with Vibee" watermark.',
-      });
-    } catch (error) {
-      console.error('Error downloading vibe card:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Download Failed',
-        description: 'Unable to download the vibe card. Please try again.',
-      });
-    } finally {
-      setIsDownloading(false);
-    }
   };
 
   return (
@@ -197,17 +168,20 @@ export function VibeCardFullScreen({ vibe, onInteraction, onListenProgress }: Vi
               <span className="text-xs font-medium">Share</span>
             </motion.button>
 
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={handleDownload}
-              disabled={isDownloading}
-              className={`flex flex-col items-center gap-2 p-3 ${isDownloading ? 'opacity-50' : ''}`}
-            >
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500/40 to-pink-500/40 backdrop-blur-sm flex items-center justify-center border-2 border-purple-400/70 hover:border-pink-400/90 hover:bg-gradient-to-br hover:from-purple-500/60 hover:to-pink-500/60 transition-all duration-300">
-                <Download className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-medium">{isDownloading ? 'Saving...' : 'Download'}</span>
-            </motion.button>
+            <DownloadDialog
+              vibe={vibe}
+              trigger={
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  className="flex flex-col items-center gap-2 p-3"
+                >
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500/40 to-pink-500/40 backdrop-blur-sm flex items-center justify-center border-2 border-purple-400/70 hover:border-pink-400/90 hover:bg-gradient-to-br hover:from-purple-500/60 hover:to-pink-500/60 transition-all duration-300">
+                    <Download className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs font-medium">Download</span>
+                </motion.button>
+              }
+            />
 
             <motion.button
               whileTap={{ scale: 0.9 }}
