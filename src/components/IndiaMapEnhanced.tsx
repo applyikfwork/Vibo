@@ -17,12 +17,21 @@ interface IndiaMapEnhancedProps {
 }
 
 const CITY_COORDINATES = {
-  'Delhi': { x: 42, y: 28, lat: 28.6139, lng: 77.2090, state: 'Delhi' },
-  'Mumbai': { x: 32, y: 55, lat: 19.0760, lng: 72.8777, state: 'Maharashtra' },
-  'Bangalore': { x: 38, y: 75, lat: 12.9716, lng: 77.5946, state: 'Karnataka' },
-  'Pune': { x: 34, y: 58, lat: 18.5204, lng: 73.8567, state: 'Maharashtra' },
-  'Hyderabad': { x: 42, y: 65, lat: 17.3850, lng: 78.4867, state: 'Telangana' },
-  'Chennai': { x: 45, y: 75, lat: 13.0827, lng: 80.2707, state: 'Tamil Nadu' },
+  'Delhi': { x: 54, y: 20, lat: 28.6139, lng: 77.2090, state: 'Delhi' },
+  'Mumbai': { x: 38, y: 50, lat: 19.0760, lng: 72.8777, state: 'Maharashtra' },
+  'Bangalore': { x: 48, y: 71, lat: 12.9716, lng: 77.5946, state: 'Karnataka' },
+  'Pune': { x: 40, y: 52, lat: 18.5204, lng: 73.8567, state: 'Maharashtra' },
+  'Hyderabad': { x: 50, y: 60, lat: 17.3850, lng: 78.4867, state: 'Telangana' },
+  'Chennai': { x: 52, y: 72, lat: 13.0827, lng: 80.2707, state: 'Tamil Nadu' },
+  'Kolkata': { x: 70, y: 40, lat: 22.5726, lng: 88.3639, state: 'West Bengal' },
+  'Jaipur': { x: 47, y: 25, lat: 26.9124, lng: 75.7873, state: 'Rajasthan' },
+  'Ahmedabad': { x: 38, y: 38, lat: 23.0225, lng: 72.5714, state: 'Gujarat' },
+  'Lucknow': { x: 58, y: 28, lat: 26.8467, lng: 80.9462, state: 'Uttar Pradesh' },
+  'Chandigarh': { x: 50, y: 17, lat: 30.7333, lng: 76.7794, state: 'Chandigarh' },
+  'Bhopal': { x: 50, y: 42, lat: 23.2599, lng: 77.4126, state: 'Madhya Pradesh' },
+  'Kochi': { x: 48, y: 80, lat: 9.9312, lng: 76.2673, state: 'Kerala' },
+  'Guwahati': { x: 80, y: 28, lat: 26.1445, lng: 91.7362, state: 'Assam' },
+  'Indore': { x: 46, y: 40, lat: 22.7196, lng: 75.8577, state: 'Madhya Pradesh' },
 };
 
 export function IndiaMapEnhanced({ 
@@ -33,6 +42,23 @@ export function IndiaMapEnhanced({
 }: IndiaMapEnhancedProps) {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
   const [showEmotionLayers, setShowEmotionLayers] = useState(true);
+
+  // Generate stable particle data once on client mount to avoid hydration issues
+  const [backgroundParticles] = useState(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      width: 2 + (i * 0.2) % 4, // Deterministic based on index
+      height: 2 + (i * 0.2) % 4,
+      hue: (i * 18) % 360, // Evenly distributed hues
+      left: (i * 5.26) % 100, // Deterministic distribution
+      top: ((i * 7.89) % 100),
+      xOffset: (i % 2 === 0 ? 1 : -1) * (30 + (i * 3) % 40),
+      yOffset: (i % 3 === 0 ? 1 : -1) * (30 + (i * 2) % 40),
+      duration: 10 + (i % 10),
+      delay: (i * 0.25) % 5,
+    }));
+  });
+
 
   const cityData = useMemo(() => {
     const data: Record<string, { vibes: Vibe[]; emotions: Record<string, number> }> = {};
@@ -87,17 +113,52 @@ export function IndiaMapEnhanced({
         </div>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="relative w-full bg-gradient-to-br from-indigo-50 via-purple-50 via-pink-50 to-orange-50 dark:from-indigo-950/20 dark:via-purple-950/20 dark:via-pink-950/20 dark:to-orange-950/20 rounded-3xl p-8 border-4 border-primary/20 shadow-inner">
+        <div className="relative w-full bg-gradient-to-br from-violet-100 via-fuchsia-100 via-pink-100 via-rose-100 to-orange-100 dark:from-violet-950/30 dark:via-fuchsia-950/30 dark:via-pink-950/30 dark:via-rose-950/30 dark:to-orange-950/30 rounded-3xl p-8 border-4 border-gradient-to-r from-purple-500 via-pink-500 to-orange-500 shadow-2xl overflow-hidden">
+          {/* Animated background particles - using stable data */}
+          {backgroundParticles.map((particle) => (
+            <motion.div
+              key={`particle-${particle.id}`}
+              className="absolute rounded-full"
+              style={{
+                width: `${particle.width}px`,
+                height: `${particle.height}px`,
+                background: `hsl(${particle.hue}, 70%, 60%)`,
+                left: `${particle.left}%`,
+                top: `${particle.top}%`,
+              }}
+              animate={{
+                x: [0, particle.xOffset],
+                y: [0, particle.yOffset],
+                opacity: [0.3, 0.7, 0.3],
+              }}
+              transition={{
+                duration: particle.duration,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: particle.delay,
+              }}
+            />
+          ))}
           <svg
             viewBox="0 0 100 100"
             className="w-full h-auto drop-shadow-2xl"
             style={{ maxHeight: '700px' }}
           >
             <defs>
-              {/* Gradient Definitions */}
-              <radialGradient id="indiaGlow" cx="50%" cy="50%">
-                <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#ec4899" stopOpacity="0.3" />
+              {/* Enhanced Gradient Definitions */}
+              <linearGradient id="indiaGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4" />
+                <stop offset="25%" stopColor="#8b5cf6" stopOpacity="0.5" />
+                <stop offset="50%" stopColor="#d946ef" stopOpacity="0.6" />
+                <stop offset="75%" stopColor="#ec4899" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="#f97316" stopOpacity="0.4" />
+              </linearGradient>
+
+              <radialGradient id="rainbowGlow" cx="50%" cy="50%">
+                <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.8" />
+                <stop offset="33%" stopColor="#ec4899" stopOpacity="0.6" />
+                <stop offset="66%" stopColor="#8b5cf6" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.4" />
               </radialGradient>
 
               {/* Dynamic Emotion Gradients */}
@@ -106,13 +167,14 @@ export function IndiaMapEnhanced({
                 const color = getMoodColor(emotion);
                 return (
                   <radialGradient key={`grad-${city}`} id={`cityGrad-${city}`}>
-                    <stop offset="0%" stopColor={color} stopOpacity="0.8" />
+                    <stop offset="0%" stopColor={color} stopOpacity="0.9" />
+                    <stop offset="50%" stopColor={color} stopOpacity="0.5" />
                     <stop offset="100%" stopColor={color} stopOpacity="0" />
                   </radialGradient>
                 );
               })}
 
-              {/* Filters */}
+              {/* Enhanced Filters */}
               <filter id="strongGlow">
                 <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
                 <feMerge>
@@ -129,56 +191,141 @@ export function IndiaMapEnhanced({
                   <feMergeNode in="SourceGraphic"/>
                 </feMerge>
               </filter>
+
+              <filter id="vibrantGlow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feColorMatrix in="coloredBlur" type="saturate" values="2"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
             </defs>
 
-            {/* India Map Base - Enhanced with animated gradient */}
-            <g filter="url(#softGlow)">
+            {/* India Map Base - Enhanced with detailed shape and animated gradient */}
+            <g filter="url(#vibrantGlow)">
+              {/* Main India body */}
               <motion.path
-                d="M 35,15 L 45,10 L 55,12 L 60,20 L 58,30 L 55,35 L 50,38 L 48,45 L 50,52 L 48,58 L 45,65 L 48,70 L 45,75 L 42,80 L 38,82 L 35,78 L 32,72 L 28,68 L 25,75 L 22,72 L 20,65 L 18,58 L 20,50 L 22,45 L 18,38 L 20,32 L 25,28 L 28,22 L 32,18 Z"
+                d="M 48,10 L 52,8 L 56,8.5 L 60,10 L 64,12 L 68,15 L 72,18 L 76,22 L 80,26 L 83,30 L 84,35 L 82,38 L 78,42 L 73,45 L 70,48 L 68,52 L 67,56 L 66,60 L 65,64 L 62,68 L 60,72 L 58,76 L 55,80 L 52,83 L 50,85 L 48,86 L 46,85 L 44,82 L 42,78 L 41,74 L 40,70 L 38,66 L 36,62 L 34,58 L 32,54 L 30,50 L 28,46 L 27,42 L 26,38 L 25,34 L 24,30 L 26,26 L 28,22 L 30,18 L 32,15 L 35,12 L 38,10 L 42,9 L 45,9 Z"
                 fill="url(#indiaGlow)"
-                stroke="#8b5cf6"
-                strokeWidth="1.2"
-                strokeDasharray="3,2"
+                stroke="#ec4899"
+                strokeWidth="1"
+                strokeDasharray="2,1"
                 className="transition-all duration-500"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ 
                   opacity: 1, 
                   scale: 1,
-                  strokeDashoffset: [0, -20, 0]
+                  strokeDashoffset: [0, -30, 0]
                 }}
                 transition={{
                   opacity: { duration: 1 },
                   scale: { duration: 1 },
-                  strokeDashoffset: { duration: 20, repeat: Infinity, ease: "linear" }
+                  strokeDashoffset: { duration: 25, repeat: Infinity, ease: "linear" }
+                }}
+              />
+              
+              {/* Animated overlay for glow effect */}
+              <motion.path
+                d="M 48,10 L 52,8 L 56,8.5 L 60,10 L 64,12 L 68,15 L 72,18 L 76,22 L 80,26 L 83,30 L 84,35 L 82,38 L 78,42 L 73,45 L 70,48 L 68,52 L 67,56 L 66,60 L 65,64 L 62,68 L 60,72 L 58,76 L 55,80 L 52,83 L 50,85 L 48,86 L 46,85 L 44,82 L 42,78 L 41,74 L 40,70 L 38,66 L 36,62 L 34,58 L 32,54 L 30,50 L 28,46 L 27,42 L 26,38 L 25,34 L 24,30 L 26,26 L 28,22 L 30,18 L 32,15 L 35,12 L 38,10 L 42,9 L 45,9 Z"
+                fill="none"
+                stroke="url(#rainbowGlow)"
+                strokeWidth="0.8"
+                strokeDasharray="4,2"
+                opacity="0.6"
+                animate={{
+                  strokeDashoffset: [0, 20, 0],
+                  opacity: [0.4, 0.8, 0.4]
+                }}
+                transition={{
+                  duration: 15,
+                  repeat: Infinity,
+                  ease: "easeInOut"
                 }}
               />
             </g>
 
-            {/* Emotion Heat Layers */}
+            {/* Ambient emotion waves across India */}
+            <motion.circle
+              cx="50"
+              cy="45"
+              r="35"
+              fill="url(#rainbowGlow)"
+              opacity="0.15"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.1, 0.2, 0.1],
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+
+            {/* Emotion Heat Layers - Enhanced */}
             {viewMode === 'heatmap' && showEmotionLayers && (
-              <g opacity="0.6">
+              <g opacity="0.7">
                 {Object.entries(CITY_COORDINATES).map(([city, coords]) => {
                   const intensity = getVibeIntensity(city);
                   if (intensity === 0) return null;
                   
                   return (
-                    <motion.circle
-                      key={`heat-${city}`}
-                      cx={coords.x}
-                      cy={coords.y}
-                      r={15 * intensity}
-                      fill={`url(#cityGrad-${city})`}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ 
-                        opacity: [0.4, 0.7, 0.4],
-                        scale: [0.8, 1.2, 0.8]
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    />
+                    <g key={`heat-group-${city}`}>
+                      {/* Outer glow layer */}
+                      <motion.circle
+                        cx={coords.x}
+                        cy={coords.y}
+                        r={20 * intensity}
+                        fill={`url(#cityGrad-${city})`}
+                        opacity="0.3"
+                        animate={{ 
+                          opacity: [0.2, 0.5, 0.2],
+                          scale: [0.9, 1.3, 0.9]
+                        }}
+                        transition={{
+                          duration: 4,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: ((coords.x + coords.y) % 20) / 10
+                        }}
+                      />
+                      {/* Middle layer */}
+                      <motion.circle
+                        cx={coords.x}
+                        cy={coords.y}
+                        r={15 * intensity}
+                        fill={`url(#cityGrad-${city})`}
+                        opacity="0.5"
+                        animate={{ 
+                          opacity: [0.4, 0.8, 0.4],
+                          scale: [0.8, 1.2, 0.8]
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                      {/* Core layer */}
+                      <motion.circle
+                        cx={coords.x}
+                        cy={coords.y}
+                        r={10 * intensity}
+                        fill={getMoodColor(getDominantEmotion(city))}
+                        opacity="0.6"
+                        filter="url(#strongGlow)"
+                        animate={{ 
+                          opacity: [0.5, 0.9, 0.5],
+                          scale: [0.9, 1.1, 0.9]
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    </g>
                   );
                 })}
               </g>
@@ -211,7 +358,7 @@ export function IndiaMapEnhanced({
                           scale: [1, 1.1, 1],
                         }}
                         transition={{
-                          duration: 2 + Math.random(),
+                          duration: 2 + ((coords.x * coords.y) % 10) / 10,
                           repeat: Infinity,
                           ease: "easeInOut"
                         }}
@@ -239,25 +386,32 @@ export function IndiaMapEnhanced({
                   
                   const color = getMoodColor(getDominantEmotion(city));
                   
-                  return [...Array(Math.min(count, 12))].map((_, i) => (
-                    <motion.circle
-                      key={`particle-${city}-${i}`}
-                      cx={coords.x}
-                      cy={coords.y}
-                      r={0.5}
-                      fill={color}
-                      animate={{
-                        x: [0, (Math.random() - 0.5) * 20],
-                        y: [0, (Math.random() - 0.5) * 20],
-                        opacity: [1, 0],
-                      }}
-                      transition={{
-                        duration: 2 + Math.random() * 2,
-                        repeat: Infinity,
-                        delay: i * 0.2,
-                      }}
-                    />
-                  ));
+                  return [...Array(Math.min(count, 12))].map((_, i) => {
+                    // Deterministic particle motion based on city coords and particle index
+                    const xOffset = ((i % 2 === 0 ? 1 : -1) * ((coords.x + i * 3) % 20)) / 2;
+                    const yOffset = ((i % 3 === 0 ? 1 : -1) * ((coords.y + i * 2) % 20)) / 2;
+                    const duration = 2 + ((i + coords.x) % 20) / 10;
+                    
+                    return (
+                      <motion.circle
+                        key={`particle-${city}-${i}`}
+                        cx={coords.x}
+                        cy={coords.y}
+                        r={0.5}
+                        fill={color}
+                        animate={{
+                          x: [0, xOffset],
+                          y: [0, yOffset],
+                          opacity: [1, 0],
+                        }}
+                        transition={{
+                          duration,
+                          repeat: Infinity,
+                          delay: i * 0.2,
+                        }}
+                      />
+                    );
+                  });
                 })}
               </g>
             )}
@@ -442,20 +596,58 @@ export function IndiaMapEnhanced({
           )}
         </div>
 
-        {/* Controls */}
-        <div className="mt-6 flex justify-between items-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowEmotionLayers(!showEmotionLayers)}
-          >
-            {showEmotionLayers ? '🔥 Hide Layers' : '✨ Show Layers'}
-          </Button>
+        {/* Enhanced Controls & Legend */}
+        <div className="mt-6 space-y-4">
+          <div className="flex justify-between items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowEmotionLayers(!showEmotionLayers)}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 border-0"
+            >
+              {showEmotionLayers ? '🔥 Hide Emotion Layers' : '✨ Show Emotion Layers'}
+            </Button>
 
-          <div className="flex gap-2 text-xs text-muted-foreground">
-            <span>🟢 Positive</span>
-            <span>🟡 Neutral</span>
-            <span>🔴 Intense</span>
+            <div className="flex gap-3 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                <span>Positive Vibes</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                <span>Neutral Energy</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                <span>Intense Emotions</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Live stats bar */}
+          <div className="flex gap-4 justify-center items-center p-4 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 dark:from-purple-900/30 dark:via-pink-900/30 dark:to-orange-900/30 rounded-2xl shadow-inner">
+            <div className="text-center">
+              <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                {Object.keys(cityData).filter(c => cityData[c].vibes.length > 0).length}
+              </div>
+              <div className="text-xs text-muted-foreground">Active Cities</div>
+            </div>
+            <div className="w-px h-8 bg-gradient-to-b from-purple-300 to-pink-300"></div>
+            <div className="text-center">
+              <div className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
+                {vibes.length}
+              </div>
+              <div className="text-xs text-muted-foreground">Total Vibes</div>
+            </div>
+            <div className="w-px h-8 bg-gradient-to-b from-pink-300 to-orange-300"></div>
+            <div className="text-center">
+              <div className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                {Object.values(cityData).reduce((acc, data) => 
+                  acc + Object.keys(data.emotions).length, 0
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">Unique Emotions</div>
+            </div>
           </div>
         </div>
       </CardContent>
