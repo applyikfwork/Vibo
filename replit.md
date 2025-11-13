@@ -23,6 +23,7 @@ None recorded yet.
 - **Data Validation**: React Hook Form with Zod.
 - **Charting**: Recharts for data visualization.
 - **Voice Notes**: Browser MediaRecorder API for audio capture (WebM/Opus, 24kbps, 16kHz), real-time waveform visualization using Web Audio API.
+- **Image Attachments (November 2025)**: Powerful image upload system for Vibe posts with automatic compression (<1MB for Firebase Free tier). Features drag-and-drop UI, real-time preview, multi-pass compression with quality fallback, WebP conversion for optimal file size. Browser-image-compression library ensures images are compressed client-side before upload. Images display in feeds with responsive layouts, lazy loading, and gradient overlays. Complete storage lifecycle management with automatic cleanup when vibes are deleted. Supports both text and voice vibes with images.
 - **Student Mental Health Hub**: Includes Exam Stress Mode, Smart Study Break Reminders, Anonymous Peer Support, and a Privacy-Protected Parent-Student Emotional Bridge.
 - **SEO**: Advanced SEO using Next.js Metadata API, dynamic XML sitemaps, structured data (JSON-LD Schema), canonical URLs, and PWA manifest.
 - **Vibee Feed Algorithm**: AI-powered, emotion-based recommendation system calculating a VibeScore. Uses Genkit AI (Google Gemini 2.5 Flash) for emotion strength and sentiment intensity. Features "My Vibe Zone", "Healing Zone", and "Explore Vibes", with adaptive learning and post boosting.
