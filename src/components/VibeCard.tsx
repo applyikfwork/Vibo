@@ -12,6 +12,7 @@ import { VoicePlayer } from '@/components/VoicePlayer';
 import Link from 'next/link';
 import { useCollection, useFirestore, useMemoFirebase, useUser, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, Timestamp } from 'firebase/firestore';
+import { deleteVibeImage, deleteVoiceNote } from '@/lib/firebase-storage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,11 +86,19 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
 
     const isOwner = user?.uid === vibe.userId;
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!isOwner || !user || !firestore) return;
         setIsDeleting(true);
 
         try {
+            if (vibe.imageStoragePath) {
+                await deleteVibeImage(vibe.imageStoragePath);
+            }
+
+            if (vibe.audioStoragePath) {
+                await deleteVoiceNote(vibe.audioStoragePath);
+            }
+
             const userVibeRef = doc(firestore, 'users', user.uid, 'vibes', vibe.id);
             deleteDocumentNonBlocking(userVibeRef);
 
@@ -220,6 +229,20 @@ export function VibeCard({ vibe, isLink = true }: VibeCardProps) {
                         <p className="font-medium text-white/90 text-base sm:text-lg mt-4 px-2 line-clamp-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                             "{vibe.text}"
                         </p>
+                        
+                        {vibe.imageUrl && (
+                            <div className="w-full px-2 mt-5 mb-2">
+                                <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-white/30 group-hover:border-white/50 transition-all duration-300">
+                                    <img
+                                        src={vibe.imageUrl}
+                                        alt="Vibe"
+                                        loading="lazy"
+                                        className="w-full h-auto max-h-80 object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+                                </div>
+                            </div>
+                        )}
                         
                         {vibe.isVoiceNote && vibe.audioUrl && vibe.audioDuration && (
                             <div className="w-full px-2 mt-4" onClick={(e) => e.stopPropagation()}>

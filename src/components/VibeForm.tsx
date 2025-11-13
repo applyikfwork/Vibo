@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Send, Loader2, Mic, Type } from 'lucide-react';
+import { Send, Loader2, Mic, Type, Image as ImageIcon, X } from 'lucide-react';
 import { getVibeDiagnosis } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
@@ -16,9 +16,10 @@ import { collection, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { getEmotionByName } from '@/lib/data';
 import type { Vibe, EmotionCategory, Location } from '@/lib/types';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
-import { uploadVoiceNote } from '@/lib/firebase-storage';
+import { uploadVoiceNote, uploadVibeImage } from '@/lib/firebase-storage';
 import { generateGeohash } from '@/lib/geo-utils';
 import { useGamification } from '@/hooks/useGamification';
+import { compressImage, formatFileSize, cleanupPreviewUrl, type CompressedImage } from '@/lib/image-processing';
 
 function PostButton({ pending }: { pending: boolean }) {
   const { pending: formPending } = useFormStatus();
@@ -39,6 +40,9 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
   const [isFocused, setIsFocused] = useState(false);
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
   const [userLocation, setUserLocation] = useState<Location | undefined>();
+  const [selectedImage, setSelectedImage] = useState<CompressedImage | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const { user } = useUser();
@@ -72,6 +76,52 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
       });
     }
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (selectedImage?.previewUrl) {
+        cleanupPreviewUrl(selectedImage.previewUrl);
+      }
+    };
+  }, [selectedImage]);
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsCompressing(true);
+
+    try {
+      const compressed = await compressImage(file);
+      setSelectedImage(compressed);
+      
+      const compressionRatio = ((compressed.originalSize - compressed.compressedSize) / compressed.originalSize * 100).toFixed(0);
+      
+      toast({
+        title: '✨ Image Compressed!',
+        description: `Reduced by ${compressionRatio}% (${formatFileSize(compressed.originalSize)} → ${formatFileSize(compressed.compressedSize)})`,
+      });
+    } catch (error: any) {
+      console.error('Error compressing image:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Image Error',
+        description: error.message || 'Failed to process image',
+      });
+    } finally {
+      setIsCompressing(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (selectedImage?.previewUrl) {
+      cleanupPreviewUrl(selectedImage.previewUrl);
+    }
+    setSelectedImage(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -109,6 +159,21 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
           }
         : undefined;
 
+      let imageData: { imageUrl: string; storagePath: string } | undefined;
+      
+      if (selectedImage) {
+        try {
+          imageData = await uploadVibeImage(user.uid, selectedImage.blob);
+        } catch (error: any) {
+          console.error('Error uploading image:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Image Upload Failed',
+            description: 'Your vibe will be posted without the image.',
+          });
+        }
+      }
+
       const newVibeData = {
         userId: user.uid,
         text: vibeText,
@@ -123,6 +188,10 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
         isAnonymous: isAnonymous,
         viewCount: 0,
         ...(locationData && { location: locationData }),
+        ...(imageData && { 
+          imageUrl: imageData.imageUrl,
+          imageStoragePath: imageData.storagePath 
+        }),
       };
 
       // 1. Create the document in the public 'all-vibes' collection and get its ref
@@ -147,6 +216,7 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
 
       setVibeText('');
       setEmoji('✨');
+      handleRemoveImage();
       if (onPost) onPost();
 
     } catch (error: any) {
@@ -175,11 +245,8 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
         throw new Error('Could not identify a valid emotion.');
       }
 
-      // Create a temporary vibe ID
-      const tempVibeId = `temp_${Date.now()}`;
-      
       // Upload audio to Firebase Storage
-      const audioUrl = await uploadVoiceNote(user.uid, audioBlob, tempVibeId);
+      const { audioUrl, storagePath: audioStoragePath } = await uploadVoiceNote(user.uid, audioBlob);
 
       const locationData = userLocation
         ? {
@@ -187,6 +254,21 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
             geohash: generateGeohash(userLocation.lat, userLocation.lng),
           }
         : undefined;
+
+      let imageData: { imageUrl: string; storagePath: string } | undefined;
+      
+      if (selectedImage) {
+        try {
+          imageData = await uploadVibeImage(user.uid, selectedImage.blob);
+        } catch (error: any) {
+          console.error('Error uploading image:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Image Upload Failed',
+            description: 'Your voice vibe will be posted without the image.',
+          });
+        }
+      }
 
       const newVibeData = {
         userId: user.uid,
@@ -204,7 +286,12 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
         isVoiceNote: true,
         audioUrl: audioUrl,
         audioDuration: duration,
+        audioStoragePath: audioStoragePath,
         ...(locationData && { location: locationData }),
+        ...(imageData && { 
+          imageUrl: imageData.imageUrl,
+          imageStoragePath: imageData.storagePath 
+        }),
       };
 
       const globalVibesRef = collection(firestore, 'all-vibes');
@@ -224,6 +311,7 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
       }
 
       setInputMode('text');
+      handleRemoveImage();
       if (onPost) onPost();
 
     } catch (error: any) {
@@ -289,10 +377,60 @@ export function VibeForm({ onPost }: { onPost?: () => void }) {
                   minLength={3}
                 />
               </div>
+              {selectedImage && (
+                <div className="relative mb-4 rounded-xl overflow-hidden border-2 border-purple-300/40 shadow-lg">
+                  <img
+                    src={selectedImage.previewUrl}
+                    alt="Preview"
+                    className="w-full h-auto max-h-96 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="destructive"
+                    className="absolute top-3 right-3 h-8 w-8 rounded-full shadow-lg"
+                    onClick={handleRemoveImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                    <span className="text-xs text-white font-medium">
+                      {formatFileSize(selectedImage.compressedSize)} • {selectedImage.width}×{selectedImage.height}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-muted/10 px-4 py-3 flex justify-between items-center border-t border-purple-200/20 rounded-b-lg">
-                <div className="flex items-center space-x-2">
-                  <Switch id="anonymous-mode" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
-                  <Label htmlFor="anonymous-mode" className="text-sm font-medium text-muted-foreground">Post Anonymously</Label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                    accept="image/jpeg,image/png,image/webp,image/heic"
+                    className="hidden"
+                    disabled={isCompressing || isPosting}
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-9 w-9 rounded-full hover:bg-purple-100 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isCompressing || isPosting || !!selectedImage}
+                    title={selectedImage ? "Image already added" : "Add image"}
+                  >
+                    {isCompressing ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+                    ) : (
+                      <ImageIcon className={`h-5 w-5 ${selectedImage ? 'text-gray-400' : 'text-purple-600'}`} />
+                    )}
+                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="anonymous-mode" checked={isAnonymous} onCheckedChange={setIsAnonymous} />
+                    <Label htmlFor="anonymous-mode" className="text-sm font-medium text-muted-foreground">Anonymous</Label>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <PostButton pending={isPosting} />

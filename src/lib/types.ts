@@ -419,6 +419,9 @@ export type Vibe = {
   isVoiceNote?: boolean;
   audioUrl?: string;
   audioDuration?: number;
+  audioStoragePath?: string;
+  imageUrl?: string;
+  imageStoragePath?: string;
   emotionStrength?: number;
   reactionCount?: number;
   commentCount?: number;
