@@ -22,6 +22,8 @@ export async function downloadVibeCard(
     format = 'png',
   } = options;
 
+  let tempContainer: HTMLElement | null = null;
+
   try {
     const element = document.getElementById(elementId);
     if (!element) {
@@ -50,7 +52,7 @@ export async function downloadVibeCard(
       align-items: center;
       gap: 6px;
       z-index: 9999;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     `;
     
     watermarkContainer.innerHTML = `
@@ -66,7 +68,7 @@ export async function downloadVibeCard(
     clonedElement.style.position = 'relative';
     clonedElement.appendChild(watermarkContainer);
 
-    const tempContainer = document.createElement('div');
+    tempContainer = document.createElement('div');
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '-9999px';
@@ -90,11 +92,13 @@ export async function downloadVibeCard(
     link.href = dataUrl;
     link.click();
 
-    document.body.removeChild(tempContainer);
-
   } catch (error) {
     console.error('Error downloading vibe card:', error);
     throw error;
+  } finally {
+    if (tempContainer && document.body.contains(tempContainer)) {
+      document.body.removeChild(tempContainer);
+    }
   }
 }
 
@@ -108,6 +112,8 @@ export async function downloadVibeCardWithCustomWatermark(
     quality = 'high',
     format = 'png',
   } = options;
+
+  let tempContainer: HTMLElement | null = null;
 
   try {
     const element = document.getElementById(elementId);
@@ -133,7 +139,7 @@ export async function downloadVibeCardWithCustomWatermark(
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
       border: 2px solid rgba(255, 255, 255, 0.3);
       z-index: 9999;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     `;
     watermarkContainer.textContent = watermarkText;
 
@@ -141,7 +147,7 @@ export async function downloadVibeCardWithCustomWatermark(
     clonedElement.style.position = 'relative';
     clonedElement.appendChild(watermarkContainer);
 
-    const tempContainer = document.createElement('div');
+    tempContainer = document.createElement('div');
     tempContainer.style.position = 'absolute';
     tempContainer.style.left = '-9999px';
     tempContainer.style.top = '-9999px';
@@ -165,10 +171,12 @@ export async function downloadVibeCardWithCustomWatermark(
     link.href = dataUrl;
     link.click();
 
-    document.body.removeChild(tempContainer);
-
   } catch (error) {
     console.error('Error downloading vibe card:', error);
     throw error;
+  } finally {
+    if (tempContainer && document.body.contains(tempContainer)) {
+      document.body.removeChild(tempContainer);
+    }
   }
 }
