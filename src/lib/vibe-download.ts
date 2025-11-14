@@ -1,3 +1,4 @@
+import React from 'react';
 import { toPng, toJpeg } from 'html-to-image';
 import type { Vibe } from './types';
 import type { AspectRatio } from '@/components/DownloadDialog';
@@ -207,11 +208,11 @@ export async function downloadVibeCardWithRatio(
 
     const root = createRoot(tempContainer);
     
+    root.render(
+      React.createElement(VibeDownloadTemplate, { vibe, ratio })
+    );
+    
     await new Promise<void>((resolve) => {
-      const { default: React } = require('react');
-      root.render(
-        React.createElement(VibeDownloadTemplate, { vibe, ratio })
-      );
       setTimeout(resolve, 300);
     });
 
